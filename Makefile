@@ -1,4 +1,4 @@
-CFLAGS += -g -O3 -std=gnu99 -Wall -Wextra -Werror -Wno-unused-parameter
+CFLAGS += -g -O0 -std=gnu99 -Wall -Wextra -Werror -Wno-unused-parameter
 
 all: testaes
 
