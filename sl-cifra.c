@@ -1,6 +1,9 @@
 #include "handy.h"
 #include "shitlisp.h"
 #include "aes.h"
+#include "sha2.h"
+
+#include <assert.h>
 
 static sl_value * aes_block_fn(sl_value *self, sl_value *args, sl_symboltab *tab,
                                void (*blockfn)(const aes_context *ctx,
@@ -44,9 +47,43 @@ static sl_value * aes_block_decrypt(sl_value *self, sl_value *args, sl_symboltab
   return aes_block_fn(self, args, tab, aes_decrypt);
 }
 
+/* SHA2 */
+static sl_value * hash_fn(sl_value *self, sl_value *args, sl_symboltab *tab, const cf_chash *h)
+{
+  sl_iter it = sl_iter_start(args);
+  sl_value *msg = sl_iter_convert(&it, sl_preprocess_eval, sl_assert_bytes, tab);
+
+  if (!msg)
+    return sl_get_nil();
+
+  cf_chash_ctx ctx;
+  assert(h->ctxsz <= CF_CHASH_MAXCTX);
+  h->init(&ctx);
+  h->update(&ctx, msg->u.bytes.buf, msg->u.bytes.len);
+  sl_decref(msg);
+
+  uint8_t result[CF_MAXHASH];
+  assert(h->hashsz <= CF_MAXHASH);
+  h->final(&ctx, result);
+
+  return sl_new_bytes(result, h->hashsz);
+}
+
+static sl_value * sha224(sl_value *self, sl_value *args, sl_symboltab *tab)
+{
+  return hash_fn(self, args, tab, &cf_sha224);
+}
+
+static sl_value * sha256(sl_value *self, sl_value *args, sl_symboltab *tab)
+{
+  return hash_fn(self, args, tab, &cf_sha256);
+}
+
 int SL_MODULE_ENTRY(sl_symboltab *tab)
 {
   ER(sl_symboltab_add_name_native(tab, "aes-encrypt", aes_block_encrypt));
   ER(sl_symboltab_add_name_native(tab, "aes-decrypt", aes_block_decrypt));
+  ER(sl_symboltab_add_name_native(tab, "sha224", sha224));
+  ER(sl_symboltab_add_name_native(tab, "sha256", sha256));
   return 0;
 }

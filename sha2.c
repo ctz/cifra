@@ -55,7 +55,7 @@ static inline uint32_t SSIG1(uint32_t x)
   return rotr32(x, 17) ^ rotr32(x, 19) ^ (x >> 10);
 }
 
-void sha256_init(sha256_context *ctx)
+void cf_sha256_init(cf_sha256_context *ctx)
 {
   memset(ctx, 0, sizeof *ctx);
   ctx->H[0] = 0x6a09e667;
@@ -68,14 +68,22 @@ void sha256_init(sha256_context *ctx)
   ctx->H[7] = 0x5be0cd19;
 }
 
+void cf_sha224_init(cf_sha256_context *ctx)
+{
+  memset(ctx, 0, sizeof *ctx);
+  ctx->H[0] = 0xc1059ed8;
+  ctx->H[1] = 0x367cd507;
+  ctx->H[2] = 0x3070dd17;
+  ctx->H[3] = 0xf70e5939;
+  ctx->H[4] = 0xffc00b31;
+  ctx->H[5] = 0x68581511;
+  ctx->H[6] = 0x64f98fa7;
+  ctx->H[7] = 0xbefa4fa4;
+}
+
 static void sha256_update_block(void *vctx, const uint8_t *inp)
 {
-  sha256_context *ctx = vctx;
-
-  printf("update: \n");
-  for (int i = 0; i < SHA256_BLOCKSZ; i++)
-    printf("%02x ", inp[i]);
-  printf("\n");
+  cf_sha256_context *ctx = vctx;
 
   uint32_t W[64];
 
@@ -121,10 +129,6 @@ static void sha256_update_block(void *vctx, const uint8_t *inp)
   ctx->H[5] += f;
   ctx->H[6] += g;
   ctx->H[7] += h;
-
-  printf("after block: %08x %08x %08x %08x %08x %08x %08x %08x\n",
-         ctx->H[0], ctx->H[1], ctx->H[2], ctx->H[3],
-         ctx->H[4], ctx->H[5], ctx->H[6], ctx->H[7]);
 }
 
 static void accumulate(uint8_t *partial, uint8_t *npartial, size_t nblock,
@@ -163,7 +167,6 @@ static void accumulate(uint8_t *partial, uint8_t *npartial, size_t nblock,
   {
     /* Partial buffer must be empty, or we're ignoring extant data */
     assert(*npartial == 0);
-    printf("full\n");
 
     process(ctx, bufin);
     bufin += nblock;
@@ -175,8 +178,6 @@ static void accumulate(uint8_t *partial, uint8_t *npartial, size_t nblock,
   {
     size_t space = nblock - *npartial;
     size_t taken = MIN(space, nbytes);
-
-    printf("buffer %zu\n", taken);
 
     memcpy(partial + *npartial, bufin, taken);
 
@@ -192,45 +193,50 @@ static void accumulate(uint8_t *partial, uint8_t *npartial, size_t nblock,
   }
 }
 
-void sha256_update(sha256_context *ctx, const void *data, size_t nbytes)
+void cf_sha256_update(cf_sha256_context *ctx, const void *data, size_t nbytes)
 {
   accumulate(ctx->partial, &ctx->npartial, sizeof ctx->partial,
              data, nbytes,
              sha256_update_block, ctx);
 }
 
-void sha256_digest(const sha256_context *ctx, uint8_t hash[SHA256_HASHSZ])
+void cf_sha224_update(cf_sha256_context *ctx, const void *data, size_t nbytes)
+{
+  cf_sha256_update(ctx, data, nbytes);
+}
+
+void cf_sha256_final(const cf_sha256_context *ctx, uint8_t hash[CF_SHA256_HASHSZ])
 {
   /* We copy the context, so the finalisation doesn't effect the caller's
    * context.  This means the caller can do:
    *
    * x = init()
    * x.update('hello')
-   * h1 = x.digest()
+   * h1 = x.final()
    * x.update(' world')
-   * h2 = x.digest()
+   * h2 = x.final()
    *
    * to get h1 = H('hello') and h2 = H('hello world')
    *
    * This wouldn't work if we applied MD-padding to *ctx.
    */
 
-  sha256_context ours = *ctx;
-  uint8_t padbuf[SHA256_BLOCKSZ];
+  cf_sha256_context ours = *ctx;
+  uint8_t padbuf[CF_SHA256_BLOCKSZ];
 
-  uint64_t digested_bytes = ours.blocks * SHA256_BLOCKSZ + ours.npartial;
+  uint64_t digested_bytes = ours.blocks * CF_SHA256_BLOCKSZ + ours.npartial;
   uint64_t digested_bits = digested_bytes * 8;
 
-  size_t zeroes = SHA256_BLOCKSZ - ((digested_bytes + 1 + 8) % SHA256_BLOCKSZ);
+  size_t zeroes = CF_SHA256_BLOCKSZ - ((digested_bytes + 1 + 8) % CF_SHA256_BLOCKSZ);
 
   /* Hash 0x80 00 ... block first. */
   padbuf[0] = 0x80;
   memset(padbuf + 1, 0, zeroes);
-  sha256_update(&ours, padbuf, 1 + zeroes);
+  cf_sha256_update(&ours, padbuf, 1 + zeroes);
 
   /* Now hash length. */
   write64_be(digested_bits, padbuf);
-  sha256_update(&ours, padbuf, 8);
+  cf_sha256_update(&ours, padbuf, 8);
 
   /* We ought to have got our padding calculation right! */
   assert(ours.npartial == 0);
@@ -245,7 +251,28 @@ void sha256_digest(const sha256_context *ctx, uint8_t hash[SHA256_HASHSZ])
   write32_be(ours.H[7], hash + 28);
 }
 
-void sha256_clean(sha256_context *ctx)
+void cf_sha224_final(const cf_sha256_context *ctx, uint8_t hash[CF_SHA224_HASHSZ])
 {
-  sha256_init(ctx);
+  uint8_t full[CF_SHA256_HASHSZ];
+  cf_sha256_final(ctx, full);
+  memcpy(hash, full, CF_SHA224_HASHSZ);
 }
+
+const cf_chash cf_sha224 = {
+  .hashsz = CF_SHA224_HASHSZ,
+  .ctxsz = sizeof(cf_sha256_context),
+  .blocksz = CF_SHA256_BLOCKSZ,
+  .init = (cf_chash_init) cf_sha224_init,
+  .update = (cf_chash_update) cf_sha224_update,
+  .final = (cf_chash_final) cf_sha224_final
+};
+
+const cf_chash cf_sha256 = {
+  .hashsz = CF_SHA256_HASHSZ,
+  .ctxsz = sizeof(cf_sha256_context),
+  .blocksz = CF_SHA256_BLOCKSZ,
+  .init = (cf_chash_init) cf_sha256_init,
+  .update = (cf_chash_update) cf_sha256_update,
+  .final = (cf_chash_final) cf_sha256_final
+};
+

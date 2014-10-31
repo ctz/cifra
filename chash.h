@@ -1,0 +1,34 @@
+#ifndef CHASH_H
+#define CHASH_H
+
+#include <stddef.h>
+#include <stdint.h>
+
+typedef void (*cf_chash_init)(void *ctx);
+typedef void (*cf_chash_update)(void *ctx, const void *data, size_t bytes);
+typedef void (*cf_chash_final)(const void *ctx, uint8_t *hash);
+
+/* Describes an incremental hash function in a general way. */
+typedef struct
+{
+  size_t hashsz;
+  size_t blocksz;
+  size_t ctxsz;
+  cf_chash_init init;
+  cf_chash_update update;
+  cf_chash_final final;
+} cf_chash;
+
+#define CF_CHASH_MAXCTX 128
+#define CF_MAXHASH 64
+
+/* A type usable with any chash as a context. */
+typedef union
+{
+  uint8_t ctx[CF_CHASH_MAXCTX];
+  uint16_t u16;
+  uint32_t u32;
+  uint64_t u64;
+} cf_chash_ctx;
+
+#endif

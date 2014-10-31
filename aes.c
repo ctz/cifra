@@ -2,6 +2,7 @@
 #include <assert.h>
 
 #include "aes.h"
+#include "handy.h"
 #include "bitops.h"
 
 #define AES128_ROUNDS 10
@@ -368,6 +369,6 @@ void aes_decrypt(const aes_context *ctx,
 
 void aes_finish(aes_context *ctx)
 {
-  memset(ctx, 0, sizeof *ctx);
+  mem_clean(ctx, sizeof *ctx);
 }
 
