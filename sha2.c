@@ -129,6 +129,8 @@ static void sha256_update_block(void *vctx, const uint8_t *inp)
   ctx->H[5] += f;
   ctx->H[6] += g;
   ctx->H[7] += h;
+
+  ctx->blocks++;
 }
 
 static void accumulate(uint8_t *partial, uint8_t *npartial, size_t nblock,
@@ -137,7 +139,7 @@ static void accumulate(uint8_t *partial, uint8_t *npartial, size_t nblock,
 {
   const uint8_t *bufin = inp;
   assert(partial && *npartial < nblock);
-  assert(inp && nbytes);
+  assert(inp || !nbytes);
   assert(process && ctx);
 
   /* If we have partial data, copy in to buffer. */
