@@ -88,27 +88,44 @@
 	[23304b7a39f9f3ff067d8d8f9e24ecc7]
 )
 
-(def rep (thing n)
-	(if (= n 1)
-		thing
-		(+ thing (rep thing (- n 1)))
-	)
+(assert (=
+	(sha224 (bytes "abc"))
+	[23097d22 3405d822 8642a477 bda255b3 2aadbce4 bda0b3f7 e36c9da7])
 )
 
 (assert (=
-	(sha256 [616263])
+	(sha256 (bytes "abc"))
 	[ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad])
 )
 
 (assert (=
-	(sha256 [6162636462636465636465666465666765666768666768696768696a68696a6b696a6b6c6a6b6c6d6b6c6d6e6c6d6e6f6d6e6f706e6f7071])
+	(sha256 (bytes "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"))
 	[248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1])
-i)
+)
 
-(puts (sha256 (rep [61] 10000)))
+(assert (=
+	(sha256 (* (bytes "a") 1000000))
+	[cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0])
+)
 
-(puts (rep "world" 1))
-(puts (rep "hello " 3))
-(puts (rep [abcd] 4))
+(assert (=
+	(sha256 (bytes "The quick brown fox jumps over the lazy dog"))
+	[d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592])
+)
+
+(assert (=
+	(sha256 (bytes "The quick brown fox jumps over the lazy cog"))
+	[e4c4d8f3bf76b692de791a173e05321150f7a345b46484fe427f6acc7ecc81be])
+)
+
+(assert (=
+	(sha224 [])
+	[d14a028c 2a3a2bc9 476102bb 288234c4 15a2b01f 828ea62a c5b3e42f])
+)
+
+(assert (=
+	(sha256 [])
+	[e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855])
+)
 
 (puts success)
