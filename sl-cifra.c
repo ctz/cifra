@@ -2,6 +2,7 @@
 #include "shitlisp.h"
 #include "aes.h"
 #include "sha2.h"
+#include "hmac.h"
 
 #include <assert.h>
 
@@ -47,7 +48,7 @@ static sl_value * aes_block_decrypt(sl_value *self, sl_value *args, sl_symboltab
   return aes_block_fn(self, args, tab, aes_decrypt);
 }
 
-/* SHA2 */
+/* Hashing */
 static sl_value * hash_fn(sl_value *self, sl_value *args, sl_symboltab *tab, const cf_chash *h)
 {
   sl_iter it = sl_iter_start(args);
@@ -79,11 +80,48 @@ static sl_value * sha256(sl_value *self, sl_value *args, sl_symboltab *tab)
   return hash_fn(self, args, tab, &cf_sha256);
 }
 
+/* HMAC */
+static sl_value * hmac_fn(sl_value *self, sl_value *args, sl_symboltab *tab, const cf_chash *h)
+{
+  sl_iter it = sl_iter_start(args);
+  sl_value *key = sl_iter_convert(&it, sl_preprocess_eval, sl_assert_bytes, tab);
+  sl_value *msg = sl_iter_convert(&it, sl_preprocess_eval, sl_assert_bytes, tab);
+
+  if (!key || !msg)
+  {
+    sl_decref(key);
+    sl_decref(msg);
+    return sl_get_nil();
+  }
+
+  uint8_t result[CF_MAXHASH];
+  cf_hmac(key->u.bytes.buf, key->u.bytes.len,
+          msg->u.bytes.buf, msg->u.bytes.len,
+          result,
+          h);
+
+  sl_decref(key);
+  sl_decref(msg);
+  return sl_new_bytes(result, h->hashsz);
+}
+
+static sl_value * hmac_sha224(sl_value *self, sl_value *args, sl_symboltab *tab)
+{
+  return hmac_fn(self, args, tab, &cf_sha224);
+}
+
+static sl_value * hmac_sha256(sl_value *self, sl_value *args, sl_symboltab *tab)
+{
+  return hmac_fn(self, args, tab, &cf_sha256);
+}
+
 int SL_MODULE_ENTRY(sl_symboltab *tab)
 {
   ER(sl_symboltab_add_name_native(tab, "aes-encrypt", aes_block_encrypt));
   ER(sl_symboltab_add_name_native(tab, "aes-decrypt", aes_block_decrypt));
   ER(sl_symboltab_add_name_native(tab, "sha224", sha224));
   ER(sl_symboltab_add_name_native(tab, "sha256", sha256));
+  ER(sl_symboltab_add_name_native(tab, "hmac-sha224", hmac_sha224));
+  ER(sl_symboltab_add_name_native(tab, "hmac-sha256", hmac_sha256));
   return 0;
 }

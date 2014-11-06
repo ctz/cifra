@@ -19,7 +19,8 @@ typedef struct
   cf_chash_final final;
 } cf_chash;
 
-#define CF_CHASH_MAXCTX 128
+#define CF_CHASH_MAXCTX 192
+#define CF_CHASH_MAXBLK 128
 #define CF_MAXHASH 64
 
 /* A type usable with any chash as a context. */
@@ -30,5 +31,8 @@ typedef union
   uint32_t u32;
   uint64_t u64;
 } cf_chash_ctx;
+
+/* One shot hashing: out = h(m). */
+void cf_hash(const cf_chash *h, const void *m, size_t nm, uint8_t *out);
 
 #endif

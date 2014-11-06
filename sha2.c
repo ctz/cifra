@@ -226,7 +226,8 @@ void cf_sha256_final(const cf_sha256_context *ctx, uint8_t hash[CF_SHA256_HASHSZ
   cf_sha256_context ours = *ctx;
   uint8_t padbuf[CF_SHA256_BLOCKSZ];
 
-  uint64_t digested_bytes = ours.blocks * CF_SHA256_BLOCKSZ + ours.npartial;
+  uint64_t digested_bytes = ours.blocks;
+  digested_bytes = digested_bytes * CF_SHA256_BLOCKSZ + ours.npartial;
   uint64_t digested_bits = digested_bytes * 8;
 
   size_t zeroes = CF_SHA256_BLOCKSZ - ((digested_bytes + 1 + 8) % CF_SHA256_BLOCKSZ);
