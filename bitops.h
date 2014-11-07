@@ -1,5 +1,5 @@
-#ifndef BITOPTS_H
-#define BITOPTS_H
+#ifndef BITOPS_H
+#define BITOPS_H
 
 /* Assorted bitwise and common operations used in ciphers. */
 
