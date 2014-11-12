@@ -1,13 +1,15 @@
 #include "aes.h"
+#include "modes.h"
+
 #include "../bignum/handy.h"
 #include "ext/cutest.h"
 
 static void test_expand(const uint8_t *key, size_t nkey,
                         const uint32_t *answer, size_t roundkeys)
 {
-  aes_context ctx;
+  cf_aes_context ctx;
 
-  aes_init(&ctx, key, nkey);
+  cf_aes_init(&ctx, key, nkey);
 
   for (size_t i = 0; i < roundkeys; i++)
   {
@@ -104,10 +106,10 @@ static void test_cipher_example(void)
 
   uint8_t output[AES_BLOCKSZ];
 
-  aes_context ctx;
-  aes_init(&ctx, key, sizeof key);
-  aes_encrypt(&ctx, input, output);
-  aes_finish(&ctx);
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, key, sizeof key);
+  cf_aes_encrypt(&ctx, input, output);
+  cf_aes_finish(&ctx);
 
   TEST_CHECK(memcmp(expected, output, sizeof expected) == 0);
 }
@@ -141,24 +143,32 @@ static size_t unhex(uint8_t *buf, size_t len, const char *str)
   return used;
 }
 
+static void dump(const char *label, const uint8_t *buf, size_t len)
+{
+  printf("%s: ", label);
+  for (size_t i = 0; i < len; i++)
+    printf("%02x", buf[i]);
+  printf("\n");
+}
+
 static void vector(const char *input, const char *output,
                    const char *key)
 {
   uint8_t keybuf[32], inbuf[16], outbuf[16], tmp[16];
   size_t nkey = sizeof keybuf;
-  aes_context ctx;
+  cf_aes_context ctx;
 
   nkey = unhex(keybuf, 32, key);
   unhex(inbuf, 16, input);
   unhex(outbuf, 16, output);
 
-  aes_init(&ctx, keybuf, nkey);
-  aes_encrypt(&ctx, inbuf, tmp);
+  cf_aes_init(&ctx, keybuf, nkey);
+  cf_aes_encrypt(&ctx, inbuf, tmp);
   TEST_CHECK(memcmp(tmp, outbuf, 16) == 0);
   
-  aes_decrypt(&ctx, outbuf, tmp);
+  cf_aes_decrypt(&ctx, outbuf, tmp);
   TEST_CHECK(memcmp(tmp, inbuf, 16) == 0);
-  aes_finish(&ctx);
+  cf_aes_finish(&ctx);
 }
 
 static void test_vectors(void)
@@ -171,12 +181,72 @@ static void test_vectors(void)
          "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
 }
 
+static void test_cbc(void)
+{
+  uint8_t iv[16], key[16], inp[16], out[16];
+
+  unhex(iv, 16, "000102030405060708090A0B0C0D0E0F");
+  unhex(key, 16, "2b7e151628aed2a6abf7158809cf4f3c");
+  unhex(inp, 16, "6bc1bee22e409f96e93d7e117393172a");
+
+  cf_aes_context aes;
+  cf_aes_init(&aes, key, sizeof key);
+
+  cf_cbc cbc;
+  cf_cbc_init(&cbc, &cf_aes, iv);
+  cf_cbc_encrypt(&cbc, &aes, inp, out, 1);
+  dump("enc", out, sizeof out);
+
+  cf_cbc_init(&cbc, &cf_aes, iv);
+  cf_cbc_decrypt(&cbc, &aes, out, inp, 1);
+  dump("dec", inp, sizeof inp);
+}
+
+static void test_ctr(void)
+{
+  uint8_t iv[16], key[16], inp[16], out[16];
+
+  unhex(iv, 16, "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff");
+  unhex(key, 16, "2b7e151628aed2a6abf7158809cf4f3c");
+  unhex(inp, 16, "6bc1bee22e409f96e93d7e117393172a");
+
+  cf_aes_context aes;
+  cf_aes_init(&aes, key, sizeof key);
+
+  cf_ctr ctr;
+  cf_ctr_init(&ctr, &cf_aes, iv);
+  cf_ctr_cipher(&ctr, &aes, inp, out, 16);
+  dump("enc", out, sizeof out);
+  dump("ctr", ctr.block, 16);
+
+  cf_ctr_init(&ctr, &cf_aes, iv);
+  cf_ctr_cipher(&ctr, &aes, out, inp, 1);
+  dump("dec", inp, sizeof inp);
+  dump("ctr", ctr.block, 16);
+
+  memset(iv, 0xff, 16);
+  cf_ctr_init(&ctr, &cf_aes, iv);
+
+  for (int i = 0; i < 1024; i++)
+  {
+    cf_ctr_cipher(&ctr, &aes, out, inp, 1);
+  }
+
+  memset(iv, 0, 16);
+  iv[15] = 0xff;
+  iv[14] = 0x03;
+
+  TEST_CHECK(memcmp(iv, ctr.block, 16) == 0);
+}
+
 TEST_LIST = {
   { "key-expansion-128", test_expand_128 },
   { "key-expansion-192", test_expand_192 },
   { "key-expansion-256", test_expand_256 },
   { "cipher-example", test_cipher_example },
   { "vectors", test_vectors },
+  { "cbc", test_cbc },
+  { "ctr", test_ctr },
   { 0 }
 };
 

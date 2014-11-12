@@ -9,7 +9,7 @@
 #include <assert.h>
 
 static sl_value * aes_block_fn(sl_value *self, sl_value *args, sl_symboltab *tab,
-                               void (*blockfn)(const aes_context *ctx,
+                               void (*blockfn)(const cf_aes_context *ctx,
                                                const uint8_t *in,
                                                uint8_t *out))
 {
@@ -27,12 +27,12 @@ static sl_value * aes_block_fn(sl_value *self, sl_value *args, sl_symboltab *tab
     goto x_err;
   }
 
-  aes_context ctx;
-  aes_init(&ctx, key->u.bytes.buf, key->u.bytes.len);
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, key->u.bytes.buf, key->u.bytes.len);
   uint8_t blockout[AES_BLOCKSZ];
   blockfn(&ctx, block->u.bytes.buf, blockout);
   ret = sl_new_bytes(blockout, AES_BLOCKSZ);
-  aes_finish(&ctx);
+  cf_aes_finish(&ctx);
 
 x_err:
   sl_decref(key);
@@ -42,12 +42,12 @@ x_err:
 
 static sl_value * aes_block_encrypt(sl_value *self, sl_value *args, sl_symboltab *tab)
 {
-  return aes_block_fn(self, args, tab, aes_encrypt);
+  return aes_block_fn(self, args, tab, cf_aes_encrypt);
 }
 
 static sl_value * aes_block_decrypt(sl_value *self, sl_value *args, sl_symboltab *tab)
 {
-  return aes_block_fn(self, args, tab, aes_decrypt);
+  return aes_block_fn(self, args, tab, cf_aes_decrypt);
 }
 
 /* Hashing */

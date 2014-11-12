@@ -112,7 +112,7 @@ static uint32_t rot_word(uint32_t w)
   return rotl32(w, 8);
 }
 
-static void aes_schedule(aes_context *ctx, const uint8_t *key, size_t nkey)
+static void aes_schedule(cf_aes_context *ctx, const uint8_t *key, size_t nkey)
 {
   size_t i,
          nb = AES_BLOCKSZ / 4,
@@ -139,7 +139,7 @@ static void aes_schedule(aes_context *ctx, const uint8_t *key, size_t nkey)
   }
 }
 
-void aes_init(aes_context *ctx, const uint8_t *key, size_t nkey)
+void cf_aes_init(cf_aes_context *ctx, const uint8_t *key, size_t nkey)
 {
   memset(ctx, 0, sizeof *ctx);
 
@@ -295,9 +295,9 @@ static void inv_mix_columns(uint32_t state[4])
   state[3] = inv_mix_column(state[3]);
 }
 
-void aes_encrypt(const aes_context *ctx,
-                 const uint8_t in[AES_BLOCKSZ],
-                 uint8_t out[AES_BLOCKSZ])
+void cf_aes_encrypt(const cf_aes_context *ctx,
+                    const uint8_t in[AES_BLOCKSZ],
+                    uint8_t out[AES_BLOCKSZ])
 {
   assert(ctx->rounds == AES128_ROUNDS ||
          ctx->rounds == AES192_ROUNDS ||
@@ -331,9 +331,9 @@ void aes_encrypt(const aes_context *ctx,
   bytes_out(state[3], out + 12);
 }
 
-void aes_decrypt(const aes_context *ctx,
-                 const uint8_t in[AES_BLOCKSZ],
-                 uint8_t out[AES_BLOCKSZ])
+void cf_aes_decrypt(const cf_aes_context *ctx,
+                    const uint8_t in[AES_BLOCKSZ],
+                    uint8_t out[AES_BLOCKSZ])
 {
   assert(ctx->rounds == AES128_ROUNDS ||
          ctx->rounds == AES192_ROUNDS ||
@@ -367,8 +367,21 @@ void aes_decrypt(const aes_context *ctx,
   bytes_out(state[3], out + 12);
 }
 
-void aes_finish(aes_context *ctx)
+void cf_aes_finish(cf_aes_context *ctx)
 {
   mem_clean(ctx, sizeof *ctx);
 }
+
+static void encdec(void *ctx, cf_prp_encdec encdec, const uint8_t *in, uint8_t *out)
+{
+  if (encdec == cf_prp_encrypt)
+    cf_aes_encrypt(ctx, in, out);
+  else
+    cf_aes_decrypt(ctx, in, out);
+}
+
+const cf_prp cf_aes = {
+  .blocksz = AES_BLOCKSZ,
+  .block = (cf_prp_block) encdec
+};
 
