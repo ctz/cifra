@@ -3,7 +3,7 @@ CPPFLAGS += -I../bignum/out -I../shitlisp/out
 
 all: testaes testsha2 cifra.so
 
-SOURCES = aes.o sha2.o chash.o hmac.o pbkdf2.o modes.o
+SOURCES = aes.o sha2.o chash.o hmac.o pbkdf2.o modes.o eax.o
 
 testaes: $(SOURCES) testaes.o
 testsha2: $(SOURCES) testsha2.o

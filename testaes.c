@@ -239,6 +239,47 @@ static void test_ctr(void)
   TEST_CHECK(memcmp(iv, ctr.block, 16) == 0);
 }
 
+static void test_eax(void)
+{
+  uint8_t key[16], nonce[16], header[8], msg[2], cipher[2], tag[16];
+
+  /*
+   * MSG: F7FB
+   * KEY: 91945D3F4DCBEE0BF45EF52255F095A4
+   * NONCE: BECAF043B0A23D843194BA972C66DEBD
+   * HEADER: FA3BFD4806EB53FA
+   * CIPHER: 19DD5C4C9331049D0BDAB0277408F67967E5
+   */
+
+  unhex(key, 16, "91945D3F4DCBEE0BF45EF52255F095A4");
+  unhex(nonce, 16, "BECAF043B0A23D843194BA972C66DEBD");
+  unhex(header, 8, "FA3BFD4806EB53FA");
+  unhex(msg, 2, "F7FB");
+
+  cf_aes_context aes;
+  cf_aes_init(&aes, key, sizeof key);
+
+  cf_eax_encrypt(&cf_aes, &aes,
+                 msg, sizeof msg,
+                 header, sizeof header,
+                 nonce, sizeof nonce,
+                 cipher,
+                 tag, sizeof tag);
+
+  dump("cipher", cipher, sizeof cipher);
+  dump("tag", tag, sizeof tag);
+
+  int rc;
+  rc = cf_eax_decrypt(&cf_aes, &aes,
+                      cipher, sizeof cipher,
+                      header, sizeof header,
+                      nonce, sizeof nonce,
+                      tag, sizeof tag,
+                      msg);
+  TEST_CHECK(rc == 0);
+  dump("plain", msg, sizeof msg);
+}
+
 TEST_LIST = {
   { "key-expansion-128", test_expand_128 },
   { "key-expansion-192", test_expand_192 },
@@ -247,6 +288,7 @@ TEST_LIST = {
   { "vectors", test_vectors },
   { "cbc", test_cbc },
   { "ctr", test_ctr },
+  { "eax", test_eax },
   { 0 }
 };
 

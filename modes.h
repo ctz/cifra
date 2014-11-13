@@ -39,4 +39,20 @@ void cf_ctr_init(cf_ctr *ctx, const cf_prp *prp, uint8_t nonce[CF_MAXBLOCK]);
  * input and output may alias and must point to specified number of bytes. */
 void cf_ctr_cipher(cf_ctr *ctx, void *prp, const uint8_t *input, uint8_t *output, size_t bytes);
 
+/* --- EAX --- */
+void cf_eax_encrypt(const cf_prp *prp, void *prpctx,
+                    const uint8_t *plain, size_t nplain,
+                    const uint8_t *header, size_t nheader,
+                    const uint8_t *nonce, size_t nnonce,
+                    uint8_t *cipher, /* the same size as nplain */
+                    uint8_t *tag, size_t ntag);
+
+/* Returns 0 on success; non-zero on error.  Nothing is written to
+ * plain on error. */
+int cf_eax_decrypt(const cf_prp *prp, void *prpctx,
+                   const uint8_t *cipher, size_t ncipher,
+                   const uint8_t *header, size_t nheader,
+                   const uint8_t *nonce, size_t nnonce,
+                   const uint8_t *tag, size_t ntag,
+                   uint8_t *plain); /* the same size as ncipher */
 #endif
