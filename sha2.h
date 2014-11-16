@@ -17,7 +17,7 @@ typedef struct
   uint32_t H[8];                      /* State. */
   uint8_t partial[CF_SHA256_BLOCKSZ]; /* Partial block of input. */
   uint32_t blocks;                    /* Number of full blocks processed into H. */
-  uint8_t npartial;                   /* Number of bytes in prefix of partial. */
+  size_t npartial;                    /* Number of bytes in prefix of partial. */
 } cf_sha256_context;
 
 extern void cf_sha256_init(cf_sha256_context *ctx);

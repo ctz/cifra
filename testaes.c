@@ -193,12 +193,12 @@ static void test_cbc(void)
   cf_aes_init(&aes, key, sizeof key);
 
   cf_cbc cbc;
-  cf_cbc_init(&cbc, &cf_aes, iv);
-  cf_cbc_encrypt(&cbc, &aes, inp, out, 1);
+  cf_cbc_init(&cbc, &cf_aes, &aes, iv);
+  cf_cbc_encrypt(&cbc, inp, out, 1);
   dump("enc", out, sizeof out);
 
-  cf_cbc_init(&cbc, &cf_aes, iv);
-  cf_cbc_decrypt(&cbc, &aes, out, inp, 1);
+  cf_cbc_init(&cbc, &cf_aes, &aes, iv);
+  cf_cbc_decrypt(&cbc, out, inp, 1);
   dump("dec", inp, sizeof inp);
 }
 
@@ -214,22 +214,22 @@ static void test_ctr(void)
   cf_aes_init(&aes, key, sizeof key);
 
   cf_ctr ctr;
-  cf_ctr_init(&ctr, &cf_aes, iv);
-  cf_ctr_cipher(&ctr, &aes, inp, out, 16);
+  cf_ctr_init(&ctr, &cf_aes, &aes, iv);
+  cf_ctr_cipher(&ctr, inp, out, 16);
   dump("enc", out, sizeof out);
   dump("ctr", ctr.block, 16);
 
-  cf_ctr_init(&ctr, &cf_aes, iv);
-  cf_ctr_cipher(&ctr, &aes, out, inp, 1);
+  cf_ctr_init(&ctr, &cf_aes, &aes, iv);
+  cf_ctr_cipher(&ctr, out, inp, 1);
   dump("dec", inp, sizeof inp);
   dump("ctr", ctr.block, 16);
 
   memset(iv, 0xff, 16);
-  cf_ctr_init(&ctr, &cf_aes, iv);
+  cf_ctr_init(&ctr, &cf_aes, &aes, iv);
 
   for (int i = 0; i < 1024; i++)
   {
-    cf_ctr_cipher(&ctr, &aes, out, inp, 1);
+    cf_ctr_cipher(&ctr, out, inp, 1);
   }
 
   memset(iv, 0, 16);

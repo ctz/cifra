@@ -3,8 +3,9 @@
 #include <stdio.h>
 
 #include "sha2.h"
+#include "blockwise.h"
 #include "bitops.h"
-#include "../bignum/handy.h"
+#include "handy.h"
 
 static const uint32_t K[64] = {
   0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
@@ -133,73 +134,11 @@ static void sha256_update_block(void *vctx, const uint8_t *inp)
   ctx->blocks++;
 }
 
-static void accumulate(uint8_t *partial, uint8_t *npartial, size_t nblock,
-                       const void *inp, size_t nbytes,
-                       void (*process)(void *vctx, const uint8_t *data), void *ctx)
-{
-  const uint8_t *bufin = inp;
-  assert(partial && *npartial < nblock);
-  assert(inp || !nbytes);
-  assert(process && ctx);
-
-  /* If we have partial data, copy in to buffer. */
-  if (*npartial)
-  {
-    size_t space = nblock - *npartial;
-    size_t taken = MIN(space, nbytes);
-
-    memcpy(partial + *npartial, bufin, taken);
-
-    bufin += taken;
-    nbytes -= taken;
-    *npartial += taken;
-
-    /* If that gives us a full block, process it. */
-    if (*npartial == nblock)
-    {
-      process(ctx, partial);
-      *npartial = 0;
-    }
-  }
-
-  /* now nbytes < nblock or *npartial == 0. */
-
-  /* If we have a full block of data, process it directly. */
-  while (nbytes >= nblock)
-  {
-    /* Partial buffer must be empty, or we're ignoring extant data */
-    assert(*npartial == 0);
-
-    process(ctx, bufin);
-    bufin += nblock;
-    nbytes -= nblock;
-  }
-
-  /* Finally, if we have remaining data, buffer it. */
-  while (nbytes)
-  {
-    size_t space = nblock - *npartial;
-    size_t taken = MIN(space, nbytes);
-
-    memcpy(partial + *npartial, bufin, taken);
-
-    bufin += taken;
-    nbytes -= taken;
-    *npartial += taken;
-
-    if (*npartial == nblock)
-    {
-      process(ctx, partial);
-      *npartial = 0;
-    }
-  }
-}
-
 void cf_sha256_update(cf_sha256_context *ctx, const void *data, size_t nbytes)
 {
-  accumulate(ctx->partial, &ctx->npartial, sizeof ctx->partial,
-             data, nbytes,
-             sha256_update_block, ctx);
+  cf_blockwise_accumulate(ctx->partial, &ctx->npartial, sizeof ctx->partial,
+                          data, nbytes,
+                          sha256_update_block, ctx);
 }
 
 void cf_sha224_update(cf_sha256_context *ctx, const void *data, size_t nbytes)

@@ -96,9 +96,9 @@ static void omac_compute(omac_ctx *ctx,
   cf_cbc cbc;
   uint8_t tmp[CF_MAXBLOCK] = { 0 },
           *zero_iv = tmp;
-  cf_cbc_init(&cbc, ctx->prp, zero_iv);
+  cf_cbc_init(&cbc, ctx->prp, ctx->prpctx, zero_iv);
 
-  cf_cbc_encrypt(&cbc, ctx->prpctx, firstblock, tmp, 1);
+  cf_cbc_encrypt(&cbc, firstblock, tmp, 1);
 
   size_t blocks = (ninput + ctx->prp->blocksz - 1) / ctx->prp->blocksz;
   for (size_t i = 0; i < blocks; i++)
@@ -107,9 +107,9 @@ static void omac_compute(omac_ctx *ctx,
     {
       for (size_t j = 0; j < ninput; j++)
         lastblock[j] ^= input[j];
-      cf_cbc_encrypt(&cbc, ctx->prpctx, lastblock, out, 1);
+      cf_cbc_encrypt(&cbc, lastblock, out, 1);
     } else {
-      cf_cbc_encrypt(&cbc, ctx->prpctx, input, tmp, 1);
+      cf_cbc_encrypt(&cbc, input, tmp, 1);
       input += ctx->prp->blocksz;
       ninput -= ctx->prp->blocksz;
     }
@@ -150,8 +150,8 @@ void cf_eax_encrypt(const cf_prp *prp, void *prpctx,
 
   /* C = CTR_K^NN(M) */
   cf_ctr ctr;
-  cf_ctr_init(&ctr, prp, NN);
-  cf_ctr_cipher(&ctr, prpctx, plain, cipher, nplain);
+  cf_ctr_init(&ctr, prp, prpctx, NN);
+  cf_ctr_cipher(&ctr, plain, cipher, nplain);
 
   /* CC = OMAC_K^2(C) */
   omac_compute_n(&omac, 2, cipher, nplain, CC);
@@ -195,7 +195,7 @@ int cf_eax_decrypt(const cf_prp *prp, void *prpctx,
     return 1;
 
   cf_ctr ctr;
-  cf_ctr_init(&ctr, prp, NN);
-  cf_ctr_cipher(&ctr, prpctx, cipher, plain, ncipher);
+  cf_ctr_init(&ctr, prp, prpctx, NN);
+  cf_ctr_cipher(&ctr, cipher, plain, ncipher);
   return 0;
 }
