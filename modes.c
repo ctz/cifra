@@ -1,14 +1,9 @@
 
 #include "prp.h"
 #include "modes.h"
+#include "bitops.h"
 
 #include <string.h>
-
-static void xorbb(uint8_t *out, const uint8_t *x, const uint8_t *y, size_t bytes)
-{
-  while (bytes--)
-    *out++ = *x++ ^ *y++;
-}
 
 /* CBC */
 void cf_cbc_init(cf_cbc *ctx, const cf_prp *prp, void *prpctx, uint8_t iv[CF_MAXBLOCK])
@@ -25,7 +20,7 @@ void cf_cbc_encrypt(cf_cbc *ctx, const uint8_t *input, uint8_t *output, size_t b
 
   while (blocks--)
   {
-    xorbb(buf, input, ctx->block, nblk);
+    xor_bb(buf, input, ctx->block, nblk);
     ctx->prp->block(ctx->prpctx, cf_prp_encrypt, buf, ctx->block);
     memcpy(output, ctx->block, nblk);
     input += nblk;
@@ -41,7 +36,7 @@ void cf_cbc_decrypt(cf_cbc *ctx, const uint8_t *input, uint8_t *output, size_t b
   while (blocks--)
   {
     ctx->prp->block(ctx->prpctx, cf_prp_decrypt, input, buf);
-    xorbb(output, buf, ctx->block, nblk);
+    xor_bb(output, buf, ctx->block, nblk);
     memcpy(ctx->block, input, nblk);
     input += nblk;
     output += nblk;
@@ -78,7 +73,7 @@ void cf_ctr_cipher(cf_ctr *ctx, const uint8_t *input, uint8_t *output, size_t by
   {
     size_t taken = bytes > nblk ? nblk : bytes;
     ctx->prp->block(ctx->prpctx, cf_prp_encrypt, ctx->block, buf);
-    xorbb(output, input, buf, taken);
+    xor_bb(output, input, buf, taken);
     output += taken;
     input += taken;
     bytes -= taken;

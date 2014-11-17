@@ -6,7 +6,19 @@
 
 void cf_blockwise_accumulate(uint8_t *partial, size_t *npartial, size_t nblock,
                              const void *inp, size_t nbytes,
-                             cf_blockwise_fn process, void *ctx)
+                             cf_blockwise_fn process,
+                             void *ctx)
+{
+  cf_blockwise_accumulate_final(partial, npartial, nblock,
+                                inp, nbytes,
+                                process, process, ctx);
+}
+
+void cf_blockwise_accumulate_final(uint8_t *partial, size_t *npartial, size_t nblock,
+                                   const void *inp, size_t nbytes,
+                                   cf_blockwise_fn process,
+                                   cf_blockwise_fn process_final,
+                                   void *ctx)
 {
   const uint8_t *bufin = inp;
   assert(partial && *npartial < nblock);
@@ -28,7 +40,10 @@ void cf_blockwise_accumulate(uint8_t *partial, size_t *npartial, size_t nblock,
     /* If that gives us a full block, process it. */
     if (*npartial == nblock)
     {
-      process(ctx, partial);
+      if (nbytes == 0)
+        process_final(ctx, partial);
+      else
+        process(ctx, partial);
       *npartial = 0;
     }
   }
@@ -41,7 +56,10 @@ void cf_blockwise_accumulate(uint8_t *partial, size_t *npartial, size_t nblock,
     /* Partial buffer must be empty, or we're ignoring extant data */
     assert(*npartial == 0);
 
-    process(ctx, bufin);
+    if (nbytes == nblock)
+      process_final(ctx, bufin);
+    else
+      process(ctx, bufin);
     bufin += nblock;
     nbytes -= nblock;
   }
@@ -60,7 +78,10 @@ void cf_blockwise_accumulate(uint8_t *partial, size_t *npartial, size_t nblock,
 
     if (*npartial == nblock)
     {
-      process(ctx, partial);
+      if (nbytes == 0)
+        process_final(ctx, partial);
+      else
+        process(ctx, partial);
       *npartial = 0;
     }
   }

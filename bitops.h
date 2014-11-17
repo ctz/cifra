@@ -48,4 +48,20 @@ static inline void write64_be(uint64_t v, uint8_t buf[8])
   *buf   = v & 0xff;
 }
 
+/** out = in ^ b8.
+ *  out and in may alias. */
+static inline void xor_b8(uint8_t *out, const uint8_t *in, uint8_t b8, size_t len)
+{
+  for (size_t i = 0; i < len; i++)
+    out[i] = in[i] ^ b8;
+}
+
+/** out = x ^ y.
+ *  out, x and y may alias. */
+static inline void xor_bb(uint8_t *out, const uint8_t *x, const uint8_t *y, size_t len)
+{
+  for (size_t i = 0; i < len; i++)
+    out[i] = x[i] ^ y[i];
+}
+
 #endif

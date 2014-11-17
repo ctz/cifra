@@ -1,7 +1,7 @@
 #include "aes.h"
 #include "modes.h"
 
-#include "../bignum/handy.h"
+#include "handy.h"
 #include "ext/cutest.h"
 
 static void test_expand(const uint8_t *key, size_t nkey,
@@ -280,6 +280,69 @@ static void test_eax(void)
   dump("plain", msg, sizeof msg);
 }
 
+static void check_cmac(const char *keystr, size_t nkey,
+                       const char *msgstr, size_t nmsg,
+                       const char *tagstr)
+{
+  uint8_t key[32], msg[256], gottag[16], wanttag[16];
+
+  unhex(key, nkey, keystr);
+  unhex(msg, nmsg, msgstr);
+  unhex(wanttag, 16, tagstr);
+
+  cf_aes_context aes;
+  cf_aes_init(&aes, key, nkey);
+
+  cf_cmac cmac;
+  cf_cmac_init(&cmac, &cf_aes, &aes);
+  cf_cmac_sign(&cmac, msg, nmsg, gottag);
+
+  TEST_CHECK(memcmp(gottag, wanttag, cf_aes.blocksz) == 0);
+}
+
+static void test_cmac(void)
+{
+  /* These from SP800-38B */
+  check_cmac("2b7e151628aed2a6abf7158809cf4f3c", 16,
+             "", 0,
+             "bb1d6929e95937287fa37d129b756746");
+  check_cmac("2b7e151628aed2a6abf7158809cf4f3c", 16,
+             "6bc1bee22e409f96e93d7e117393172a", 16,
+             "070a16b46b4d4144f79bdd9dd04a287c");
+  check_cmac("2b7e151628aed2a6abf7158809cf4f3c", 16,
+             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411", 40,
+             "dfa66747de9ae63030ca32611497c827");
+  check_cmac("2b7e151628aed2a6abf7158809cf4f3c", 16,
+             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710", 64,
+             "51f0bebf7e3b9d92fc49741779363cfe");
+
+  check_cmac("8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b", 24,
+             "", 0,
+             "d17ddf46adaacde531cac483de7a9367");
+  check_cmac("8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b", 24,
+             "6bc1bee22e409f96e93d7e117393172a", 16,
+             "9e99a7bf31e710900662f65e617c5184");
+  check_cmac("8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b", 24,
+             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411", 40,
+             "8a1de5be2eb31aad089a82e6ee908b0e");
+  check_cmac("8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b", 24,
+             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710", 64,
+             "a1d5df0eed790f794d77589659f39a11");
+
+  check_cmac("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", 32,
+             "", 0,
+             "028962f61b7bf89efc6b551f4667d983");
+  check_cmac("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", 32,
+             "6bc1bee22e409f96e93d7e117393172a", 16,
+             "28a7023f452e8f82bd4bf28d8c37c35c");
+  check_cmac("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", 32,
+             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411", 40,
+             "aaf3d8f1de5640c232f5b169b9c911e6");
+  check_cmac("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", 32,
+             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710", 64,
+             "e1992190549f6ed5696a2c056c315410");
+}
+
 TEST_LIST = {
   { "key-expansion-128", test_expand_128 },
   { "key-expansion-192", test_expand_192 },
@@ -289,6 +352,7 @@ TEST_LIST = {
   { "cbc", test_cbc },
   { "ctr", test_ctr },
   { "eax", test_eax },
+  { "cmac", test_cmac },
   { 0 }
 };
 

@@ -24,6 +24,32 @@ typedef void (*cf_blockwise_fn)(void *ctx, const uint8_t *data);
 void cf_blockwise_accumulate(uint8_t *partial, size_t *npartial,
                              size_t nblock,
                              const void *input, size_t nbytes,
-                             cf_blockwise_fn process, void *ctx);
+                             cf_blockwise_fn process, 
+                             void *ctx);
+
+/* This function manages the common abstraction of accumulating input in
+ * a buffer, and processing it when a full block is available.
+ * This version supports calling a different processing function for
+ * the last block.
+ *
+ * partial is the buffer (maintained by the caller)
+ * on entry, npartial is the currently valid count of used bytes on
+ *   the front of partial.
+ * on exit, npartial is updated to reflect the status of partial.
+ * nblock is the blocksize to accumulate -- partial must be at least
+ *   this long!
+ * input is the new data to process, of length nbytes.
+ * process is the processing function, passed ctx and a pointer
+ *   to the data to process (always exactly nblock bytes long!)
+ *   which may not neccessarily be the same as partial.
+ * process_final is called last (but may not be called at all if
+ *   all input is buffered).
+ */
+void cf_blockwise_accumulate_final(uint8_t *partial, size_t *npartial,
+                                   size_t nblock,
+                                   const void *input, size_t nbytes,
+                                   cf_blockwise_fn process, 
+                                   cf_blockwise_fn process_final,
+                                   void *ctx);
 
 #endif

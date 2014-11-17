@@ -1,16 +1,11 @@
 #include "hmac.h"
 #include "chash.h"
+#include "bitops.h"
 #include "handy.h"
 
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-
-static void xor(uint8_t *out, const uint8_t *in, uint8_t d, size_t len)
-{
-  for (size_t i = 0; i < len; i++)
-    out[i] = in[i] ^ d;
-}
 
 void cf_hmac_init(cf_hmac_ctx *ctx,
                   const cf_chash *hash,
@@ -48,12 +43,12 @@ void cf_hmac_init(cf_hmac_ctx *ctx,
   /* Start inner hash computation */
   uint8_t blk[CF_CHASH_MAXBLK];
 
-  xor(blk, k, 0x36, hash->blocksz);
+  xor_b8(blk, k, 0x36, hash->blocksz);
   hash->init(&ctx->inner);
   hash->update(&ctx->inner, blk, hash->blocksz);
 
   /* And outer. */
-  xor(blk, k, 0x5c, hash->blocksz);
+  xor_b8(blk, k, 0x5c, hash->blocksz);
   hash->init(&ctx->outer);
   hash->update(&ctx->outer, blk, hash->blocksz);
 

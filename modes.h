@@ -33,11 +33,11 @@ typedef struct
   uint8_t block[CF_MAXBLOCK];
 } cf_ctr;
 
-/* Initialise CBC encryption/decryption context using selected prp and nonce.
+/* Initialise CTR encryption/decryption context using selected prp and nonce.
  * (nb, this only increments the whole nonce as a big endian block) */
 void cf_ctr_init(cf_ctr *ctx, const cf_prp *prp, void *prpctx, uint8_t nonce[CF_MAXBLOCK]);
 
-/* Encrypt or decrypt bytes in CTR mode.  prp is the PRP's context.
+/* Encrypt or decrypt bytes in CTR mode.
  * input and output may alias and must point to specified number of bytes. */
 void cf_ctr_cipher(cf_ctr *ctx, const uint8_t *input, uint8_t *output, size_t bytes);
 
@@ -48,12 +48,42 @@ typedef struct
   void *prpctx;
   uint8_t B[CF_MAXBLOCK];
   uint8_t P[CF_MAXBLOCK];
-  cf_cbc cbc;
 } cf_cmac;
 
+/* Initialise CMAC signing context using selected prp. */
 void cf_cmac_init(cf_cmac *ctx, const cf_prp *prp, void *prpctx);
 
+/* CMAC sign the given data.  The MAC is written to ctx->prp->blocksz
+ * bytes at out.   This is a one-shot function. */
+void cf_cmac_sign(cf_cmac *ctx, const uint8_t *data, size_t bytes,
+                  uint8_t out[CF_MAXBLOCK]);
 
+/* Stream interface to CMAC signing. */
+typedef struct
+{
+  cf_cmac cmac;
+  cf_cbc cbc;
+  uint8_t buffer[CF_MAXBLOCK];
+  size_t used;
+  size_t processed;
+  int finalised;
+} cf_cmac_stream;
+
+/* Initialise CMAC streaming signing context using selected prp. */
+void cf_cmac_stream_init(cf_cmac_stream *ctx, const cf_prp *prp, void *prpctx);
+
+/* Reset the streaming signing context, to sign a new message. */
+void cf_cmac_stream_reset(cf_cmac_stream *ctx);
+
+/* Process ndata bytes at data.  isfinal is non-zero if this is the last piece
+ * of data. */
+void cf_cmac_stream_update(cf_cmac_stream *ctx, const uint8_t *data, size_t ndata,
+                           int isfinal);
+
+/* Output the MAC to ctx->cmac->prp->blocksz bytes at out.
+ * cf_cmac_stream_update with isfinal non-zero must have been called
+ * since the last _init/_reset. */
+void cf_cmac_stream_final(cf_cmac_stream *ctx, uint8_t out[CF_MAXBLOCK]);
 
 /* --- EAX --- */
 void cf_eax_encrypt(const cf_prp *prp, void *prpctx,
