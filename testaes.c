@@ -1,8 +1,30 @@
 #include "aes.h"
 #include "modes.h"
+#include "bitops.h"
 
 #include "handy.h"
 #include "ext/cutest.h"
+
+static void test_bitopts(void)
+{
+  uint8_t tab8[8];
+  uint32_t tab32[32];
+  
+  for (size_t i = 0; i < 8; i++)
+    tab8[i] = 1 << i;
+  for (size_t i = 0; i < 32; i++)
+    tab32[i] = 1 << i;
+
+  for (size_t i = 0; i < 8; i++)
+  {
+    TEST_CHECK(select_u8(i, tab8, 8) == tab8[i]);
+  }
+
+  for (size_t i = 0; i < 32; i++)
+  {
+    TEST_CHECK(select_u32(i, tab32, 32) == tab32[i]);
+  }
+}
 
 static void test_expand(const uint8_t *key, size_t nkey,
                         const uint32_t *answer, size_t roundkeys)
@@ -344,6 +366,7 @@ static void test_cmac(void)
 }
 
 TEST_LIST = {
+  { "bitops", test_bitopts },
   { "key-expansion-128", test_expand_128 },
   { "key-expansion-192", test_expand_192 },
   { "key-expansion-256", test_expand_256 },

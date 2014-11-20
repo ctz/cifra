@@ -9,12 +9,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-static uint8_t constant_select(uint32_t cond, uint8_t nonzero, uint8_t zero)
-{
-  /* TODO: make this side-channel free! */
-  return cond ? nonzero : zero;
-}
-
 static void block_double_gf2n(const cf_prp *prp,
                               const uint8_t in[CF_MAXBLOCK],
                               uint8_t out[CF_MAXBLOCK])
@@ -33,6 +27,7 @@ static void block_double_gf2n(const cf_prp *prp,
    * otherwise, where L<<1 means the left shift of L by one position
    * (the first bit vanishing and a zero entering into the last bit).
    */
+  uint8_t table[2] = { 0x00, 0x87 };
 
   assert(prp->blocksz == 16);
 
@@ -44,7 +39,7 @@ static void block_double_gf2n(const cf_prp *prp,
     borrow = (in[i - 1] >> 7);
   }
 
-  out[15] ^= constant_select(in[0] & 0x80, 0x87, 0x00);
+  out[15] ^= select_u8(!!(in[0] & 0x80), table, 2);
 }
 
 void cf_cmac_init(cf_cmac *ctx, const cf_prp *prp, void *prpctx)

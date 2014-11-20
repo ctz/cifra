@@ -95,10 +95,10 @@ static uint32_t round_constant(uint32_t i)
 
 static uint32_t sub_word(uint32_t w, const uint8_t *sbox)
 {
-  return word4(sbox[byte(w, 0)],
-               sbox[byte(w, 1)],
-               sbox[byte(w, 2)],
-               sbox[byte(w, 3)]);
+  return word4(select_u8(byte(w, 0), sbox, 256),
+               select_u8(byte(w, 1), sbox, 256),
+               select_u8(byte(w, 2), sbox, 256),
+               select_u8(byte(w, 3), sbox, 256));
 }
 
 static uint32_t rot_word(uint32_t w)

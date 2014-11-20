@@ -64,4 +64,40 @@ static inline void xor_bb(uint8_t *out, const uint8_t *x, const uint8_t *y, size
     out[i] = x[i] ^ y[i];
 }
 
+/** Produce 0xffffffff if x == y, zero otherwise, without branching. */
+static inline uint32_t mask_u32(uint32_t x, uint32_t y)
+{
+  return - (uint32_t) (x == y);
+}
+
+/** Select the ith entry from the given table of n values, in a side channel-silent
+ *  way. */
+static inline uint32_t select_u32(uint32_t i, volatile const uint32_t *tab, uint32_t n)
+{
+  uint32_t r = 0;
+
+  for (uint32_t ii = 0; ii < n; ii++)
+  {
+    uint32_t mask = mask_u32(i, ii);
+    r = (r & ~mask) | (tab[ii] & mask);
+  }
+
+  return r;
+}
+
+/** Select the ith entry from the given table of n values, in a side channel-silent
+ *  way. */
+static inline uint8_t select_u8(uint32_t i, volatile const uint8_t *tab, uint32_t n)
+{
+  uint8_t r = 0;
+
+  for (uint32_t ii = 0; ii < n; ii++)
+  {
+    uint8_t mask = mask_u32(i, ii) & 0xff;
+    r = (r & ~mask) | (tab[ii] & mask);
+  }
+
+  return r;
+}
+
 #endif
