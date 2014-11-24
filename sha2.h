@@ -32,4 +32,25 @@ extern void cf_sha224_final(const cf_sha256_context *ctx, uint8_t hash[CF_SHA224
 extern const cf_chash cf_sha256;
 extern const cf_chash cf_sha224;
 
+#define CF_SHA384_HASHSZ 48
+#define CF_SHA384_BLOCKSZ 128
+
+#define CF_SHA512_HASHSZ 64
+#define CF_SHA512_BLOCKSZ 128
+
+typedef struct
+{
+  uint64_t H[8];
+  uint8_t partial[CF_SHA512_BLOCKSZ];
+  uint32_t blocks;
+  size_t npartial;
+} cf_sha512_context;
+
+extern void cf_sha512_init(cf_sha512_context *ctx);
+extern void cf_sha512_update(cf_sha512_context *ctx, const void *data, size_t nbytes);
+extern void cf_sha512_final(const cf_sha512_context *ctx, uint8_t hash[CF_SHA512_HASHSZ]);
+
+extern const cf_chash cf_sha384;
+extern const cf_chash cf_sha512;
+
 #endif

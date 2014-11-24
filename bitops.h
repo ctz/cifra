@@ -1,6 +1,9 @@
 #ifndef BITOPS_H
 #define BITOPS_H
 
+#include <stdint.h>
+#include <stddef.h>
+
 /* Assorted bitwise and common operations used in ciphers. */
 
 /** Circularly rotate right x by n bits.
@@ -17,6 +20,20 @@ static inline uint32_t rotl32(uint32_t x, unsigned n)
   return (x << n) | (x >> (32 - n));
 }
 
+/** Circularly rotate right x by n bits.
+ *  0 > n > 64. */
+static inline uint64_t rotr64(uint64_t x, unsigned n)
+{
+  return (x >> n) | (x << (64 - n));
+}
+
+/** Circularly rotate left x by n bits.
+ *  0 > n > 64. */
+static inline uint64_t rotl64(uint64_t x, unsigned n)
+{
+  return (x << n) | (x >> (64 - n));
+}
+
 /** Read 4 bytes from buf, as a 32-bit big endian quantity. */
 static inline uint32_t read32_be(const uint8_t buf[4])
 {
@@ -24,6 +41,19 @@ static inline uint32_t read32_be(const uint8_t buf[4])
          (buf[1] << 16) |
          (buf[2] << 8) |
          (buf[3]);
+}
+
+/** Read 8 bytes from buf, as a 64-bit big endian quantity. */
+static inline uint64_t read64_be(const uint8_t buf[8])
+{
+  return ((uint64_t)buf[0] << 56) |
+         ((uint64_t)buf[1] << 48) |
+         ((uint64_t)buf[2] << 40) |
+         ((uint64_t)buf[3] << 32) |
+         ((uint64_t)buf[4] << 24) |
+         ((uint64_t)buf[5] << 16) |
+         ((uint64_t)buf[6] << 8) |
+         ((uint64_t)buf[7]);
 }
 
 /** Encode v as a 32-bit big endian quantity into buf. */

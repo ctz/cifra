@@ -82,6 +82,16 @@ static sl_value * sha256(sl_value *self, sl_value *args, sl_symboltab *tab)
   return hash_fn(self, args, tab, &cf_sha256);
 }
 
+static sl_value * sha384(sl_value *self, sl_value *args, sl_symboltab *tab)
+{
+  return hash_fn(self, args, tab, &cf_sha384);
+}
+
+static sl_value * sha512(sl_value *self, sl_value *args, sl_symboltab *tab)
+{
+  return hash_fn(self, args, tab, &cf_sha512);
+}
+
 /* HMAC */
 static sl_value * hmac_fn(sl_value *self, sl_value *args, sl_symboltab *tab, const cf_chash *h)
 {
@@ -108,14 +118,17 @@ static sl_value * hmac_fn(sl_value *self, sl_value *args, sl_symboltab *tab, con
 }
 
 static sl_value * hmac_sha224(sl_value *self, sl_value *args, sl_symboltab *tab)
-{
-  return hmac_fn(self, args, tab, &cf_sha224);
-}
+{ return hmac_fn(self, args, tab, &cf_sha224); }
 
 static sl_value * hmac_sha256(sl_value *self, sl_value *args, sl_symboltab *tab)
-{
-  return hmac_fn(self, args, tab, &cf_sha256);
-}
+{ return hmac_fn(self, args, tab, &cf_sha256); }
+
+static sl_value * hmac_sha384(sl_value *self, sl_value *args, sl_symboltab *tab)
+{ return hmac_fn(self, args, tab, &cf_sha384); }
+
+static sl_value * hmac_sha512(sl_value *self, sl_value *args, sl_symboltab *tab)
+{ return hmac_fn(self, args, tab, &cf_sha512); }
+
 
 /* PBKDF2 */
 static sl_value * do_pbkdf2(const cf_chash *h, sl_value *pw, sl_value *salt,
@@ -181,8 +194,12 @@ int SL_MODULE_ENTRY(sl_symboltab *tab)
   ER(sl_symboltab_add_name_native(tab, "aes-decrypt", aes_block_decrypt));
   ER(sl_symboltab_add_name_native(tab, "sha224", sha224));
   ER(sl_symboltab_add_name_native(tab, "sha256", sha256));
+  ER(sl_symboltab_add_name_native(tab, "sha384", sha384));
+  ER(sl_symboltab_add_name_native(tab, "sha512", sha512));
   ER(sl_symboltab_add_name_native(tab, "hmac-sha224", hmac_sha224));
   ER(sl_symboltab_add_name_native(tab, "hmac-sha256", hmac_sha256));
+  ER(sl_symboltab_add_name_native(tab, "hmac-sha384", hmac_sha384));
+  ER(sl_symboltab_add_name_native(tab, "hmac-sha512", hmac_sha512));
   ER(sl_symboltab_add_name_native(tab, "pbkdf2-sha224", pbkdf2_sha224));
   ER(sl_symboltab_add_name_native(tab, "pbkdf2-sha256", pbkdf2_sha256));
   return 0;

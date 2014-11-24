@@ -19,7 +19,7 @@ typedef struct
   cf_chash_final final;
 } cf_chash;
 
-#define CF_CHASH_MAXCTX 192
+#define CF_CHASH_MAXCTX 224
 #define CF_CHASH_MAXBLK 128
 #define CF_MAXHASH 64
 
