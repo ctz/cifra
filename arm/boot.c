@@ -11,7 +11,6 @@ extern uint32_t __bss_start__, __bss_end__; /* BSS addresses in RAM */
 extern uint32_t __StackTop; /* End of stack in RAM */
 
 #define ATTR_SECTION(sec) __attribute__ ((section (sec)))
-#define ATTR_NAKED() __attribute__ ((naked))
 
 /* --- Interrupt vector table. --- */
 void Reset_Handler(void);
@@ -88,6 +87,21 @@ void do_nothing(void)
 
 void SysTick_Handler(void)
 {
+}
+
+void *memmove(void *vtarg, const void *vsrc, size_t len)
+{
+  if (vsrc > vtarg)
+    return memcpy(vtarg, vsrc, len);
+  else if (vsrc == vtarg)
+    return vtarg;
+
+  uint8_t *targ = vtarg;
+  const uint8_t *src = vsrc;
+
+  for (size_t i = len; i != 0; i++)
+    targ[i - 1] = src[i - 1];
+  return vtarg;
 }
 
 void *memcpy(void *vtarg, const void *vsrc, size_t len)
