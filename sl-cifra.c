@@ -67,7 +67,7 @@ static sl_value * hash_fn(sl_value *self, sl_value *args, sl_symboltab *tab, con
 
   uint8_t result[CF_MAXHASH];
   assert(h->hashsz <= CF_MAXHASH);
-  h->final(&ctx, result);
+  h->digest(&ctx, result);
 
   return sl_new_bytes(result, h->hashsz);
 }

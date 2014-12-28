@@ -65,16 +65,17 @@ class Function:
                 if targetf:
                     self.calls.append(targetf)
 
-    def stack_usage(self, hints, prog):
+    def stack_usage(self, hints, prog, depth = 0):
         hinted_calls = []
+        print '    ' * depth, 'stack:', self.name, self.stack_guess, 'bytes'
 
         our_hints = [h for h in hints if h and h[0] == self.name]
         if our_hints:
             hints = [h[1:] for h in our_hints]
             hinted_calls = [prog.function_by_name(h[0]) for h in hints if h]
 
-        if self.calls:
-            call_usage = max([f.stack_usage(hints, prog) for f in self.calls + hinted_calls])
+        if self.calls + hinted_calls:
+            call_usage = max([f.stack_usage(hints, prog, depth + 1) for f in self.calls + hinted_calls])
         else:
             call_usage = 0
         return self.stack_guess + call_usage
@@ -138,8 +139,12 @@ p = Program()
 p.read_elf(sys.argv[-1])
 
 p.analyse()
-p.add_call_hint('cf_sha224_update', 'cf_blockwise_accumulate', 'sha256_update_block')
-p.add_call_hint('cf_sha256_update', 'cf_blockwise_accumulate', 'sha256_update_block')
-print 'stack', 'hashtest', '=', p.measure_stack('hashtest')
+p.add_call_hint('cf_sha224_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'sha256_update_block')
+p.add_call_hint('cf_sha256_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'sha256_update_block')
+p.add_call_hint('cf_sha384_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'sha512_update_block')
+p.add_call_hint('cf_sha512_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'sha512_update_block')
+
+print 'stack', 'hashtest_sha256', '=', p.measure_stack('hashtest_sha256')
+print 'stack', 'hashtest_sha512', '=', p.measure_stack('hashtest_sha512')
 print 'stack', 'stack_8w', '=', p.measure_stack('stack_8w')
 print 'stack', 'stack_64w', '=', p.measure_stack('stack_64w')

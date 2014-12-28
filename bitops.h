@@ -46,14 +46,10 @@ static inline uint32_t read32_be(const uint8_t buf[4])
 /** Read 8 bytes from buf, as a 64-bit big endian quantity. */
 static inline uint64_t read64_be(const uint8_t buf[8])
 {
-  return ((uint64_t)buf[0] << 56) |
-         ((uint64_t)buf[1] << 48) |
-         ((uint64_t)buf[2] << 40) |
-         ((uint64_t)buf[3] << 32) |
-         ((uint64_t)buf[4] << 24) |
-         ((uint64_t)buf[5] << 16) |
-         ((uint64_t)buf[6] << 8) |
-         ((uint64_t)buf[7]);
+  uint32_t hi = read32_be(buf),
+           lo = read32_be(buf + 4);
+  return ((uint64_t)hi) << 32 |
+         lo;
 }
 
 /** Encode v as a 32-bit big endian quantity into buf. */

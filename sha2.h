@@ -22,12 +22,14 @@ typedef struct
 
 extern void cf_sha256_init(cf_sha256_context *ctx);
 extern void cf_sha256_update(cf_sha256_context *ctx, const void *data, size_t nbytes);
-extern void cf_sha256_final(const cf_sha256_context *ctx, uint8_t hash[CF_SHA256_HASHSZ]);
+extern void cf_sha256_digest(const cf_sha256_context *ctx, uint8_t hash[CF_SHA256_HASHSZ]);
+extern void cf_sha256_digest_final(cf_sha256_context *ctx, uint8_t hash[CF_SHA256_HASHSZ]);
 
 /* nb. SHA224 uses SHA256's underlying types. */
 extern void cf_sha224_init(cf_sha256_context *ctx);
 extern void cf_sha224_update(cf_sha256_context *ctx, const void *data, size_t nbytes);
-extern void cf_sha224_final(const cf_sha256_context *ctx, uint8_t hash[CF_SHA224_HASHSZ]);
+extern void cf_sha224_digest(const cf_sha256_context *ctx, uint8_t hash[CF_SHA224_HASHSZ]);
+extern void cf_sha224_digest_final(cf_sha256_context *ctx, uint8_t hash[CF_SHA224_HASHSZ]);
 
 extern const cf_chash cf_sha256;
 extern const cf_chash cf_sha224;
@@ -48,7 +50,8 @@ typedef struct
 
 extern void cf_sha512_init(cf_sha512_context *ctx);
 extern void cf_sha512_update(cf_sha512_context *ctx, const void *data, size_t nbytes);
-extern void cf_sha512_final(const cf_sha512_context *ctx, uint8_t hash[CF_SHA512_HASHSZ]);
+extern void cf_sha512_digest(const cf_sha512_context *ctx, uint8_t hash[CF_SHA512_HASHSZ]);
+extern void cf_sha512_digest_final(cf_sha512_context *ctx, uint8_t hash[CF_SHA512_HASHSZ]);
 
 extern const cf_chash cf_sha384;
 extern const cf_chash cf_sha512;

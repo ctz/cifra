@@ -50,6 +50,7 @@ static const uint64_t K[80] = {
   UINT64_C(0x5fcb6fab3ad6faec), UINT64_C(0x6c44198c4a475817)
 };
 
+#ifdef INLINE_FUNCS
 static inline uint64_t CH(uint64_t x, uint64_t y, uint64_t z)
 {
   return (x & y) ^ (~x & z);
@@ -79,6 +80,14 @@ static inline uint64_t SSIG1(uint64_t x)
 {
   return rotr64(x, 19) ^ rotr64(x, 61) ^ (x >> 6);
 }
+#else
+# define CH(x, y, z) (((x) & (y)) ^ (~(x) & (z)))
+# define MAJ(x, y, z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+# define BSIG0(x) (rotr64((x), 28) ^ rotr64((x), 34) ^ rotr64((x), 39))
+# define BSIG1(x) (rotr64((x), 14) ^ rotr64((x), 18) ^ rotr64((x), 41))
+# define SSIG0(x) (rotr64((x), 1) ^ rotr64((x), 8) ^ ((x) >> 7))
+# define SSIG1(x) (rotr64((x), 19) ^ rotr64((x), 61) ^ ((x) >> 6))
+#endif
 
 void cf_sha512_init(cf_sha512_context *ctx)
 {
@@ -110,18 +119,7 @@ static void sha512_update_block(void *vctx, const uint8_t *inp)
 {
   cf_sha512_context *ctx = vctx;
 
-  uint64_t W[80];
-
-  for (size_t t = 0; t < 16; t++)
-  {
-    W[t] = read64_be(inp);
-    inp += 8;
-  }
-
-  for (size_t t = 16; t < 80; t++)
-  {
-    W[t] = SSIG1(W[t - 2]) + W[t - 7] + SSIG0(W[t - 15]) + W[t - 16];
-  }
+  uint64_t W[16];
 
   uint64_t a = ctx->H[0],
            b = ctx->H[1],
@@ -130,11 +128,24 @@ static void sha512_update_block(void *vctx, const uint8_t *inp)
            e = ctx->H[4],
            f = ctx->H[5],
            g = ctx->H[6],
-           h = ctx->H[7];
+           h = ctx->H[7],
+           Wt;
 
   for (size_t t = 0; t < 80; t++)
   {
-    uint64_t T1 = h + BSIG1(e) + CH(e, f, g) + K[t] + W[t];
+    if (t < 16)
+    {
+      W[t] = Wt = read64_be(inp);
+      inp += 8;
+    } else {
+      Wt = SSIG1(W[(t - 2) % 16]) +
+           W[(t - 7) % 16] +
+           SSIG0(W[(t - 15) % 16]) +
+           W[(t - 16) % 16];
+      W[t % 16] = Wt;
+    }
+
+    uint64_t T1 = h + BSIG1(e) + CH(e, f, g) + K[t] + Wt;
     uint64_t T2 = BSIG0(a) + MAJ(a, b, c);
     h = g;
     g = f;
@@ -170,16 +181,16 @@ void cf_sha384_update(cf_sha512_context *ctx, const void *data, size_t nbytes)
   cf_sha512_update(ctx, data, nbytes);
 }
 
-void cf_sha512_final(const cf_sha512_context *ctx, uint8_t hash[CF_SHA512_HASHSZ])
+void cf_sha512_digest(const cf_sha512_context *ctx, uint8_t hash[CF_SHA512_HASHSZ])
 {
   /* We copy the context, so the finalisation doesn't effect the caller's
    * context.  This means the caller can do:
    *
    * x = init()
    * x.update('hello')
-   * h1 = x.final()
+   * h1 = x.digest()
    * x.update(' world')
-   * h2 = x.final()
+   * h2 = x.digest()
    *
    * to get h1 = H('hello') and h2 = H('hello world')
    *
@@ -187,41 +198,57 @@ void cf_sha512_final(const cf_sha512_context *ctx, uint8_t hash[CF_SHA512_HASHSZ
    */
 
   cf_sha512_context ours = *ctx;
-  uint8_t padbuf[CF_SHA512_BLOCKSZ];
+  cf_sha512_digest_final(&ours, hash);
+}
 
-  uint64_t digested_bytes = ours.blocks;
-  digested_bytes = digested_bytes * CF_SHA512_BLOCKSZ + ours.npartial;
+void cf_sha512_digest_final(cf_sha512_context *ctx, uint8_t hash[CF_SHA512_HASHSZ])
+{
+  uint64_t digested_bytes = ctx->blocks;
+  digested_bytes = digested_bytes * CF_SHA512_BLOCKSZ + ctx->npartial;
   uint64_t digested_bits = digested_bytes * 8;
 
   size_t zeroes = CF_SHA512_BLOCKSZ - ((digested_bytes + 1 + 16) % CF_SHA512_BLOCKSZ);
 
   /* Hash 0x80 00 ... block first. */
-  padbuf[0] = 0x80;
-  memset(padbuf + 1, 0, zeroes);
-  cf_sha512_update(&ours, padbuf, 1 + zeroes);
+  uint8_t buf[8];
+  buf[0] = 0x80;
+  buf[1] = 0x00;
+  cf_sha512_update(ctx, &buf[0], 1);
 
-  /* Now hash length. */
-  write64_be(0, padbuf);
-  write64_be(digested_bits, padbuf + 8);
-  cf_sha512_update(&ours, padbuf, 16);
+  while (zeroes--)
+    cf_sha512_update(ctx, &buf[1], 1);
+
+  /* Now hash length (this is 128 bits long). */
+  write64_be(0, buf);
+  cf_sha512_update(ctx, buf, 8);
+  write64_be(digested_bits, buf);
+  cf_sha512_update(ctx, buf, 8);
 
   /* We ought to have got our padding calculation right! */
-  assert(ours.npartial == 0);
+  assert(ctx->npartial == 0);
 
-  write64_be(ours.H[0], hash + 0);
-  write64_be(ours.H[1], hash + 8);
-  write64_be(ours.H[2], hash + 16);
-  write64_be(ours.H[3], hash + 24);
-  write64_be(ours.H[4], hash + 32);
-  write64_be(ours.H[5], hash + 40);
-  write64_be(ours.H[6], hash + 48);
-  write64_be(ours.H[7], hash + 56);
+  write64_be(ctx->H[0], hash + 0);
+  write64_be(ctx->H[1], hash + 8);
+  write64_be(ctx->H[2], hash + 16);
+  write64_be(ctx->H[3], hash + 24);
+  write64_be(ctx->H[4], hash + 32);
+  write64_be(ctx->H[5], hash + 40);
+  write64_be(ctx->H[6], hash + 48);
+  write64_be(ctx->H[7], hash + 56);
+  memset(ctx, 0, sizeof *ctx);
 }
 
-void cf_sha384_final(const cf_sha512_context *ctx, uint8_t hash[CF_SHA384_HASHSZ])
+void cf_sha384_digest(cf_sha512_context *ctx, uint8_t hash[CF_SHA384_HASHSZ])
 {
   uint8_t full[CF_SHA512_HASHSZ];
-  cf_sha512_final(ctx, full);
+  cf_sha512_digest(ctx, full);
+  memcpy(hash, full, CF_SHA384_HASHSZ);
+}
+
+void cf_sha384_digest_final(cf_sha512_context *ctx, uint8_t hash[CF_SHA384_HASHSZ])
+{
+  uint8_t full[CF_SHA512_HASHSZ];
+  cf_sha512_digest_final(ctx, full);
   memcpy(hash, full, CF_SHA384_HASHSZ);
 }
 
@@ -231,7 +258,7 @@ const cf_chash cf_sha384 = {
   .blocksz = CF_SHA384_BLOCKSZ,
   .init = (cf_chash_init) cf_sha384_init,
   .update = (cf_chash_update) cf_sha384_update,
-  .final = (cf_chash_final) cf_sha384_final
+  .digest = (cf_chash_digest) cf_sha384_digest
 };
 
 const cf_chash cf_sha512 = {
@@ -240,6 +267,6 @@ const cf_chash cf_sha512 = {
   .blocksz = CF_SHA512_BLOCKSZ,
   .init = (cf_chash_init) cf_sha512_init,
   .update = (cf_chash_update) cf_sha512_update,
-  .final = (cf_chash_final) cf_sha512_final
+  .digest = (cf_chash_digest) cf_sha512_digest
 };
 

@@ -6,7 +6,7 @@
 
 typedef void (*cf_chash_init)(void *ctx);
 typedef void (*cf_chash_update)(void *ctx, const void *data, size_t bytes);
-typedef void (*cf_chash_final)(const void *ctx, uint8_t *hash);
+typedef void (*cf_chash_digest)(const void *ctx, uint8_t *hash);
 
 /* Describes an incremental hash function in a general way. */
 typedef struct
@@ -16,7 +16,7 @@ typedef struct
   size_t ctxsz;
   cf_chash_init init;
   cf_chash_update update;
-  cf_chash_final final;
+  cf_chash_digest digest;
 } cf_chash;
 
 #define CF_CHASH_MAXCTX 224

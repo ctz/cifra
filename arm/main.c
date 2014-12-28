@@ -23,13 +23,22 @@ static void stack_8w(void *v)
   (void) words[7];
 }
 
-static void hashtest(void *v)
+static void hashtest_sha256(void *v)
 {
   uint8_t hash[CF_SHA256_HASHSZ];
   cf_sha256_context ctx;
   cf_sha256_init(&ctx);
   cf_sha256_update(&ctx, "", 0);
-  cf_sha256_final(&ctx, hash);
+  cf_sha256_digest_final(&ctx, hash);
+}
+
+static void hashtest_sha512(void *v)
+{
+  uint8_t hash[CF_SHA512_HASHSZ];
+  cf_sha512_context ctx;
+  cf_sha512_init(&ctx);
+  cf_sha512_update(&ctx, "", 0);
+  cf_sha512_digest_final(&ctx, hash);
 }
 
 /* Provided by linkscript */
@@ -83,8 +92,10 @@ int main(void)
   measure(stack_8w, NULL);
   emit("stack_64w:\n");
   measure(stack_64w, NULL);
-  emit("hashtest:\n");
-  measure(hashtest, NULL);
+  emit("hashtest_sha256:\n");
+  measure(hashtest_sha256, NULL);
+  emit("hashtest_sha512:\n");
+  measure(hashtest_sha512, NULL);
 
   quit_success();
 }

@@ -26,6 +26,7 @@ static const uint32_t K[64] = {
   0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
+#ifdef INLINE_FUNCS
 static inline uint32_t CH(uint32_t x, uint32_t y, uint32_t z)
 {
   return (x & y) ^ (~x & z);
@@ -55,6 +56,14 @@ static inline uint32_t SSIG1(uint32_t x)
 {
   return rotr32(x, 17) ^ rotr32(x, 19) ^ (x >> 10);
 }
+#else
+# define CH(x, y, z) (((x) & (y)) ^ (~(x) & (z)))
+# define MAJ(x, y, z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+# define BSIG0(x) (rotr32((x), 2) ^ rotr32((x), 13) ^ rotr32((x), 22))
+# define BSIG1(x) (rotr32((x), 6) ^ rotr32((x), 11) ^ rotr32((x), 25))
+# define SSIG0(x) (rotr32((x), 7) ^ rotr32((x), 18) ^ ((x) >> 3))
+# define SSIG1(x) (rotr32((x), 17) ^ rotr32((x), 19) ^ ((x) >> 10))
+#endif
 
 void cf_sha256_init(cf_sha256_context *ctx)
 {
@@ -86,18 +95,8 @@ static void sha256_update_block(void *vctx, const uint8_t *inp)
 {
   cf_sha256_context *ctx = vctx;
 
-  uint32_t W[64];
-
-  for (size_t t = 0; t < 16; t++)
-  {
-    W[t] = read32_be(inp);
-    inp += 4;
-  }
-
-  for (size_t t = 16; t < 64; t++)
-  {
-    W[t] = SSIG1(W[t - 2]) + W[t - 7] + SSIG0(W[t - 15]) + W[t - 16];
-  }
+  /* This is a 16-word window into the whole W array. */
+  uint32_t W[16];
 
   uint32_t a = ctx->H[0],
            b = ctx->H[1],
@@ -106,11 +105,31 @@ static void sha256_update_block(void *vctx, const uint8_t *inp)
            e = ctx->H[4],
            f = ctx->H[5],
            g = ctx->H[6],
-           h = ctx->H[7];
+           h = ctx->H[7],
+           Wt;
 
   for (size_t t = 0; t < 64; t++)
   {
-    uint32_t T1 = h + BSIG1(e) + CH(e, f, g) + K[t] + W[t];
+    /* For W[0..16] we process the input into W.
+     * For W[16..64] we compute the next W value:
+     *
+     * W[t] = SSIG1(W[t - 2]) + W[t - 7] + SSIG0(W[t - 15]) + W[t - 16];
+     *
+     * But all W indices are reduced mod 16 into our window.
+     */
+    if (t < 16)
+    {
+      W[t] = Wt = read32_be(inp);
+      inp += 4;
+    } else {
+      Wt = SSIG1(W[(t - 2) % 16]) +
+           W[(t - 7) % 16] +
+           SSIG0(W[(t - 15) % 16]) +
+           W[(t - 16) % 16];
+      W[t % 16] = Wt;
+    }
+
+    uint32_t T1 = h + BSIG1(e) + CH(e, f, g) + K[t] + Wt;
     uint32_t T2 = BSIG0(a) + MAJ(a, b, c);
     h = g;
     g = f;
@@ -146,16 +165,16 @@ void cf_sha224_update(cf_sha256_context *ctx, const void *data, size_t nbytes)
   cf_sha256_update(ctx, data, nbytes);
 }
 
-void cf_sha256_final(const cf_sha256_context *ctx, uint8_t hash[CF_SHA256_HASHSZ])
+void cf_sha256_digest(const cf_sha256_context *ctx, uint8_t hash[CF_SHA256_HASHSZ])
 {
   /* We copy the context, so the finalisation doesn't effect the caller's
    * context.  This means the caller can do:
    *
    * x = init()
    * x.update('hello')
-   * h1 = x.final()
+   * h1 = x.digest()
    * x.update(' world')
-   * h2 = x.final()
+   * h2 = x.digest()
    *
    * to get h1 = H('hello') and h2 = H('hello world')
    *
@@ -163,40 +182,56 @@ void cf_sha256_final(const cf_sha256_context *ctx, uint8_t hash[CF_SHA256_HASHSZ
    */
 
   cf_sha256_context ours = *ctx;
-  uint8_t padbuf[CF_SHA256_BLOCKSZ];
+  cf_sha256_digest_final(&ours, hash);
+}
 
-  uint64_t digested_bytes = ours.blocks;
-  digested_bytes = digested_bytes * CF_SHA256_BLOCKSZ + ours.npartial;
+void cf_sha256_digest_final(cf_sha256_context *ctx, uint8_t hash[CF_SHA256_HASHSZ])
+{
+  uint64_t digested_bytes = ctx->blocks;
+  digested_bytes = digested_bytes * CF_SHA256_BLOCKSZ + ctx->npartial;
   uint64_t digested_bits = digested_bytes * 8;
 
   size_t zeroes = CF_SHA256_BLOCKSZ - ((digested_bytes + 1 + 8) % CF_SHA256_BLOCKSZ);
 
   /* Hash 0x80 00 ... block first. */
-  padbuf[0] = 0x80;
-  memset(padbuf + 1, 0, zeroes);
-  cf_sha256_update(&ours, padbuf, 1 + zeroes);
+  uint8_t buf[8];
+  buf[0] = 0x80;
+  buf[1] = 0x00;
+  cf_sha256_update(ctx, &buf[0], 1);
+
+  while (zeroes--)
+    cf_sha256_update(ctx, &buf[1], 1);
 
   /* Now hash length. */
-  write64_be(digested_bits, padbuf);
-  cf_sha256_update(&ours, padbuf, 8);
+  write64_be(digested_bits, buf);
+  cf_sha256_update(ctx, buf, 8);
 
   /* We ought to have got our padding calculation right! */
-  assert(ours.npartial == 0);
+  assert(ctx->npartial == 0);
 
-  write32_be(ours.H[0], hash + 0);
-  write32_be(ours.H[1], hash + 4);
-  write32_be(ours.H[2], hash + 8);
-  write32_be(ours.H[3], hash + 12);
-  write32_be(ours.H[4], hash + 16);
-  write32_be(ours.H[5], hash + 20);
-  write32_be(ours.H[6], hash + 24);
-  write32_be(ours.H[7], hash + 28);
+  write32_be(ctx->H[0], hash + 0);
+  write32_be(ctx->H[1], hash + 4);
+  write32_be(ctx->H[2], hash + 8);
+  write32_be(ctx->H[3], hash + 12);
+  write32_be(ctx->H[4], hash + 16);
+  write32_be(ctx->H[5], hash + 20);
+  write32_be(ctx->H[6], hash + 24);
+  write32_be(ctx->H[7], hash + 28);
+  
+  memset(ctx, 0, sizeof *ctx);
 }
 
-void cf_sha224_final(const cf_sha256_context *ctx, uint8_t hash[CF_SHA224_HASHSZ])
+void cf_sha224_digest(const cf_sha256_context *ctx, uint8_t hash[CF_SHA224_HASHSZ])
 {
   uint8_t full[CF_SHA256_HASHSZ];
-  cf_sha256_final(ctx, full);
+  cf_sha256_digest(ctx, full);
+  memcpy(hash, full, CF_SHA224_HASHSZ);
+}
+
+void cf_sha224_digest_final(cf_sha256_context *ctx, uint8_t hash[CF_SHA224_HASHSZ])
+{
+  uint8_t full[CF_SHA256_HASHSZ];
+  cf_sha256_digest_final(ctx, full);
   memcpy(hash, full, CF_SHA224_HASHSZ);
 }
 
@@ -206,7 +241,7 @@ const cf_chash cf_sha224 = {
   .blocksz = CF_SHA256_BLOCKSZ,
   .init = (cf_chash_init) cf_sha224_init,
   .update = (cf_chash_update) cf_sha224_update,
-  .final = (cf_chash_final) cf_sha224_final
+  .digest = (cf_chash_digest) cf_sha224_digest
 };
 
 const cf_chash cf_sha256 = {
@@ -215,6 +250,6 @@ const cf_chash cf_sha256 = {
   .blocksz = CF_SHA256_BLOCKSZ,
   .init = (cf_chash_init) cf_sha256_init,
   .update = (cf_chash_update) cf_sha256_update,
-  .final = (cf_chash_final) cf_sha256_final
+  .digest = (cf_chash_digest) cf_sha256_digest
 };
 

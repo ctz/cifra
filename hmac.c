@@ -69,10 +69,10 @@ void cf_hmac_finish(cf_hmac_ctx *ctx, uint8_t *out)
   assert(out);
 
   uint8_t innerh[CF_MAXHASH];
-  ctx->hash->final(&ctx->inner, innerh);
+  ctx->hash->digest(&ctx->inner, innerh);
 
   ctx->hash->update(&ctx->outer, innerh, ctx->hash->hashsz);
-  ctx->hash->final(&ctx->outer, out);
+  ctx->hash->digest(&ctx->outer, out);
 
   mem_clean(ctx, sizeof *ctx);
 }

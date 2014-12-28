@@ -10,11 +10,11 @@ static void test_sha256_inter(void)
   cf_sha256_context ctx;
   cf_sha256_init(&ctx);
   cf_sha256_update(&ctx, "abc", 3);
-  cf_sha256_final(&ctx, digest);
+  cf_sha256_digest_final(&ctx, digest);
 
   cf_sha256_init(&ctx);
   cf_sha256_update(&ctx, "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", 56);
-  cf_sha256_final(&ctx, digest);
+  cf_sha256_digest(&ctx, digest);
 }
 
 #ifdef REALLY_SLOW_TEST
@@ -26,7 +26,7 @@ static void test_sha256_long(void)
 
   for (size_t i = 0; i < 0x1000000; i++)
     cf_sha256_update(&ctx, "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmno", 64);
-  cf_sha256_final(&ctx, digest);
+  cf_sha256_digest_final(&ctx, digest);
 
   for (size_t i = 0; i < sizeof digest; i++)
     printf("%02x", digest[i]);
