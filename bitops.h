@@ -144,4 +144,34 @@ static inline uint8_t select_u8(uint32_t i, volatile const uint8_t *tab, uint32_
   return r;
 }
 
+/** Increments the integer stored at v (of non-zero length len)
+ *  with the least significant byte first. */
+static inline void incr_le(uint8_t *v, size_t len)
+{
+  size_t i = 0;
+  while (1)
+  {
+    if (++v[i] != 0)
+      return;
+    i++;
+    if (i == len)
+      return;
+  }
+}
+
+/** Increments the integer stored at v (of non-zero length len)
+ *  with the most significant byte last. */
+static inline void incr_be(uint8_t *v, size_t len)
+{
+  len--;
+  while (1)
+  {
+    if (++v[len] != 0)
+      return;
+    if (len == 0)
+      return;
+    len--;
+  }
+}
+
 #endif

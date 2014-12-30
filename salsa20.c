@@ -1,4 +1,10 @@
+#include "salsa20.h"
 #include "bitops.h"
+#include "blockwise.h"
+
+#include <string.h>
+#include <assert.h>
+#include <stdlib.h>
 
 void cf_salsa20_core(const uint8_t key0[16],
                      const uint8_t key1[16],
@@ -96,4 +102,50 @@ void cf_salsa20_core(const uint8_t key0[16],
   write32_le(xd, out + 52);
   write32_le(xe, out + 56);
   write32_le(xf, out + 60);
+}
+
+static const uint8_t *salsa20_tau = (const uint8_t *) "expand 16-byte k";
+static const uint8_t *salsa20_sigma = (const uint8_t *) "expand 32-byte k";
+
+void cf_salsa20_init(cf_salsa20_ctx *ctx, const uint8_t *key, size_t nkey, uint8_t nonce[8])
+{
+  switch (nkey)
+  {
+    case 16:
+      memcpy(ctx->key0, key, 16);
+      memcpy(ctx->key1, key, 16);
+      ctx->sigma = salsa20_tau;
+      break;
+    case 32:
+      memcpy(ctx->key0, key, 16);
+      memcpy(ctx->key1, key + 16, 16);
+      ctx->sigma = salsa20_sigma;
+      break;
+    default:
+      assert(nkey == 16 || nkey == 32);
+      abort();
+  }
+
+  memset(ctx->nonce, 0, sizeof ctx->nonce);
+  memcpy(ctx->nonce + 8, nonce, 8);
+  ctx->nblock = 0;
+}
+
+static void cf_salsa20_next_block(void *vctx, uint8_t *out)
+{
+  cf_salsa20_ctx *ctx = vctx;
+  cf_salsa20_core(ctx->key0,
+                  ctx->key1,
+                  ctx->nonce,
+                  ctx->sigma,
+                  out);
+  incr_le(ctx->nonce, 8);
+}
+
+void cf_salsa20_cipher(cf_salsa20_ctx *ctx, const uint8_t *input, uint8_t *output, size_t bytes)
+{
+  cf_blockwise_xor(ctx->block, &ctx->nblock, 64,
+                   input, output, bytes,
+                   cf_salsa20_next_block,
+                   ctx);
 }

@@ -6,7 +6,7 @@
 #include "ext/cutest.h"
 #include "testutil.h"
 
-static void test_bitopts(void)
+static void test_bitopts_select(void)
 {
   uint8_t tab8[8];
   uint32_t tab32[32];
@@ -25,6 +25,40 @@ static void test_bitopts(void)
   {
     TEST_CHECK(select_u32(i, tab32, 32) == tab32[i]);
   }
+}
+
+static void test_bitopts_incr(void)
+{
+  uint8_t buf[4];
+
+#define CHECK_BE(start, add, end) \
+  { \
+    write32_be((start), buf); \
+    for (size_t i = 0; i < (add); i++) \
+      incr_be(buf, sizeof buf); \
+    TEST_CHECK(read32_be(buf) == (end)); \
+  }
+
+#define CHECK_LE(start, add, end) \
+  { \
+    write32_le((start), buf); \
+    for (size_t i = 0; i < (add); i++) \
+      incr_le(buf, sizeof buf); \
+    TEST_CHECK(read32_le(buf) == (end)); \
+  }
+
+  CHECK_BE(0, 1, 1);
+  CHECK_BE(0, 256, 256);
+  CHECK_BE(256, 256, 512);
+  CHECK_BE(0xffffffff, 1, 0);
+
+  CHECK_LE(0, 1, 1);
+  CHECK_LE(0, 256, 256);
+  CHECK_LE(0x7fffffff, 1, 0x80000000);
+  CHECK_LE(0xffffffff, 1, 0);
+
+#undef CHECK_BE
+#undef CHECK_LE
 }
 
 static void test_expand(const uint8_t *key, size_t nkey,
@@ -337,7 +371,8 @@ static void test_cmac(void)
 }
 
 TEST_LIST = {
-  { "bitops", test_bitopts },
+  { "bitopts-select", test_bitopts_select },
+  { "bitopts-incr", test_bitopts_incr },
   { "key-expansion-128", test_expand_128 },
   { "key-expansion-192", test_expand_192 },
   { "key-expansion-256", test_expand_256 },

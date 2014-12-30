@@ -53,24 +53,11 @@ void cf_ctr_init(cf_ctr *ctx, const cf_prp *prp, void *prpctx, uint8_t nonce[CF_
   memcpy(ctx->nonce, nonce, prp->blocksz);
 }
 
-static void next_block(uint8_t *block, size_t nb)
-{
-  nb--;
-  while (1)
-  {
-    if (++block[nb] != 0)
-      return;
-    if (nb == 0)
-      return;
-    nb--;
-  }
-}
-
 static void ctr_next_block(void *vctx, uint8_t *out)
 {
   cf_ctr *ctx = vctx;
   ctx->prp->block(ctx->prpctx, cf_prp_encrypt, ctx->nonce, out);
-  next_block(ctx->nonce, ctx->prp->blocksz);
+  incr_be(ctx->nonce, ctx->prp->blocksz);
 }
 
 void cf_ctr_cipher(cf_ctr *ctx, const uint8_t *input, uint8_t *output, size_t bytes)
