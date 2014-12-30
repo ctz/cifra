@@ -1,7 +1,5 @@
 #include "bitops.h"
 
-#include <stdio.h>
-
 void cf_salsa20_core(const uint8_t key0[16],
                      const uint8_t key1[16],
                      const uint8_t nonce[16],

@@ -7,7 +7,6 @@
 
 #include <string.h>
 #include <assert.h>
-#include <stdio.h>
 
 static void block_double_gf2n(const cf_prp *prp,
                               const uint8_t in[CF_MAXBLOCK],
@@ -121,7 +120,7 @@ static void cmac_process_final_pad(void *vctx, const uint8_t *block)
 void cf_cmac_stream_update(cf_cmac_stream *ctx, const uint8_t *data, size_t len, int isfinal)
 {
   size_t blocksz = ctx->cmac.prp->blocksz;
-  cf_blockwise_fn final_fn = cmac_process;
+  cf_blockwise_in_fn final_fn = cmac_process;
   int needpad = 0;
 
   if (isfinal)

@@ -1,6 +1,5 @@
 #include <string.h>
 #include <assert.h>
-#include <stdio.h>
 
 #include "sha2.h"
 #include "blockwise.h"

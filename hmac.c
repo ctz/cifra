@@ -5,7 +5,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <stdio.h>
 
 void cf_hmac_init(cf_hmac_ctx *ctx,
                   const cf_chash *hash,

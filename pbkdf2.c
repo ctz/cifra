@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <stdio.h>
 
 static void F(const cf_hmac_ctx *startctx,
               uint32_t counter,
