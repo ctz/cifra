@@ -169,11 +169,12 @@ static void test_vectors(void)
 
 static void test_cbc(void)
 {
-  uint8_t iv[16], key[16], inp[16], out[16];
+  uint8_t iv[16], key[16], inp[16], out[16], expect[16];
 
   unhex(iv, 16, "000102030405060708090A0B0C0D0E0F");
   unhex(key, 16, "2b7e151628aed2a6abf7158809cf4f3c");
   unhex(inp, 16, "6bc1bee22e409f96e93d7e117393172a");
+  unhex(expect, 16, "7649abac8119b246cee98e9b12e9197d");
 
   cf_aes_context aes;
   cf_aes_init(&aes, key, sizeof key);
@@ -181,48 +182,53 @@ static void test_cbc(void)
   cf_cbc cbc;
   cf_cbc_init(&cbc, &cf_aes, &aes, iv);
   cf_cbc_encrypt(&cbc, inp, out, 1);
-  dump("enc", out, sizeof out);
+  TEST_CHECK(memcmp(out, expect, 16) == 0);
 
   cf_cbc_init(&cbc, &cf_aes, &aes, iv);
-  cf_cbc_decrypt(&cbc, out, inp, 1);
-  dump("dec", inp, sizeof inp);
+  cf_cbc_decrypt(&cbc, out, expect, 1);
+  TEST_CHECK(memcmp(expect, inp, 16) == 0);
 }
 
 static void test_ctr(void)
 {
-  uint8_t iv[16], key[16], inp[16], out[16];
+  uint8_t nonce[16], key[16], inp[16], out[16], expect[16];
 
-  unhex(iv, 16, "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff");
+  unhex(nonce, 16, "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff");
   unhex(key, 16, "2b7e151628aed2a6abf7158809cf4f3c");
   unhex(inp, 16, "6bc1bee22e409f96e93d7e117393172a");
+  unhex(expect, 16, "874d6191b620e3261bef6864990db6ce");
 
   cf_aes_context aes;
   cf_aes_init(&aes, key, sizeof key);
 
   cf_ctr ctr;
-  cf_ctr_init(&ctr, &cf_aes, &aes, iv);
+  cf_ctr_init(&ctr, &cf_aes, &aes, nonce);
   cf_ctr_cipher(&ctr, inp, out, 16);
-  dump("enc", out, sizeof out);
-  dump("ctr", ctr.block, 16);
+  TEST_CHECK(memcmp(expect, out, 16) == 0);
 
-  cf_ctr_init(&ctr, &cf_aes, &aes, iv);
-  cf_ctr_cipher(&ctr, out, inp, 1);
-  dump("dec", inp, sizeof inp);
-  dump("ctr", ctr.block, 16);
+  cf_ctr_init(&ctr, &cf_aes, &aes, nonce);
+  cf_ctr_cipher(&ctr, out, expect, 16);
+  TEST_CHECK(memcmp(expect, inp, 16) == 0);
 
-  memset(iv, 0xff, 16);
-  cf_ctr_init(&ctr, &cf_aes, &aes, iv);
+  memset(nonce, 0xff, 16);
+  memset(inp, 0x00, 16);
+  cf_ctr_init(&ctr, &cf_aes, &aes, nonce);
 
+  /* Exercise cf_blockwise_xor code paths. */
   for (int i = 0; i < 1024; i++)
   {
-    cf_ctr_cipher(&ctr, out, inp, 1);
+    cf_ctr_cipher(&ctr, inp, out, i % 16);
   }
 
-  memset(iv, 0, 16);
-  iv[15] = 0xff;
-  iv[14] = 0x03;
+  /* expected counter value is 1024 * 7.5 / 16 - 1:
+   * 479 = 0x1df
+   */
 
-  TEST_CHECK(memcmp(iv, ctr.block, 16) == 0);
+  memset(nonce, 0, 16);
+  nonce[15] = 0xdf;
+  nonce[14] = 0x01;
+
+  TEST_CHECK(memcmp(nonce, ctr.nonce, 16) == 0);
 }
 
 static void test_eax(void)
@@ -252,18 +258,19 @@ static void test_eax(void)
                  cipher,
                  tag, sizeof tag);
 
-  dump("cipher", cipher, sizeof cipher);
-  dump("tag", tag, sizeof tag);
+  TEST_CHECK(memcmp("\x19\xdd", cipher, 2) == 0);
+  TEST_CHECK(memcmp("\x5c\x4c\x93\x31\x04\x9d\x0b\xda\xb0\x27\x74\x08\xf6\x79\x67\xe5", tag, sizeof tag) == 0);
 
   int rc;
+  uint8_t tmp[2];
   rc = cf_eax_decrypt(&cf_aes, &aes,
                       cipher, sizeof cipher,
                       header, sizeof header,
                       nonce, sizeof nonce,
                       tag, sizeof tag,
-                      msg);
+                      tmp);
   TEST_CHECK(rc == 0);
-  dump("plain", msg, sizeof msg);
+  TEST_CHECK(memcmp(tmp, msg, sizeof msg) == 0);
 }
 
 static void check_cmac(const char *keystr, size_t nkey,

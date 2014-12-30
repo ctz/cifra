@@ -2,6 +2,7 @@
 #include "prp.h"
 #include "modes.h"
 #include "bitops.h"
+#include "blockwise.h"
 
 #include <string.h>
 
@@ -48,7 +49,8 @@ void cf_ctr_init(cf_ctr *ctx, const cf_prp *prp, void *prpctx, uint8_t nonce[CF_
 {
   ctx->prp = prp;
   ctx->prpctx = prpctx;
-  memcpy(ctx->block, nonce, prp->blocksz);
+  ctx->nkeymat = 0;
+  memcpy(ctx->nonce, nonce, prp->blocksz);
 }
 
 static void next_block(uint8_t *block, size_t nb)
@@ -64,19 +66,18 @@ static void next_block(uint8_t *block, size_t nb)
   }
 }
 
+static void ctr_next_block(void *vctx, uint8_t *out)
+{
+  cf_ctr *ctx = vctx;
+  ctx->prp->block(ctx->prpctx, cf_prp_encrypt, ctx->nonce, out);
+  next_block(ctx->nonce, ctx->prp->blocksz);
+}
+
 void cf_ctr_cipher(cf_ctr *ctx, const uint8_t *input, uint8_t *output, size_t bytes)
 {
-  uint8_t buf[CF_MAXBLOCK];
-  size_t nblk = ctx->prp->blocksz;
-
-  while (bytes)
-  {
-    size_t taken = bytes > nblk ? nblk : bytes;
-    ctx->prp->block(ctx->prpctx, cf_prp_encrypt, ctx->block, buf);
-    xor_bb(output, input, buf, taken);
-    output += taken;
-    input += taken;
-    bytes -= taken;
-    next_block(ctx->block, nblk);
-  }
+  cf_blockwise_xor(ctx->keymat, &ctx->nkeymat,
+                   ctx->prp->blocksz,
+                   input, output, bytes,
+                   ctr_next_block,
+                   ctx);
 }

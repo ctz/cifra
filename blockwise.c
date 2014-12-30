@@ -1,4 +1,5 @@
 #include "blockwise.h"
+#include "bitops.h"
 #include "handy.h"
 
 #include <assert.h>
@@ -6,7 +7,7 @@
 
 void cf_blockwise_accumulate(uint8_t *partial, size_t *npartial, size_t nblock,
                              const void *inp, size_t nbytes,
-                             cf_blockwise_fn process,
+                             cf_blockwise_in_fn process,
                              void *ctx)
 {
   cf_blockwise_accumulate_final(partial, npartial, nblock,
@@ -16,8 +17,8 @@ void cf_blockwise_accumulate(uint8_t *partial, size_t *npartial, size_t nblock,
 
 void cf_blockwise_accumulate_final(uint8_t *partial, size_t *npartial, size_t nblock,
                                    const void *inp, size_t nbytes,
-                                   cf_blockwise_fn process,
-                                   cf_blockwise_fn process_final,
+                                   cf_blockwise_in_fn process,
+                                   cf_blockwise_in_fn process_final,
                                    void *ctx)
 {
   const uint8_t *bufin = inp;
@@ -84,5 +85,35 @@ void cf_blockwise_accumulate_final(uint8_t *partial, size_t *npartial, size_t nb
         process(ctx, partial);
       *npartial = 0;
     }
+  }
+}
+
+void cf_blockwise_xor(uint8_t *partial, size_t *npartial, size_t nblock,
+                      const void *inp, void *outp, size_t nbytes,
+                      cf_blockwise_out_fn process, void *ctx)
+{
+  const uint8_t *inb = inp;
+  uint8_t *outb = outp;
+
+  assert(partial && *npartial < nblock);
+  assert(inp || !nbytes);
+  assert(process && ctx);
+
+  while (nbytes)
+  {
+    /* If we're out of material, and need more, produce a block. */
+    if (*npartial == 0)
+    {
+      process(ctx, partial);
+      *npartial = nblock;
+    }
+
+    size_t offset = nblock - *npartial;
+    size_t taken = MIN(*npartial, nbytes);
+    xor_bb(outb, inb, partial + offset, taken);
+    *npartial -= taken;
+    nbytes -= taken;
+    outb += taken;
+    inb += taken;
   }
 }

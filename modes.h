@@ -30,7 +30,9 @@ typedef struct
 {
   const cf_prp *prp;
   void *prpctx;
-  uint8_t block[CF_MAXBLOCK];
+  uint8_t nonce[CF_MAXBLOCK];
+  uint8_t keymat[CF_MAXBLOCK];
+  size_t nkeymat;
 } cf_ctr;
 
 /* Initialise CTR encryption/decryption context using selected prp and nonce.
