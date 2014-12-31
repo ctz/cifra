@@ -10,16 +10,16 @@
 void cf_chacha20_core(const uint8_t key0[16],
                       const uint8_t key1[16],
                       const uint8_t nonce[16],
-                      const uint8_t sigma[16],
+                      const uint8_t constant[16],
                       uint8_t out[64])
 {
   uint32_t z0, z1, z2, z3, z4, z5, z6, z7,
            z8, z9, za, zb, zc, zd, ze, zf;
 
-  uint32_t x0 = z0 = read32_le(sigma + 0),
-           x1 = z1 = read32_le(sigma + 4),
-           x2 = z2 = read32_le(sigma + 8),
-           x3 = z3 = read32_le(sigma + 12),
+  uint32_t x0 = z0 = read32_le(constant + 0),
+           x1 = z1 = read32_le(constant + 4),
+           x2 = z2 = read32_le(constant + 8),
+           x3 = z3 = read32_le(constant + 12),
            x4 = z4 = read32_le(key0 + 0),
            x5 = z5 = read32_le(key0 + 4),
            x6 = z6 = read32_le(key0 + 8),
@@ -85,6 +85,7 @@ void cf_chacha20_core(const uint8_t key0[16],
   write32_le(xe, out + 56);
   write32_le(xf, out + 60);
 }
+
 static const uint8_t *chacha20_tau = (const uint8_t *) "expand 16-byte k";
 static const uint8_t *chacha20_sigma = (const uint8_t *) "expand 32-byte k";
 
@@ -95,12 +96,12 @@ void cf_chacha20_init(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey, uin
     case 16:
       memcpy(ctx->key0, key, 16);
       memcpy(ctx->key1, key, 16);
-      ctx->sigma = chacha20_tau;
+      ctx->constant = chacha20_tau;
       break;
     case 32:
       memcpy(ctx->key0, key, 16);
       memcpy(ctx->key1, key + 16, 16);
-      ctx->sigma = chacha20_sigma;
+      ctx->constant = chacha20_sigma;
       break;
     default:
       assert(nkey == 16 || nkey == 32);
@@ -118,7 +119,7 @@ static void cf_chacha20_next_block(void *vctx, uint8_t *out)
   cf_chacha20_core(ctx->key0,
                   ctx->key1,
                   ctx->nonce,
-                  ctx->sigma,
+                  ctx->constant,
                   out);
   incr_le(ctx->nonce, 8);
 }

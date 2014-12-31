@@ -9,41 +9,41 @@
 void cf_salsa20_core(const uint8_t key0[16],
                      const uint8_t key1[16],
                      const uint8_t nonce[16],
-                     const uint8_t sigma[16],
+                     const uint8_t constant[16],
                      uint8_t out[64])
 {
   /* unpack sequence is:
    *
-   * s0
+   * c0
    * key0
-   * s1
+   * c1
    * nonce
-   * s2
+   * c2
    * key1
-   * s3
+   * c3
    *
-   * where s0, s1, s2, s3 = sigma
+   * where c0, c1, c2, c3 = constant
    */
   
   uint32_t z0, z1, z2, z3, z4, z5, z6, z7,
            z8, z9, za, zb, zc, zd, ze, zf;
 
-  uint32_t x0 = z0 = read32_le(sigma + 0),
+  uint32_t x0 = z0 = read32_le(constant + 0),
            x1 = z1 = read32_le(key0 + 0),
            x2 = z2 = read32_le(key0 + 4),
            x3 = z3 = read32_le(key0 + 8),
            x4 = z4 = read32_le(key0 + 12),
-           x5 = z5 = read32_le(sigma + 4),
+           x5 = z5 = read32_le(constant + 4),
            x6 = z6 = read32_le(nonce + 0),
            x7 = z7 = read32_le(nonce + 4),
            x8 = z8 = read32_le(nonce + 8),
            x9 = z9 = read32_le(nonce + 12),
-           xa = za = read32_le(sigma + 8),
+           xa = za = read32_le(constant + 8),
            xb = zb = read32_le(key1 + 0),
            xc = zc = read32_le(key1 + 4),
            xd = zd = read32_le(key1 + 8),
            xe = ze = read32_le(key1 + 12),
-           xf = zf = read32_le(sigma + 12);
+           xf = zf = read32_le(constant + 12);
 
 #define QUARTER(v0, v1, v2, v3) \
   v1 ^= rotl32(v0 + v3, 7); \
@@ -114,12 +114,12 @@ void cf_salsa20_init(cf_salsa20_ctx *ctx, const uint8_t *key, size_t nkey, uint8
     case 16:
       memcpy(ctx->key0, key, 16);
       memcpy(ctx->key1, key, 16);
-      ctx->sigma = salsa20_tau;
+      ctx->constant = salsa20_tau;
       break;
     case 32:
       memcpy(ctx->key0, key, 16);
       memcpy(ctx->key1, key + 16, 16);
-      ctx->sigma = salsa20_sigma;
+      ctx->constant = salsa20_sigma;
       break;
     default:
       assert(nkey == 16 || nkey == 32);
@@ -137,7 +137,7 @@ static void cf_salsa20_next_block(void *vctx, uint8_t *out)
   cf_salsa20_core(ctx->key0,
                   ctx->key1,
                   ctx->nonce,
-                  ctx->sigma,
+                  ctx->constant,
                   out);
   incr_le(ctx->nonce, 8);
 }

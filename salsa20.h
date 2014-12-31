@@ -7,20 +7,20 @@
 void cf_salsa20_core(const uint8_t key0[16],
                      const uint8_t key1[16],
                      const uint8_t nonce[16],
-                     const uint8_t sigma[16],
+                     const uint8_t constant[16],
                      uint8_t out[64]);
                      
 void cf_chacha20_core(const uint8_t key0[16],
                       const uint8_t key1[16],
                       const uint8_t nonce[16],
-                      const uint8_t sigma[16],
+                      const uint8_t constant[16],
                       uint8_t out[64]);
 
 typedef struct
 {
   uint8_t key0[16], key1[16];
   uint8_t nonce[16];
-  const uint8_t *sigma;
+  const uint8_t *constant;
   uint8_t block[64];
   size_t nblock;
 } cf_salsa20_ctx, cf_chacha20_ctx;
