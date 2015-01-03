@@ -21,6 +21,10 @@ class Instruction:
             self.comment = comment[1].strip()
         else:
             self.comment = ''
+    
+    def __repr__(self):
+        return '<insn %r>' % (self.__dict__)
+
 
 def literal_branch_target(t):
     return ' <' in t
@@ -47,16 +51,46 @@ class Function:
     def dump(self):
         print self.name + ':'
         for insn in self.insns:
-            print '  ', insn.op, insn.args, '\t;', insn.comment
+            print '  ', '%04x' % insn.addr + ':', insn.op, insn.args, '\t;', insn.comment
+
+    def get_literal_word(self, addr):
+        for insn in self.insns:
+            if insn.addr == addr and insn.op == '.word':
+                print 'word', insn.args
+                w = int(insn.args, 16)
+                if w & 0x80000000:
+                    w = -(w ^ 0xffffffff) + 1
+                return w
+        return None
 
     def analyse(self, prog):
-        self.stack_guess = 0
+        self.stack_guess = None
+        regs = {}
+        debug = self.name == 'cf_curve25519_mul'
+        if debug:
+            self.dump()
 
         for insn in self.insns:
-            if insn.op == 'sub' and insn.args.startswith('sp, '):
+            # stack adjustment with literal
+            if insn.op == 'sub' and insn.args.startswith('sp, ') and self.stack_guess is None:
                 sz = int(insn.args.split('#', 1)[1])
                 self.stack_guess = sz
 
+            # literal pool loads
+            if insn.op == 'ldr' and ', [pc, #' in insn.args:
+                reg, offset = insn.args.split(', [pc, #')
+                offset = int(offset.replace(']', ''))
+                word = self.get_literal_word(insn.addr + offset + 2)
+                if word is not None:
+                    regs[reg] = word
+
+            if insn.op == 'add' and insn.args.startswith('sp, r') and self.stack_guess is None:
+                reg = insn.args.split(', ')[1]
+                if reg in regs:
+                    print 'from add to sp,', reg, 'stack_guess =', -regs[reg]
+                    self.stack_guess = -regs[reg]
+
+            # static branches
             if insn.op[0] == 'b' and literal_branch_target(insn.args):
                 target = long(insn.args.split(' <', 1)[0], 16)
 
@@ -64,6 +98,9 @@ class Function:
 
                 if targetf:
                     self.calls.append(targetf)
+
+        if self.stack_guess is None:
+            self.stack_guess = 0
 
     def stack_usage(self, hints, prog, depth = 0):
         hinted_calls = []
@@ -148,3 +185,4 @@ print 'stack', 'hashtest_sha256', '=', p.measure_stack('hashtest_sha256')
 print 'stack', 'hashtest_sha512', '=', p.measure_stack('hashtest_sha512')
 print 'stack', 'stack_8w', '=', p.measure_stack('stack_8w')
 print 'stack', 'stack_64w', '=', p.measure_stack('stack_64w')
+print 'stack', 'curve25519_test', '=', p.measure_stack('curve25519_test')

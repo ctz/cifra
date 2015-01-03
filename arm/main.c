@@ -1,5 +1,6 @@
 #include "semihost.h"
 #include "sha2.h"
+#include "curve25519.h"
 
 #include <stdio.h>
 
@@ -39,6 +40,13 @@ static void hashtest_sha512(void *v)
   cf_sha512_init(&ctx);
   cf_sha512_update(&ctx, "", 0);
   cf_sha512_digest_final(&ctx, hash);
+}
+
+static void curve25519_test(void *v)
+{
+  uint8_t secret[32] = { 1 };
+  uint8_t pubkey[32];
+  cf_curve25519_mul_base(pubkey, secret);
 }
 
 /* Provided by linkscript */
@@ -96,6 +104,8 @@ int main(void)
   measure(hashtest_sha256, NULL);
   emit("hashtest_sha512:\n");
   measure(hashtest_sha512, NULL);
+  emit("curve25519_test:\n");
+  measure(curve25519_test, NULL);
 
   quit_success();
 }
