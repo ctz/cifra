@@ -49,7 +49,7 @@ vectors_t vectors ATTR_SECTION(".isr_vector") = {
   .svc = do_nothing,
   .debug_monitor = do_nothing,
   .pendsv = do_nothing,
-  .systick = do_nothing,
+  .systick = SysTick_Handler,
   .irq = { COPY128(do_nothing) }
 };
 
@@ -85,8 +85,21 @@ void do_nothing(void)
 {
 }
 
+uint32_t ticks = 0;
+
 void SysTick_Handler(void)
 {
+  ticks++;
+}
+
+uint32_t get_ticks(void)
+{
+  return ticks;
+}
+
+void reset_ticks(void)
+{
+  ticks = 0;
 }
 
 void *memmove(void *vtarg, const void *vsrc, size_t len)
@@ -115,7 +128,7 @@ void *memcpy(void *vtarg, const void *vsrc, size_t len)
 
 void *memset(void *vtarg, int c, size_t len)
 {
-  uint8_t *targ = vtarg;
+  volatile uint8_t *targ = vtarg;
   for (size_t i = 0; i < len; i++)
     targ[i] = (uint8_t) c;
   return vtarg;

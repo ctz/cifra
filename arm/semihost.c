@@ -10,20 +10,7 @@
 #define OP_EXIT_ARG_FAILURE 0x0
 #define OP_EXIT_ARG_SUCCESS 0x20026
 
-static uint32_t semihost(uint32_t op, void *ptr)
-{
-  uint32_t r = 0;
-  asm volatile ("mov r0, %[op]\n"
-                "mov r1, %[arg]\n"
-                "bkpt 0xab\n"
-                "mov %[ret], r0"
-                : [ret] "=r" (r)
-                : [op] "r" (op),
-                  [arg] "r" (ptr)
-                : "r0", "r1");
-
-  return r;
-}
+extern uint32_t semihost(uint32_t, volatile void *);
 
 __attribute__((noreturn))
 void quit_success(void)
@@ -43,7 +30,7 @@ void quit_failure(void)
 
 void emit(const char *buf)
 {
-  semihost(OP_WRITE0, (void *) buf);
+  semihost(OP_WRITE0, (volatile void *) buf);
 }
 
 static void emit_extent(const char *start, const char *end)
@@ -113,9 +100,10 @@ void emitf(const char *fmt, ...)
   emit_extent(start, end);
 }
   
+static const char *hex_chars = "0123456789abcdef";
+  
 void emit_hex(const void *ptr, size_t len)
 {
-  const char *hex_char = "0123456789abcdef";
   const uint8_t *bb = ptr;
   char byte[3];
 
@@ -123,26 +111,25 @@ void emit_hex(const void *ptr, size_t len)
 
   for (size_t i = 0; i < len; i++)
   {
-    byte[0] = hex_char[(bb[i] >> 4) & 0xf];
-    byte[1] = hex_char[bb[i] & 0xf];
+    byte[0] = hex_chars[(bb[i] >> 4) & 0xf];
+    byte[1] = hex_chars[bb[i] & 0xf];
     emit(byte);
   }
 }
 
 void emit_uint32(uint32_t x)
 {
-  const char *hex_char = "0123456789abcdef";
   char buf[sizeof "0x11223344"];
   buf[0] = '0';
   buf[1] = 'x';
-  buf[2] = hex_char[(x >> 28) & 0xf];
-  buf[3] = hex_char[(x >> 24) & 0xf];
-  buf[4] = hex_char[(x >> 20) & 0xf];
-  buf[5] = hex_char[(x >> 16) & 0xf];
-  buf[6] = hex_char[(x >> 12) & 0xf];
-  buf[7] = hex_char[(x >> 8) & 0xf];
-  buf[8] = hex_char[(x >> 4) & 0xf];
-  buf[9] = hex_char[x & 0xf];
+  buf[2] = hex_chars[(x >> 28) & 0xf];
+  buf[3] = hex_chars[(x >> 24) & 0xf];
+  buf[4] = hex_chars[(x >> 20) & 0xf];
+  buf[5] = hex_chars[(x >> 16) & 0xf];
+  buf[6] = hex_chars[(x >> 12) & 0xf];
+  buf[7] = hex_chars[(x >> 8) & 0xf];
+  buf[8] = hex_chars[(x >> 4) & 0xf];
+  buf[9] = hex_chars[x & 0xf];
   buf[10] = 0;
 
   emit(buf);
@@ -158,20 +145,25 @@ typedef struct
 #define SysTick ((systick *)0xe000e010)
 
 #define STCTRL_SYSCLOCK 0x04
+#define STCTRL_TICKINT  0x02
 #define STCTRL_ENABLE   0x01
 
-#define STCTRL_MAX 0xffffff
+#define STCTRL_MAX 999
+
+extern uint32_t get_ticks(void);
+extern void reset_ticks(void);
 
 uint32_t reset_cycles(void)
 {
   SysTick->reload = STCTRL_MAX;
-  SysTick->ctrl = STCTRL_SYSCLOCK | STCTRL_ENABLE;
+  SysTick->ctrl = STCTRL_SYSCLOCK | STCTRL_TICKINT | STCTRL_ENABLE;
   SysTick->current = 0;
-  return get_cycles();
+  reset_ticks();
+  return get_ticks();
 }
 
 uint32_t get_cycles(void)
 {
-  return STCTRL_MAX - SysTick->current;
+  return get_ticks();
 }
 

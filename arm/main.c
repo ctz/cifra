@@ -4,27 +4,29 @@
 
 #include <stdio.h>
 
-typedef void (*measure_fn)(void *ctx);
+typedef void (*measure_fn)(void);
 
-static void do_nothing(void *v)
+static void do_nothing(void)
 {
 }
 
-static void stack_64w(void *v)
+static void stack_64w(void)
 {
   volatile uint32_t words[64];
+  words[0] = 0;
   words[63] = 0;
   (void) words[63];
 }
 
-static void stack_8w(void *v)
+static void stack_8w(void)
 {
   volatile uint32_t words[8];
+  words[0] = 0;
   words[7] = 0;
   (void) words[7];
 }
 
-static void hashtest_sha256(void *v)
+static void hashtest_sha256(void)
 {
   uint8_t hash[CF_SHA256_HASHSZ];
   cf_sha256_context ctx;
@@ -33,7 +35,7 @@ static void hashtest_sha256(void *v)
   cf_sha256_digest_final(&ctx, hash);
 }
 
-static void hashtest_sha512(void *v)
+static void hashtest_sha512(void)
 {
   uint8_t hash[CF_SHA512_HASHSZ];
   cf_sha512_context ctx;
@@ -42,7 +44,7 @@ static void hashtest_sha512(void *v)
   cf_sha512_digest_final(&ctx, hash);
 }
 
-static void curve25519_test(void *v)
+static void curve25519_test(void)
 {
   uint8_t secret[32] = { 1 };
   uint8_t pubkey[32];
@@ -75,11 +77,11 @@ static inline uint32_t measure_stack(void)
   return 0;
 }
 
-static void measure(measure_fn fn, void *ctx)
+static void measure(measure_fn fn)
 {
   clear_stack();
   uint32_t start_cycles = reset_cycles();
-  fn(ctx);
+  fn();
   uint32_t end_cycles = get_cycles();
   uint32_t stack_words = measure_stack();
 
@@ -92,20 +94,19 @@ static void measure(measure_fn fn, void *ctx)
 
 }
 
+#define STRING_(x) #x
+#define STRING(x) STRING_(x)
+
 int main(void)
 {
-  emit("do_nothing:\n");
-  measure(do_nothing, NULL);
-  emit("stack_8w:\n");
-  measure(stack_8w, NULL);
-  emit("stack_64w:\n");
-  measure(stack_64w, NULL);
-  emit("hashtest_sha256:\n");
-  measure(hashtest_sha256, NULL);
-  emit("hashtest_sha512:\n");
-  measure(hashtest_sha512, NULL);
-  emit("curve25519_test:\n");
-  measure(curve25519_test, NULL);
-
+  emit(STRING(TEST) "\n");
+  measure(TEST);
   quit_success();
+
+  (void) do_nothing;
+  (void) stack_8w;
+  (void) stack_64w;
+  (void) hashtest_sha256;
+  (void) hashtest_sha512;
+  (void) curve25519_test;
 }

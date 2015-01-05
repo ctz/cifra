@@ -13,7 +13,10 @@ class Instruction:
         args = op.split('\t', 1)
         
         self.op = args[0].strip()
-        comment = args[1].strip().split(';', 1)
+        if len(args) == 2:
+            comment = args[1].strip().split(';', 1)
+        else:
+            comment = args
 
         self.args = comment[0].strip()
 
@@ -56,7 +59,6 @@ class Function:
     def get_literal_word(self, addr):
         for insn in self.insns:
             if insn.addr == addr and insn.op == '.word':
-                print 'word', insn.args
                 w = int(insn.args, 16)
                 if w & 0x80000000:
                     w = -(w ^ 0xffffffff) + 1
@@ -66,9 +68,6 @@ class Function:
     def analyse(self, prog):
         self.stack_guess = None
         regs = {}
-        debug = self.name == 'cf_curve25519_mul'
-        if debug:
-            self.dump()
 
         for insn in self.insns:
             # stack adjustment with literal
@@ -87,8 +86,7 @@ class Function:
             if insn.op == 'add' and insn.args.startswith('sp, r') and self.stack_guess is None:
                 reg = insn.args.split(', ')[1]
                 if reg in regs:
-                    print 'from add to sp,', reg, 'stack_guess =', -regs[reg]
-                    self.stack_guess = -regs[reg]
+                    self.stack_guess = regs[reg]
 
             # static branches
             if insn.op[0] == 'b' and literal_branch_target(insn.args):
@@ -96,7 +94,7 @@ class Function:
 
                 targetf = prog.function_at_addr(target)
 
-                if targetf:
+                if targetf and targetf != self:
                     self.calls.append(targetf)
 
         if self.stack_guess is None:
@@ -104,7 +102,8 @@ class Function:
 
     def stack_usage(self, hints, prog, depth = 0):
         hinted_calls = []
-        print '    ' * depth, 'stack:', self.name, self.stack_guess, 'bytes'
+        if self.stack_guess:
+            print '    ' * depth, 'stack:', self.name, self.stack_guess, 'bytes'
 
         our_hints = [h for h in hints if h and h[0] == self.name]
         if our_hints:
