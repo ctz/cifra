@@ -3,7 +3,7 @@
 #include "bitops.h"
 
 #include "handy.h"
-#include "ext/cutest.h"
+#include "cutest.h"
 #include "testutil.h"
 
 static void test_bitopts_select(void)
@@ -305,6 +305,15 @@ static void test_eax(void)
                       tmp);
   TEST_CHECK(rc == 0);
   TEST_CHECK(memcmp(tmp, msg, sizeof msg) == 0);
+
+  tag[0] ^= 0xff;
+  rc = cf_eax_decrypt(&cf_aes, &aes,
+                      cipher, sizeof cipher,
+                      header, sizeof header,
+                      nonce, sizeof nonce,
+                      tag, sizeof tag,
+                      tmp);
+  TEST_CHECK(rc == 1);
 }
 
 static void check_cmac(const char *keystr, size_t nkey,
