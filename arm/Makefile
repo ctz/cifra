@@ -1,37 +1,48 @@
 FUNCS = do_nothing stack_8w stack_64w hashtest_sha256 hashtest_sha512 curve25519_test
+TESTS = testcurve25519 testaes testsalsa20 testsha2
+ARCHS = stm32f0 stm32f3 qemucm0
 
-all: $(patsubst %,%.stm32f0.bin,$(FUNCS)) \
-	$(patsubst %,%.stm32f3.bin,$(FUNCS)) \
-	$(patsubst %,%.qemucm0.bin,$(FUNCS))
+all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
+	$(patsubst %,%.stm32f3.bin,$(FUNCS) $(TESTS)) \
+	$(patsubst %,%.qemucm0.bin,$(FUNCS) $(TESTS))
 
 %.stm32f0.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(LDFLAGS) -T linkscript.stm32f0.ld -mcpu=cortex-m0 -o $@ $^ -DTEST=$*
+	arm-none-eabi-gcc $(CFLAGS) $(LDFLAGS) -T linkscript.stm32f0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* $(EABI_M0)
 
 %.stm32f3.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m3 -o $@ $^ -DTEST=$*
+	arm-none-eabi-gcc $(CFLAGS) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m3 -DCORTEX_M3 -o $@ $^ -DTEST=$*
 
 %.qemucm0.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(LDFLAGS) -T linkscript.qemucm0.ld -mcpu=cortex-m0 -o $@ $^ -DTEST=$*
+	arm-none-eabi-gcc $(CFLAGS) $(LDFLAGS) -T linkscript.qemucm0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* $(EABI_M0)
 
 %.bin: %.elf
 	arm-none-eabi-objcopy -O binary $< $@
 .PRECIOUS: %.bin
 
-CFLAGS = -I../../bignum -I.. -O3 -ffunction-sections -g -Wall -Werror -std=gnu99 -mthumb
+CFLAGS = -I./ext -I../../bignum -I.. -Os -ffunction-sections -g -Wall -Werror -std=gnu99 -mthumb
 LDFLAGS = -nostartfiles -nostdlib -Wl,-gc-sections
 EABI_M0 = libeabi-cortex-m0-lmul.s
-SRCS = boot.c main.c semihost.c semihost.s ../sha256.c ../sha512.c ../blockwise.c ../curve25519.c
+SRCS = boot.c semihost.c semihost.s \
+       ../sha256.c ../sha512.c ../blockwise.c ../chash.c \
+       ../curve25519.c \
+       ../aes.c ../eax.c ../modes.c ../cmac.c \
+       ../hmac.c ../salsa20.c ../chacha20.c
 
-$(patsubst %,%.stm32f0.elf, $(FUNCS)): $(SRCS) $(EABI_M0)
-$(patsubst %,%.stm32f3.elf, $(FUNCS)): $(SRCS)
-$(patsubst %,%.qemucm0.elf, $(FUNCS)): $(SRCS) $(EABI_M0)
+$(patsubst %,%.stm32f0.elf, $(FUNCS)): $(SRCS) main.c
+$(patsubst %,%.stm32f3.elf, $(FUNCS)): $(SRCS) main.c
+$(patsubst %,%.qemucm0.elf, $(FUNCS)): $(SRCS) main.c
+
+$(patsubst %,testcurve25519.%.elf, $(ARCHS)): $(SRCS) ../testcurve25519.c
+$(patsubst %,testaes.%.elf, $(ARCHS)): $(SRCS) ../testaes.c
+$(patsubst %,testsalsa20.%.elf, $(ARCHS)): $(SRCS) ../testsalsa20.c
+$(patsubst %,testsha2.%.elf, $(ARCHS)): $(SRCS) ../testsha2.c
 
 run.%.qemucm0: %.qemucm0.bin
 	qemu-system-gnuarmeclipse -verbose -verbose -M STM32F0-Discovery -kernel $^ -semihosting -nographic -monitor null -serial null 2> $@.log
 	cat $@.log
 
-runtests: $(patsubst %,run.%.qemucm0,$(FUNCS))
-.PHONY: runtests
+test: $(patsubst %,run.%.qemucm0,$(FUNCS) $(TESTS))
+.PHONY: test
 
 clean:
 	rm -rf *.log *.elf *.bin
