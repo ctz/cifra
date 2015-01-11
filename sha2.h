@@ -53,6 +53,12 @@ extern void cf_sha512_update(cf_sha512_context *ctx, const void *data, size_t nb
 extern void cf_sha512_digest(const cf_sha512_context *ctx, uint8_t hash[CF_SHA512_HASHSZ]);
 extern void cf_sha512_digest_final(cf_sha512_context *ctx, uint8_t hash[CF_SHA512_HASHSZ]);
 
+/* Likewise SHA384 uses SHA512's types. */
+extern void cf_sha384_init(cf_sha512_context *ctx);
+extern void cf_sha384_update(cf_sha512_context *ctx, const void *data, size_t nbytes);
+extern void cf_sha384_digest(const cf_sha512_context *ctx, uint8_t hash[CF_SHA384_HASHSZ]);
+extern void cf_sha384_digest_final(cf_sha512_context *ctx, uint8_t hash[CF_SHA384_HASHSZ]);
+
 extern const cf_chash cf_sha384;
 extern const cf_chash cf_sha512;
 

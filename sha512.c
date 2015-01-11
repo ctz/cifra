@@ -237,7 +237,7 @@ void cf_sha512_digest_final(cf_sha512_context *ctx, uint8_t hash[CF_SHA512_HASHS
   memset(ctx, 0, sizeof *ctx);
 }
 
-void cf_sha384_digest(cf_sha512_context *ctx, uint8_t hash[CF_SHA384_HASHSZ])
+void cf_sha384_digest(const cf_sha512_context *ctx, uint8_t hash[CF_SHA384_HASHSZ])
 {
   uint8_t full[CF_SHA512_HASHSZ];
   cf_sha512_digest(ctx, full);
