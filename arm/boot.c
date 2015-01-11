@@ -133,3 +133,29 @@ void *memset(void *vtarg, int c, size_t len)
     targ[i] = (uint8_t) c;
   return vtarg;
 }
+
+int memcmp(const void *va, const void *vb, size_t len)
+{
+  const uint8_t *a = va, *b = vb;
+
+  for (size_t i = 0; i < len; i++)
+  {
+    if (a[i] != b[i])
+      return a[i] < b[i] ? -1 : 1;
+  }
+
+  return 0;
+}
+
+size_t strlen(const char *c)
+{
+  size_t r = 0;
+  while (*c++) r++;
+  return r;
+}
+
+void abort(void)
+{
+  while (1)
+    ;
+}
