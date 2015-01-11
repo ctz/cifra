@@ -17,3 +17,6 @@ tweetnacl -O2:		68876000c	3.0KB	2268b
 tweetnacl -Os:		75979000c	2.8KB	2244b
 tweetnacl -O3:		69622000c	8.9KB	2900b
 
+naclref -Os:		47813000c	3.2KB	4012b
+naclref -O3:		35059000c	4.1KB	4044b
+naclref -O2:		34309000c	3.5KB	4036b
