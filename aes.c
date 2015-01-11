@@ -1,5 +1,6 @@
 #include <string.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #include "aes.h"
 #include "handy.h"
@@ -121,18 +122,27 @@ static void aes_schedule(cf_aes_context *ctx, const uint8_t *key, size_t nkey)
   uint32_t *w = ctx->ks;
 
   /* First words are just the key. */
-  for (i = 0; i < nkey / 4; i++)
+  for (i = 0; i < nk; i++)
   {
     w[i] = word(key + i * 4);
   }
 
-  for (; i < n; i++)
+  uint32_t i_div_nk = 1;
+  uint32_t i_mod_nk = 0;
+
+  for (; i < n; i++, i_mod_nk++)
   {
     uint32_t temp = w[i - 1];
     
-    if (i % nk == 0)
-      temp = sub_word(rot_word(temp), S) ^ round_constant(i / nk);
-    else if (nk > 6 && i % nk == 4)
+    if (i_mod_nk == nk)
+    {
+      i_div_nk++;
+      i_mod_nk = 0;
+    }
+
+    if (i_mod_nk == 0)
+      temp = sub_word(rot_word(temp), S) ^ round_constant(i_div_nk);
+    else if (nk > 6 && i_mod_nk == 4)
       temp = sub_word(temp, S);
 
     w[i] = w[i - nk] ^ temp;
@@ -167,7 +177,7 @@ void cf_aes_init(cf_aes_context *ctx, const uint8_t *key, size_t nkey)
 #endif
 
     default:
-      assert(!"invalid aes key size");
+      abort();
   }
 }
 
