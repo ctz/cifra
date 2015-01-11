@@ -130,7 +130,7 @@ void cf_cmac_stream_update(cf_cmac_stream *ctx, const uint8_t *data, size_t len,
 
     /* If we have a whole number of blocks, and at least 1 block, we XOR in B.
      * Otherwise, we need to pad and XOR in P. */
-    if ((len + ctx->used) % blocksz == 0 &&
+    if (((len + ctx->used) & 0xf) == 0 &&
         !(len == 0 && ctx->used == 0 && ctx->processed == 0))
       final_fn = cmac_process_final_nopad;
     else
