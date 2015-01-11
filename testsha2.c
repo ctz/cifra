@@ -1,6 +1,7 @@
 #include "sha2.h"
 #include "../bignum/handy.h"
-#include "ext/cutest.h"
+#include "cutest.h"
+#include "testutil.h"
 
 #undef REALLY_SLOW_TEST
 

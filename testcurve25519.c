@@ -1,6 +1,6 @@
 #include "curve25519.h"
 #include "../bignum/handy.h"
-#include "ext/cutest.h"
+#include "cutest.h"
 #include "testutil.h"
 
 static void test_base_mul(void)

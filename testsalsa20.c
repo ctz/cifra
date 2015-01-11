@@ -3,7 +3,7 @@
 
 #include "testutil.h"
 #include "handy.h"
-#include "ext/cutest.h"
+#include "cutest.h"
 
 static void test_salsa20_core(void)
 {
