@@ -1,5 +1,8 @@
 *.o
 *.so
+*.gcov
+*.gcno
+*.gcda
 testaes
 testsha2
 testsalsa20
