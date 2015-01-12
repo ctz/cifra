@@ -44,16 +44,18 @@ run.%.qemucm0: %.qemucm0.bin
 	cat $@.log
 
 run.%.stm32f0: %.stm32f0.elf
-	{ openocd -f openocd.stm32f0.cfg > $@.log & echo $$! > openocd.pid; }
+	arm-none-eabi-readelf -l $^ > $@.log
+	echo '-----' >> $@.log
+	openocd -f openocd.stm32f0.cfg >> $@.log &
 	arm-none-eabi-gdb --quiet --batch-silent \
 		$^ \
 		-ex 'target remote :3333' \
-		-ex 'monitor arm semihosting enable' \
 		-ex 'monitor reset halt' \
 		-ex 'load' \
+		-ex 'monitor arm semihosting enable' \
 		-ex 'monitor reset run' \
-		-ex 'monitor wait_halt 30000'
-	kill `cat openocd.pid`
+		-ex 'monitor wait_halt 120000' \
+		-ex 'monitor shutdown'
 
 test: $(patsubst %,run.%.qemucm0,$(FUNCS) $(TESTS))
 .PHONY: test
