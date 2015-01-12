@@ -1,4 +1,6 @@
-FUNCS = do_nothing stack_8w stack_64w hashtest_sha256 hashtest_sha512 curve25519_test
+FUNCS = do_nothing stack_8w stack_64w hashtest_sha256 hashtest_sha512 \
+	aes128block_test aes256block_test \
+	curve25519_test
 TESTS = testcurve25519 testaes testsalsa20 testsha2
 ARCHS = stm32f0 stm32f3 qemucm0
 
@@ -41,8 +43,23 @@ run.%.qemucm0: %.qemucm0.bin
 	qemu-system-gnuarmeclipse -verbose -verbose -M STM32F0-Discovery -kernel $^ -semihosting -nographic -monitor null -serial null 2> $@.log
 	cat $@.log
 
+run.%.stm32f0: %.stm32f0.elf
+	{ openocd -f openocd.stm32f0.cfg > $@.log & echo $$! > openocd.pid; }
+	arm-none-eabi-gdb --quiet --batch-silent \
+		$^ \
+		-ex 'target remote :3333' \
+		-ex 'monitor arm semihosting enable' \
+		-ex 'monitor reset halt' \
+		-ex 'load' \
+		-ex 'monitor reset run' \
+		-ex 'monitor wait_halt 30000'
+	kill `cat openocd.pid`
+
 test: $(patsubst %,run.%.qemucm0,$(FUNCS) $(TESTS))
 .PHONY: test
+
+test.stm32f0: $(patsubst %,run.%.stm32f0,$(FUNCS) $(TESTS))
+.PHONY: test.stm32f0
 
 clean:
 	rm -rf *.log *.elf *.bin
