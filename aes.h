@@ -8,10 +8,35 @@
 
 #define AES_BLOCKSZ 16
 
-/* This works for small implementations which only support
- * 128-bit key AES.  Default is good for 128- to 256-bit keys. */
+/* --- Size/speed/security configuration --- */
+
+/* Round counts for different key sizes. */
+#define AES128_ROUNDS 10
+#define AES192_ROUNDS 12
+#define AES256_ROUNDS 14
+
+/* You can reduce the maximum number of rounds this implementation
+ * supports. This reduces the storage needed by cf_aes_context.
+ *
+ * Default is good for 128- to 256-bit keys. */
 #ifndef AES_MAXROUNDS
-# define AES_MAXROUNDS 14
+# define AES_MAXROUNDS AES256_ROUNDS
+#endif
+
+/* Define this as 1 if you need side channel protection against
+ * AES s-box lookups.  This has a non-trivial performance
+ * penalty.
+ *
+ * If you are targetting a microcontroller (with no cache)
+ * you can turn this off. */
+#ifndef AES_SIDE_CHANNEL_PROTECTED
+# define AES_SIDE_CHANNEL_PROTECTED 1
+#endif
+
+/* Define this to 1 if you don't need to decrypt anything
+ * This saves space.  cf_aes_decrypt calls abort. */
+#ifndef AES_ENCRYPT_ONLY
+# define AES_ENCRYPT_ONLY 0
 #endif
 
 typedef struct
