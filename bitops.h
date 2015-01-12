@@ -114,6 +114,12 @@ static inline uint32_t mask_u32(uint32_t x, uint32_t y)
   return - (uint32_t) (x == y);
 }
 
+/** Product 0xff if x == y, zero otherwise, without branching. */
+static inline uint8_t mask_u8(uint32_t x, uint32_t y)
+{
+  return - (uint8_t) (x == y);
+}
+
 /** Select the ith entry from the given table of n values, in a side channel-silent
  *  way. */
 static inline uint32_t select_u32(uint32_t i, volatile const uint32_t *tab, uint32_t n)
@@ -137,11 +143,38 @@ static inline uint8_t select_u8(uint32_t i, volatile const uint8_t *tab, uint32_
 
   for (uint32_t ii = 0; ii < n; ii++)
   {
-    uint8_t mask = mask_u32(i, ii) & 0xff;
+    uint8_t mask = mask_u8(i, ii);
     r = (r & ~mask) | (tab[ii] & mask);
   }
 
   return r;
+}
+
+/** Select the ath, bth, cth and dth entries from the given table of n values,
+ *  placing the results into a, b, c and d. */
+static inline void select_u8x4(uint8_t *a, uint8_t *b, uint8_t *c, uint8_t *d,
+                               volatile const uint8_t *tab, uint32_t n)
+{
+  uint8_t ra = 0,
+          rb = 0,
+          rc = 0,
+          rd = 0;
+  uint8_t mask;
+
+  for (uint32_t i = 0; i < n; i++)
+  {
+    uint8_t item = tab[i];
+
+    mask = mask_u8(*a, i); ra = (ra & ~mask) | (item & mask);
+    mask = mask_u8(*b, i); rb = (rb & ~mask) | (item & mask);
+    mask = mask_u8(*c, i); rc = (rc & ~mask) | (item & mask);
+    mask = mask_u8(*d, i); rd = (rd & ~mask) | (item & mask);
+  }
+
+  *a = ra;
+  *b = rb;
+  *c = rc;
+  *d = rd;
 }
 
 /** Increments the integer stored at v (of non-zero length len)
