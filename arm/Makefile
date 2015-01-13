@@ -54,7 +54,21 @@ run.%.stm32f0: %.stm32f0.elf
 		-ex 'load' \
 		-ex 'monitor arm semihosting enable' \
 		-ex 'monitor reset run' \
-		-ex 'monitor wait_halt 120000' \
+		-ex 'monitor wait_halt 240000' \
+		-ex 'monitor shutdown'
+
+run.%.stm32f3: %.stm32f3.elf
+	arm-none-eabi-readelf -l $^ > $@.log
+	echo '-----' >> $@.log
+	openocd -f openocd.stm32f3.cfg >> $@.log &
+	arm-none-eabi-gdb --quiet --batch-silent \
+		$^ \
+		-ex 'target remote :3333' \
+		-ex 'monitor reset halt' \
+		-ex 'load' \
+		-ex 'monitor arm semihosting enable' \
+		-ex 'monitor reset run' \
+		-ex 'monitor wait_halt 240000' \
 		-ex 'monitor shutdown'
 
 test: $(patsubst %,run.%.qemucm0,$(FUNCS) $(TESTS))
@@ -62,6 +76,9 @@ test: $(patsubst %,run.%.qemucm0,$(FUNCS) $(TESTS))
 
 test.stm32f0: $(patsubst %,run.%.stm32f0,$(FUNCS) $(TESTS))
 .PHONY: test.stm32f0
+
+test.stm32f3: $(patsubst %,run.%.stm32f3,$(FUNCS) $(TESTS))
+.PHONY: test.stm32f3
 
 clean:
 	rm -rf *.log *.elf *.bin
