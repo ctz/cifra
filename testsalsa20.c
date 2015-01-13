@@ -181,6 +181,10 @@ static void test_chacha20(void)
   cf_chacha20_cipher(&ctx, block, block, sizeof block);
 
   TEST_CHECK(memcmp(expect, block, sizeof expect) == 0);
+
+  /* Check 128-bit mode works. */
+  cf_chacha20_init(&ctx, key, 16, nonce);
+  cf_chacha20_cipher(&ctx, block, block, sizeof block);
 }
 
 TEST_LIST = {
