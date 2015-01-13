@@ -237,11 +237,21 @@ static void test_ctr(void)
 
   cf_ctr ctr;
   cf_ctr_init(&ctr, &cf_aes, &aes, nonce);
+  cf_ctr_cipher(&ctr, inp, out, 16); /* one piece */
+  TEST_CHECK(memcmp(expect, out, 16) == 0);
+  
+  cf_ctr_init(&ctr, &cf_aes, &aes, nonce);
+  cf_ctr_cipher(&ctr, inp, out, 1); /* incremental (2 blocks) */
   cf_ctr_cipher(&ctr, inp, out, 16);
+  cf_ctr_cipher(&ctr, inp, out, 16);
+  
+  cf_ctr_init(&ctr, &cf_aes, &aes, nonce);
+  cf_ctr_cipher(&ctr, inp, out, 1); /* incremental */
+  cf_ctr_cipher(&ctr, inp + 1, out + 1, 15);
   TEST_CHECK(memcmp(expect, out, 16) == 0);
 
   cf_ctr_init(&ctr, &cf_aes, &aes, nonce);
-  cf_ctr_cipher(&ctr, out, expect, 16);
+  cf_ctr_cipher(&ctr, out, expect, 16); /* decrypt */
   TEST_CHECK(memcmp(expect, inp, 16) == 0);
 
   memset(nonce, 0xff, 16);

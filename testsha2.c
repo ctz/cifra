@@ -7,13 +7,43 @@
 
 #undef REALLY_SLOW_TEST
 
-static void vector(const cf_chash *hash, const void *msg, size_t nmsg, const char *answer)
+static void vector(const cf_chash *hash, const void *vmsg, size_t nmsg, const char *answer)
 {
   uint8_t digest[CF_MAXHASH], expect[CF_MAXHASH];
+  const uint8_t *msg = vmsg;
+  size_t orig_nmsg = nmsg;
 
   unhex(expect, sizeof expect, answer);
 
-  cf_hash(hash, msg, nmsg, digest); 
+  cf_chash_ctx ctx;
+  hash->init(&ctx);
+
+  /* Input in carefully chosen chunk sizes to exercise blockwise code. */
+  if (nmsg)
+  {
+    hash->update(&ctx, msg, 1);
+    nmsg--;
+    msg++;
+  }
+
+  hash->update(&ctx, msg, nmsg);
+  hash->digest(&ctx, digest);
+  TEST_CHECK(memcmp(digest, expect, hash->hashsz) == 0);
+  
+  /* Now try with other arrangements. */
+  msg = vmsg;
+  nmsg = orig_nmsg;
+
+  hash->init(&ctx);
+  if (nmsg >= hash->blocksz)
+  {
+    hash->update(&ctx, msg, hash->blocksz - 1);
+    nmsg -= hash->blocksz - 1;
+    msg += hash->blocksz - 1;
+  }
+
+  hash->update(&ctx, msg, nmsg);
+  hash->digest(&ctx, digest);
   TEST_CHECK(memcmp(digest, expect, hash->hashsz) == 0);
 }
 
