@@ -45,10 +45,10 @@ void cf_cmac_init(cf_cmac *ctx, const cf_prp *prp, void *prpctx)
 {
   uint8_t L[CF_MAXBLOCK];
 
-  memset(ctx, 0, sizeof *ctx);
+  mem_clean(ctx, sizeof *ctx);
 
   /* L = E_K(0^n) */
-  memset(L, 0, prp->blocksz);
+  mem_clean(L, prp->blocksz);
   prp->block(prpctx, cf_prp_encrypt, L, L);
 
   /* B = 2L */
@@ -80,7 +80,7 @@ void cf_cmac_stream_reset(cf_cmac_stream *ctx)
 {
   uint8_t iv_zero[CF_MAXBLOCK] = { 0 };
   cf_cbc_init(&ctx->cbc, ctx->cmac.prp, ctx->cmac.prpctx, iv_zero);
-  memset(ctx->buffer, 0, sizeof ctx->buffer);
+  mem_clean(ctx->buffer, sizeof ctx->buffer);
   ctx->used = 0;
   ctx->processed = 0;
   ctx->finalised = 0;
