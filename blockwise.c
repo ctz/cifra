@@ -77,14 +77,9 @@ void cf_blockwise_accumulate_final(uint8_t *partial, size_t *npartial, size_t nb
     nbytes -= taken;
     *npartial += taken;
 
-    if (*npartial == nblock)
-    {
-      if (nbytes == 0)
-        process_final(ctx, partial);
-      else
-        process(ctx, partial);
-      *npartial = 0;
-    }
+    /* If we started with *npartial, we must have copied it
+     * in first. */
+    assert(*npartial < nblock);
   }
 }
 
