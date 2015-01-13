@@ -27,17 +27,14 @@ void cf_hmac_init(cf_hmac_ctx *ctx,
     nkey = hash->hashsz;
   }
 
+  /* Standard doesn't cover case where blocksz < hashsz. */
+  assert(nkey <= hash->blocksz);
+
   /* Right zero-pad short keys. */
-  if (nkey < hash->blocksz)
-  {
-    if (k != key)
-      memcpy(k, key, nkey);
+  if (k != key)
+    memcpy(k, key, nkey);
+  if (hash->blocksz > nkey)
     memset(k + nkey, 0, hash->blocksz - nkey);
-  } else {
-    /* Or just copy in. */
-    if (k != key)
-      memcpy(k, key, nkey);
-  }
 
   /* Start inner hash computation */
   uint8_t blk[CF_CHASH_MAXBLK];
