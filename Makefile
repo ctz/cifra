@@ -35,4 +35,4 @@ test-sl: $(wildcard test-*.sl) cifra.so
 cover: test
 	gcov *.c
 	echo 'Lines with missing coverage:'
-	grep '#####' *.gcov | grep -vE '(cutest).h.gcov'
+	grep '#####' *.gcov | grep -vE '(cutest|testutil).h.gcov'
