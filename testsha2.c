@@ -1,5 +1,6 @@
 #include "sha2.h"
 #include "hmac.h"
+#include "pbkdf2.h"
 #include "../bignum/handy.h"
 #include "cutest.h"
 #include "testutil.h"
@@ -218,6 +219,63 @@ static void test_sha256_long(void)
 }
 #endif
 
+static void check_pkbdf2_sha256(const char *pw, size_t npw,
+                                const char *salt, size_t nsalt,
+                                uint32_t iters,
+                                const char *answer)
+{
+  uint8_t expect[64];
+  size_t nexpect;
+  uint8_t output[64];
+
+  nexpect = unhex(expect, sizeof expect, answer);
+  cf_pbkdf2_hmac((const void *) pw, npw, 
+                 (const void *) salt, nsalt,
+                 iters,
+                 output, nexpect,
+                 &cf_sha256);
+
+  TEST_CHECK(memcmp(expect, output, nexpect) == 0);
+}
+
+static void test_pbkdf2_sha256(void)
+{
+  check_pkbdf2_sha256("password", 8,
+                      "salt", 4,
+                      1,
+                      "120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b");
+
+  check_pkbdf2_sha256("password", 8,
+                      "salt", 4,
+                      2,
+                      "ae4d0c95af6b46d32d0adff928f06dd02a303f8ef3c251dfd6e2d85a95474c43");
+
+  check_pkbdf2_sha256("password", 8,
+                      "salt", 4,
+                      4096,
+                      "c5e478d59288c841aa530db6845c4c8d962893a001ce4e11a4963873aa98134a");
+
+  check_pkbdf2_sha256("passwordPASSWORDpassword", 24,
+                      "saltSALTsaltSALTsaltSALTsaltSALTsalt", 36,
+                      4096,
+                      "348c89dbcbd32b2f32d814b8116e84cf2b17347ebc1800181c4e2a1fb8dd53e1c635518c7dac47e9");
+
+  check_pkbdf2_sha256("", 0,
+                      "salt", 4,
+                      1024,
+                      "9e83f279c040f2a11aa4a02b24c418f2d3cb39560c9627fa4f47e3bcc2897c3d");
+
+  check_pkbdf2_sha256("password", 8,
+                      "", 0,
+                      1024,
+                      "ea5808411eb0c7e830deab55096cee582761e22a9bc034e3ece925225b07bf46");
+
+  check_pkbdf2_sha256("\x70\x61\x73\x73\x00\x77\x6f\x72\x64", 9,
+                      "\x73\x61\x00\x6c\x74", 5,
+                      4096,
+                      "89b69d0516f829893c696226650a8687");
+}
+
 TEST_LIST = {
   { "sha224", test_sha224},
   { "sha256", test_sha256 },
@@ -228,6 +286,8 @@ TEST_LIST = {
   { "hmac-sha256", test_hmac_sha256 },
   { "hmac-sha384", test_hmac_sha384 },
   { "hmac-sha512", test_hmac_sha512 },
+
+  { "pbkdf2-sha256", test_pbkdf2_sha256 },
 
 #ifdef REALLY_SLOW_TEST
   { "sha256-long", test_sha256_long },
