@@ -1,5 +1,5 @@
 #include "curve25519.h"
-#include "../bignum/handy.h"
+#include "handy.h"
 #include "cutest.h"
 #include "testutil.h"
 

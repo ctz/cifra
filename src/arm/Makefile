@@ -21,7 +21,7 @@ all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
 	arm-none-eabi-objcopy -O binary $< $@
 .PRECIOUS: %.bin
 
-CFLAGS = -I./ext -I../../bignum -I.. -Os -ffunction-sections -g -Wall -Werror -std=gnu99 -mthumb
+CFLAGS = -I./ext -I../../../bignum -I.. -Os -ffunction-sections -g -Wall -Werror -std=gnu99 -mthumb
 LDFLAGS = -nostartfiles -nostdlib -Wl,-gc-sections
 EABI_M0 = libeabi-cortex-m0-lmul.s
 SRCS = boot.c semihost.c semihost.s \

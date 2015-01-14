@@ -1,7 +1,7 @@
 #include "sha2.h"
 #include "hmac.h"
 #include "pbkdf2.h"
-#include "../bignum/handy.h"
+#include "handy.h"
 #include "cutest.h"
 #include "testutil.h"
 
