@@ -1,3 +1,7 @@
+/**
+ * @brief The AES/Rijndael128 block cipher.
+ */
+
 #ifndef AES_H
 #define AES_H
 
@@ -41,32 +45,43 @@
 
 typedef struct
 {
+  /** Number of rounds. */
   uint32_t rounds;
+
+  /** Scheduled key material. */
   uint32_t ks[AES_BLOCKSZ / 4 * (AES_MAXROUNDS + 1)];
 } cf_aes_context;
 
-/** Fill in *ctx by expanding the given key.
- *  nkey must be 16, 24 or 32. */
+/** AES key scheduling.
+ *
+ *  Fill in @p *ctx by expanding the given key.
+ *  @p nkey must be 16, 24 or 32. */
 extern void cf_aes_init(cf_aes_context *ctx,
                         const uint8_t *key,
                         size_t nkey);
 
-/** Encrypts the given block, from in to out.  These may
- *  alias.
- *  Fails at runtime if ctx is invalid. */
+/** Encrypts the given block, from @p in to @p out.  These
+ *  may alias.
+ *
+ *  Fails at runtime if @p ctx is invalid. */
 extern void cf_aes_encrypt(const cf_aes_context *ctx,
                            const uint8_t in[AES_BLOCKSZ],
                            uint8_t out[AES_BLOCKSZ]);
 
-/** Decrypts the given block, in place.
- *  Fails at runtime if ctx is invalid. */
+/** Decrypts the given block, from @p in to @p out.  These
+ *  may alias.
+ *
+ *  Fails at runtime if @p ctx is invalid. */
 extern void cf_aes_decrypt(const cf_aes_context *ctx,
                            const uint8_t in[AES_BLOCKSZ],
                            uint8_t out[AES_BLOCKSZ]);
 
-/** Call this when you're done to erase the round keys. */
+/** Erase scheduled key material.
+ *
+ *  Call this when you're done to erase the round keys. */
 extern void cf_aes_finish(cf_aes_context *ctx);
 
+/** Abstract interface to AES. */
 extern const cf_prp cf_aes;
 
 #endif
