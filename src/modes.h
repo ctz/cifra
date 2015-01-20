@@ -119,4 +119,13 @@ void cf_gcm_encrypt(const cf_prp *prp, void *prpctx,
                     const uint8_t *nonce, size_t nnonce,
                     uint8_t *cipher, /* the same size as nplain */
                     uint8_t *tag, size_t ntag);
+
+/* Returns 0 on success; non-zero on error.  Nothing is written to
+ * plain on error. */
+int cf_gcm_decrypt(const cf_prp *prp, void *prpctx,
+                   const uint8_t *cipher, size_t ncipher,
+                   const uint8_t *header, size_t nheader,
+                   const uint8_t *nonce, size_t nnonce,
+                   const uint8_t *tag, size_t ntag,
+                   uint8_t *plain); /* the same size as ncipher */
 #endif

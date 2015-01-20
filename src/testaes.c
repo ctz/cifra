@@ -422,6 +422,7 @@ static void check_gcm(const char *keystr,
 {
   uint8_t key[32],
           plain[64],
+          plain_decrypt[64],
           aad[64],
           iv[64],
           cipher_expect[64],
@@ -450,6 +451,24 @@ static void check_gcm(const char *keystr,
 
   TEST_CHECK(memcmp(tag, tag_expect, ntag) == 0);
   TEST_CHECK(memcmp(cipher, cipher_expect, ncipher) == 0);
+
+  int err = cf_gcm_decrypt(&cf_aes, &ctx,
+                           cipher, ncipher,
+                           aad, naad,
+                           iv, niv,
+                           tag, ntag,
+                           plain_decrypt);
+  TEST_CHECK(err == 0);
+  TEST_CHECK(memcmp(plain_decrypt, plain, ncipher) == 0);
+
+  tag[0] ^= 0xff;
+  err = cf_gcm_decrypt(&cf_aes, &ctx,
+                       cipher, ncipher,
+                       aad, naad,
+                       iv, niv,
+                       tag, ntag,
+                       plain_decrypt);
+  TEST_CHECK(err == 1);
 }
 
 static void test_gcm(void)
