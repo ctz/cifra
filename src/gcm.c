@@ -12,8 +12,8 @@
 /* Incremental GHASH computation. */
 typedef struct
 {
-  uint8_t H[16];
-  uint8_t Y[16];
+  cf_gf128 H;
+  cf_gf128 Y;
   uint8_t buffer[16];
   size_t buffer_used;
   uint64_t len_aad;
@@ -27,14 +27,16 @@ typedef struct
 static void ghash_init(ghash_ctx *ctx, uint8_t H[16])
 {
   memset(ctx, 0, sizeof *ctx);
-  memcpy(ctx->H, H, 16);
+  cf_gf128_frombytes_be(H, ctx->H);
   ctx->state = STATE_AAD;
 }
 
 static void ghash_block(void *vctx, const uint8_t *data)
 {
   ghash_ctx *ctx = vctx;
-  cf_gf128_add(data, ctx->Y, ctx->Y);
+  cf_gf128 gfdata;
+  cf_gf128_frombytes_be(data, gfdata);
+  cf_gf128_add(gfdata, ctx->Y, ctx->Y);
   cf_gf128_mul(ctx->Y, ctx->H, ctx->Y);
 }
 
@@ -92,7 +94,7 @@ static void ghash_final(ghash_ctx *ctx, uint8_t out[16])
   ghash_add(ctx, lenbuf, sizeof lenbuf);
 
   assert(ctx->buffer_used == 0);
-  memcpy(out, ctx->Y, 16);
+  cf_gf128_tobytes_be(ctx->Y, out);
 }
 
 void cf_gcm_encrypt(const cf_prp *prp, void *prpctx,

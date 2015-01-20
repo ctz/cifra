@@ -21,10 +21,14 @@ void cf_cmac_init(cf_cmac *ctx, const cf_prp *prp, void *prpctx)
   prp->block(prpctx, cf_prp_encrypt, L, L);
 
   /* B = 2L */
-  cf_gf128_double(L, ctx->B);
+  cf_gf128 gf;
+  cf_gf128_frombytes_be(L, gf);
+  cf_gf128_double(gf, gf);
+  cf_gf128_tobytes_be(gf, ctx->B);
 
   /* P = 4L */
-  cf_gf128_double(ctx->B, ctx->P);
+  cf_gf128_double(gf, gf);
+  cf_gf128_tobytes_be(gf, ctx->P);
 
   ctx->prp = prp;
   ctx->prpctx = prpctx;

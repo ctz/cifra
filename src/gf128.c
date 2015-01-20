@@ -4,64 +4,79 @@
 
 #include <string.h>
 
-/* out = 2 * in.  Arguments may alias. */
-void cf_gf128_double(const uint8_t in[16], uint8_t out[16])
+void cf_gf128_tobytes_be(const cf_gf128 in, uint8_t out[16])
 {
-  uint8_t table[2] = { 0x00, 0x87 };
-  uint8_t topbyte = in[0];
-  uint8_t borrow = 0;
-  
-  for (size_t i = 16; i != 0; i--)
-  {
-    uint8_t inbyte = in[i - 1];
-    out[i - 1] = (inbyte << 1) | borrow;
-    borrow = inbyte >> 7;
-  }
+  write32_be(in[0], out + 0);
+  write32_be(in[1], out + 4);
+  write32_be(in[2], out + 8);
+  write32_be(in[3], out + 12);
+}
 
-  out[15] ^= select_u8(!!(topbyte & 0x80), table, 2);
+void cf_gf128_frombytes_be(const uint8_t in[16], cf_gf128 out)
+{
+  out[0] = read32_be(in + 0);
+  out[1] = read32_be(in + 4);
+  out[2] = read32_be(in + 8);
+  out[3] = read32_be(in + 12);
 }
 
 /* out = 2 * in.  Arguments may alias. */
-void cf_gf128_double_le(const uint8_t in[16], uint8_t out[16])
+void cf_gf128_double(const cf_gf128 in, cf_gf128 out)
+{
+  uint8_t table[2] = { 0x00, 0x87 };
+  uint32_t borrow = 0;
+  uint32_t inword;
+
+  inword = in[3];   out[3] = (inword << 1) | borrow;  borrow = inword >> 31;
+  inword = in[2];   out[2] = (inword << 1) | borrow;  borrow = inword >> 31;
+  inword = in[1];   out[1] = (inword << 1) | borrow;  borrow = inword >> 31;
+  inword = in[0];   out[0] = (inword << 1) | borrow;  borrow = inword >> 31;
+  
+  out[3] ^= select_u8(borrow, table, 2);
+}
+
+/* out = 2 * in.  Arguments may alias. */
+void cf_gf128_double_le(const cf_gf128 in, cf_gf128 out)
 {
   uint8_t table[2] = { 0x00, 0xe1 };
-  uint8_t topbyte = in[15];
-  uint8_t borrow = 0;
+  uint32_t borrow = 0;
+  uint32_t inword;
 
-  for (size_t i = 0; i < 16; i++)
-  {
-    uint8_t inbyte = in[i];
-    out[i] = (inbyte >> 1) | (borrow << 7);
-    borrow = inbyte & 1;
-  }
+  inword = in[0];   out[0] = (inword >> 1) | (borrow << 31);  borrow = inword & 1;
+  inword = in[1];   out[1] = (inword >> 1) | (borrow << 31);  borrow = inword & 1;
+  inword = in[2];   out[2] = (inword >> 1) | (borrow << 31);  borrow = inword & 1;
+  inword = in[3];   out[3] = (inword >> 1) | (borrow << 31);  borrow = inword & 1;
 
-  out[0] ^= select_u8(!!(topbyte & 1), table, 2);
+  out[0] ^= select_u8(borrow, table, 2) << 24;
 }
 
 /* out = x + y.  Arguments may alias. */
-void cf_gf128_add(const uint8_t x[16], const uint8_t y[16], uint8_t out[16])
+void cf_gf128_add(const cf_gf128 x, const cf_gf128 y, cf_gf128 out)
 {
-  xor_bb(out, x, y, 16);
+  out[0] = x[0] ^ y[0];
+  out[1] = x[1] ^ y[1];
+  out[2] = x[2] ^ y[2];
+  out[3] = x[3] ^ y[3];
 }
 
 /* out = xy.  Arguments may alias. */
-void cf_gf128_mul(const uint8_t x[16], const uint8_t y[16], uint8_t out[16])
+void cf_gf128_mul(const cf_gf128 x, const cf_gf128 y, cf_gf128 out)
 {
-  uint8_t Z[16], V[16], zero[16] = { 0 };
+  cf_gf128 Z, V, zero = { 0 };
  
   /* Z_0 = 0^128
    * V_0 = Y */ 
-  memset(Z, 0, 16);
-  memcpy(V, y, 16);
-  
+  memset(Z, 0, sizeof Z);
+  memcpy(V, y, sizeof V);
+
   for (int i = 0; i < 128; i++)
   {
-    uint8_t byte = x[i >> 3];
-    uint8_t bit = (byte >> (7 - (i & 7))) & 1;
+    uint32_t word = x[i >> 5];
+    uint8_t bit = (word >> (31 - (i & 31))) & 1;
 
     select_xor128(Z, zero, V, bit);
     cf_gf128_double_le(V, V);
   }
 
-  memcpy(out, Z, 16);
+  memcpy(out, Z, sizeof Z);
 }

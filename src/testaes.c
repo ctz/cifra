@@ -404,13 +404,18 @@ static void test_cmac(void)
 
 static void test_gf128_mul(void)
 {
-  uint8_t x[16], y[16], out[16], expect[16];
+  uint8_t bx[16], by[16], bout[16], bexpect[16];
 
-  unhex(x, sizeof x, "0388dace60b6a392f328c2b971b2fe78");
-  unhex(y, sizeof y, "66e94bd4ef8a2c3b884cfa59ca342b2e");
-  unhex(expect, sizeof expect, "5e2ec746917062882c85b0685353deb7");
+  unhex(bx, sizeof bx, "0388dace60b6a392f328c2b971b2fe78");
+  unhex(by, sizeof by, "66e94bd4ef8a2c3b884cfa59ca342b2e");
+  unhex(bexpect, sizeof bexpect, "5e2ec746917062882c85b0685353deb7");
+
+  cf_gf128 x, y, out;
+  cf_gf128_frombytes_be(bx, x);
+  cf_gf128_frombytes_be(by, y);
   cf_gf128_mul(x, y, out);
-  TEST_CHECK(memcmp(expect, out, 16) == 0);
+  cf_gf128_tobytes_be(out, bout);
+  TEST_CHECK(memcmp(bexpect, bout, 16) == 0);
 }
 
 static void check_gcm(const char *keystr,
