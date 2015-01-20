@@ -33,11 +33,19 @@ typedef struct
   uint8_t nonce[CF_MAXBLOCK];
   uint8_t keymat[CF_MAXBLOCK];
   size_t nkeymat;
+  size_t counter_offset;
+  size_t counter_width;
 } cf_ctr;
 
 /* Initialise CTR encryption/decryption context using selected prp and nonce.
  * (nb, this only increments the whole nonce as a big endian block) */
 void cf_ctr_init(cf_ctr *ctx, const cf_prp *prp, void *prpctx, uint8_t nonce[CF_MAXBLOCK]);
+
+/* Set the location and width of the nonce counter.  
+ *
+ * eg. offset = 12, width = 4 means the counter is mod 2^32 and placed
+ * at the end of the nonce. */
+void cf_ctr_custom_counter(cf_ctr *ctx, size_t offset, size_t width);
 
 /* Encrypt or decrypt bytes in CTR mode.
  * input and output may alias and must point to specified number of bytes. */
@@ -103,4 +111,12 @@ int cf_eax_decrypt(const cf_prp *prp, void *prpctx,
                    const uint8_t *nonce, size_t nnonce,
                    const uint8_t *tag, size_t ntag,
                    uint8_t *plain); /* the same size as ncipher */
+
+/* --- GCM --- */
+void cf_gcm_encrypt(const cf_prp *prp, void *prpctx,
+                    const uint8_t *plain, size_t nplain,
+                    const uint8_t *header, size_t nhead,
+                    const uint8_t *nonce, size_t nnonce,
+                    uint8_t *cipher, /* the same size as nplain */
+                    uint8_t *tag, size_t ntag);
 #endif

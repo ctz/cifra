@@ -4,46 +4,15 @@
 #include "modes.h"
 #include "bitops.h"
 #include "blockwise.h"
+#include "gf128.h"
 
 #include <string.h>
 #include <assert.h>
 
-static void block_double_gf2n(const cf_prp *prp,
-                              const uint8_t in[CF_MAXBLOCK],
-                              uint8_t out[CF_MAXBLOCK])
-{
-  /*
-   * For n = 128 the indicated polynomial is x^128 + x^7 + x^2 + x + 1.
-   *
-   * In that case,
-   *
-   *   2L = L<<1
-   *
-   * if the first bit of L is 0 and
-   *
-   *   2L = (L<<1) ^ 0^120 10000111
-   *  
-   * otherwise, where L<<1 means the left shift of L by one position
-   * (the first bit vanishing and a zero entering into the last bit).
-   */
-  uint8_t table[2] = { 0x00, 0x87 };
-
-  assert(prp->blocksz == 16);
-
-  uint8_t borrow = 0;
-  
-  for (size_t i = prp->blocksz; i != 0; i--)
-  {
-    out[i - 1] = (in[i - 1] << 1) | borrow;
-    borrow = (in[i - 1] >> 7);
-  }
-
-  out[15] ^= select_u8(!!(in[0] & 0x80), table, 2);
-}
-
 void cf_cmac_init(cf_cmac *ctx, const cf_prp *prp, void *prpctx)
 {
   uint8_t L[CF_MAXBLOCK];
+  assert(prp->blocksz == 16);
 
   mem_clean(ctx, sizeof *ctx);
 
@@ -52,10 +21,10 @@ void cf_cmac_init(cf_cmac *ctx, const cf_prp *prp, void *prpctx)
   prp->block(prpctx, cf_prp_encrypt, L, L);
 
   /* B = 2L */
-  block_double_gf2n(prp, L, ctx->B);
+  cf_gf128_double(L, ctx->B);
 
   /* P = 4L */
-  block_double_gf2n(prp, ctx->B, ctx->P);
+  cf_gf128_double(ctx->B, ctx->P);
 
   ctx->prp = prp;
   ctx->prpctx = prpctx;

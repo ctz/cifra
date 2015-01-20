@@ -10,7 +10,8 @@ TARGETS = testaes testsha2 testsalsa20 testcurve25519
 all: $(TARGETS)
 
 SOURCES = aes.o sha256.o sha512.o chash.o hmac.o pbkdf2.o modes.o eax.o \
-	  blockwise.o cmac.o salsa20.o chacha20.o curve25519.o
+	  gf128.o blockwise.o cmac.o salsa20.o chacha20.o curve25519.o \
+	  gcm.o
 
 testaes: $(SOURCES) testaes.o
 testsha2: $(SOURCES) testsha2.o

@@ -177,6 +177,26 @@ static inline void select_u8x4(uint8_t *a, uint8_t *b, uint8_t *c, uint8_t *d,
   *d = rd;
 }
 
+/** out ^= if0 or if1, depending on the value of bit. */
+static inline void select_xor128(uint8_t out[128],
+                                 const uint8_t if0[128],
+                                 const uint8_t if1[128],
+                                 uint8_t bit)
+{
+  /* To make this less slow, do this word-wise.  Alignment
+   * might yet conspire screw us. */
+  uint32_t *out_32 = (uint32_t *) out;
+  const uint32_t *if0_32 = (const uint32_t *) if0;
+  const uint32_t *if1_32 = (const uint32_t *) if1;
+  uint32_t mask1 = mask_u32(bit, 1);
+  uint32_t mask0 = ~mask1;
+  
+  out_32[0] ^= (if0_32[0] & mask0) | (if1_32[0] & mask1);
+  out_32[1] ^= (if0_32[1] & mask0) | (if1_32[1] & mask1);
+  out_32[2] ^= (if0_32[2] & mask0) | (if1_32[2] & mask1);
+  out_32[3] ^= (if0_32[3] & mask0) | (if1_32[3] & mask1);
+}
+
 /** Increments the integer stored at v (of non-zero length len)
  *  with the least significant byte first. */
 static inline void incr_le(uint8_t *v, size_t len)

@@ -1,6 +1,7 @@
 #include "aes.h"
 #include "modes.h"
 #include "bitops.h"
+#include "gf128.h"
 
 #include "handy.h"
 #include "cutest.h"
@@ -389,6 +390,168 @@ static void test_cmac(void)
              "e1992190549f6ed5696a2c056c315410");
 }
 
+static void test_gf128_mul(void)
+{
+  uint8_t x[16], y[16], out[16], expect[16];
+
+  unhex(x, sizeof x, "0388dace60b6a392f328c2b971b2fe78");
+  unhex(y, sizeof y, "66e94bd4ef8a2c3b884cfa59ca342b2e");
+  unhex(expect, sizeof expect, "5e2ec746917062882c85b0685353deb7");
+  cf_gf128_mul(x, y, out);
+  TEST_CHECK(memcmp(expect, out, 16) == 0);
+}
+
+static void check_gcm(const char *keystr,
+                      const char *plainstr,
+                      const char *aadstr,
+                      const char *ivstr,
+                      const char *cipherstr,
+                      const char *tagstr)
+{
+  uint8_t key[32],
+          plain[64],
+          aad[64],
+          iv[64],
+          cipher_expect[64],
+          cipher[64],
+          tag_expect[16],
+          tag[16];
+
+  size_t nkey = unhex(key, sizeof key, keystr),
+         nplain = unhex(plain, sizeof plain, plainstr),
+         naad = unhex(aad, sizeof aad, aadstr),
+         niv = unhex(iv, sizeof iv, ivstr),
+         ncipher = unhex(cipher_expect, sizeof cipher_expect, cipherstr),
+         ntag = unhex(tag_expect, sizeof tag_expect, tagstr);
+
+  assert(ncipher == nplain);
+
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, key, nkey);
+
+  cf_gcm_encrypt(&cf_aes, &ctx,
+                 plain, nplain,
+                 aad, naad,
+                 iv, niv,
+                 cipher,
+                 tag, ntag);
+
+  TEST_CHECK(memcmp(tag, tag_expect, ntag) == 0);
+  TEST_CHECK(memcmp(cipher, cipher_expect, ncipher) == 0);
+}
+
+static void test_gcm(void)
+{
+  check_gcm("00000000000000000000000000000000",
+            "",
+            "",
+            "000000000000000000000000",
+            "",
+            "58e2fccefa7e3061367f1d57a4e7455a");
+  check_gcm("00000000000000000000000000000000",
+            "00000000000000000000000000000000",
+            "",
+            "000000000000000000000000",
+            "0388dace60b6a392f328c2b971b2fe78",
+            "ab6e47d42cec13bdf53a67b21257bddf");
+  check_gcm("feffe9928665731c6d6a8f9467308308",
+            "d9313225f88406e5a55909c5aff5269a"
+            "86a7a9531534f7da2e4c303d8a318a72"
+            "1c3c0c95956809532fcf0e2449a6b525"
+            "b16aedf5aa0de657ba637b391aafd255",
+            "",
+            "cafebabefacedbaddecaf888",
+            "42831ec2217774244b7221b784d0d49c"
+            "e3aa212f2c02a4e035c17e2329aca12e"
+            "21d514b25466931c7d8f6a5aac84aa05"
+            "1ba30b396a0aac973d58e091473f5985",
+            "4d5c2af327cd64a62cf35abd2ba6fab4");
+  check_gcm("feffe9928665731c6d6a8f9467308308",
+            "d9313225f88406e5a55909c5aff5269a"
+            "86a7a9531534f7da2e4c303d8a318a72"
+            "1c3c0c95956809532fcf0e2449a6b525"
+            "b16aedf5aa0de657ba637b39",
+            "feedfacedeadbeeffeedfacedeadbeef"
+            "abaddad2",
+            "cafebabefacedbaddecaf888",
+            "42831ec2217774244b7221b784d0d49c"
+            "e3aa212f2c02a4e035c17e2329aca12e"
+            "21d514b25466931c7d8f6a5aac84aa05"
+            "1ba30b396a0aac973d58e091",
+            "5bc94fbc3221a5db94fae95ae7121a47");
+  check_gcm("feffe9928665731c6d6a8f9467308308",
+            "d9313225f88406e5a55909c5aff5269a"
+            "86a7a9531534f7da2e4c303d8a318a72"
+            "1c3c0c95956809532fcf0e2449a6b525"
+            "b16aedf5aa0de657ba637b39",
+            "feedfacedeadbeeffeedfacedeadbeef"
+            "abaddad2",
+            "cafebabefacedbad",
+            "61353b4c2806934a777ff51fa22a4755"
+            "699b2a714fcdc6f83766e5f97b6c7423"
+            "73806900e49f24b22b097544d4896b42"
+            "4989b5e1ebac0f07c23f4598",
+            "3612d2e79e3b0785561be14aaca2fccb");
+  check_gcm("feffe9928665731c6d6a8f9467308308",
+            "d9313225f88406e5a55909c5aff5269a"
+            "86a7a9531534f7da2e4c303d8a318a72"
+            "1c3c0c95956809532fcf0e2449a6b525"
+            "b16aedf5aa0de657ba637b39",
+            "feedfacedeadbeeffeedfacedeadbeef"
+            "abaddad2",
+            "9313225df88406e555909c5aff5269aa"
+            "6a7a9538534f7da1e4c303d2a318a728"
+            "c3c0c95156809539fcf0e2429a6b5254"
+            "16aedbf5a0de6a57a637b39b",
+            "8ce24998625615b603a033aca13fb894"
+            "be9112a5c3a211a8ba262a3cca7e2ca7"
+            "01e4a9a4fba43c90ccdcb281d48c7c6f"
+            "d62875d2aca417034c34aee5",
+            "619cc5aefffe0bfa462af43c1699d050");
+
+  check_gcm("feffe9928665731c6d6a8f9467308308",
+            "d9313225f88406e5a55909c5aff5269a"
+            "86a7a9531534f7da2e4c303d8a318a72"
+            "1c3c0c95956809532fcf0e2449a6b525"
+            "b16aedf5aa0de657ba637b39",
+            "feedfacedeadbeeffeedfacedeadbeef"
+            "abaddad2",
+            "9313225df88406e555909c5aff5269aa"
+            "6a7a9538534f7da1e4c303d2a318a728"
+            "c3c0c95156809539fcf0e2429a6b5254"
+            "16aedbf5a0de6a57a637b39b",
+            "8ce24998625615b603a033aca13fb894"
+            "be9112a5c3a211a8ba262a3cca7e2ca7"
+            "01e4a9a4fba43c90ccdcb281d48c7c6f"
+            "d62875d2aca417034c34aee5",
+            "619cc5aefffe0bfa462af43c1699d050");
+  check_gcm("000000000000000000000000000000000000000000000000",
+            "",
+            "",
+            "000000000000000000000000",
+            "",
+            "cd33b28ac773f74ba00ed1f312572435");
+  check_gcm("000000000000000000000000000000000000000000000000",
+            "00000000000000000000000000000000",
+            "",
+            "000000000000000000000000",
+            "98e7247c07f0fe411c267e4384b0f600",
+            "2ff58d80033927ab8ef4d4587514f0fb");
+  check_gcm("feffe9928665731c6d6a8f9467308308"
+            "feffe9928665731c",
+            "d9313225f88406e5a55909c5aff5269a"
+            "86a7a9531534f7da2e4c303d8a318a72"
+            "1c3c0c95956809532fcf0e2449a6b525"
+            "b16aedf5aa0de657ba637b391aafd255",
+            "",
+            "cafebabefacedbaddecaf888",
+            "3980ca0b3c00e841eb06fac4872a2757"
+            "859e1ceaa6efd984628593b40ca1e19c"
+            "7d773d00c144c525ac619d18c84a3f47"
+            "18e2448b2fe324d9ccda2710acade256",
+            "9924a7c8587336bfb118024db8674a14");
+}
+
 TEST_LIST = {
   { "bitopts-select", test_bitopts_select },
   { "bitopts-incr", test_bitopts_incr },
@@ -401,6 +564,8 @@ TEST_LIST = {
   { "ctr", test_ctr },
   { "eax", test_eax },
   { "cmac", test_cmac },
+  { "gf128-mul", test_gf128_mul },
+  { "gcm", test_gcm },
   { 0 }
 };
 
