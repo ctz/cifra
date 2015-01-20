@@ -7,6 +7,18 @@
 #include "cutest.h"
 #include "testutil.h"
 
+static void test_memclean(void)
+{
+  uint8_t buf[32];
+  memset(buf, 0xff, sizeof buf);
+  mem_clean(buf + 1, sizeof buf - 2);
+  TEST_CHECK(buf[0] == 0xff);
+  TEST_CHECK(buf[1] == 0x00);
+  TEST_CHECK(buf[16] == 0x00);
+  TEST_CHECK(buf[30] == 0x00);
+  TEST_CHECK(buf[31] == 0xff);
+}
+
 static void test_bitopts_select(void)
 {
   uint8_t tab8[8];
@@ -553,6 +565,7 @@ static void test_gcm(void)
 }
 
 TEST_LIST = {
+  { "handy-memclean", test_memclean },
   { "bitopts-select", test_bitopts_select },
   { "bitopts-incr", test_bitopts_incr },
   { "key-expansion-128", test_expand_128 },
