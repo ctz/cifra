@@ -39,6 +39,7 @@ static const uint8_t Rcon[11] =
   0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
 };
 
+#ifdef INLINE_FUNCS
 static inline uint32_t word4(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3)
 {
   return b0 << 24 | b1 << 16 | b2 << 8 | b3;
@@ -57,17 +58,35 @@ static inline uint8_t byte(uint32_t w, unsigned x)
   return (w >> (x * 8)) & 0xff;
 }
 
+static uint32_t round_constant(uint32_t i)
+{
+  return Rcon[i] << 24;
+}
+
+static uint32_t rot_word(uint32_t w)
+{
+  /* Takes
+   * word [a0,a1,a2,a3]
+   * returns
+   * word [a1,a2,a3,a0]
+   *
+   */
+  return rotl32(w, 8);
+}
+#endif
+
+#define word4(a, b, c, d) (((uint32_t)(a) << 24) | ((uint32_t)(b) << 16) | ((uint32_t)(c) << 8) | (d))
+#define word(u4) word4((u4)[0], (u4)[1], (u4)[2], (u4)[3])
+#define byte(w, x) ((w >> ((3 - (x)) << 3)) & 0xff)
+#define round_constant(i) ((uint32_t)(Rcon[i]) << 24)
+#define rot_word(w) rotl32((w), 8)
+
 static inline void bytes_out(uint32_t w, uint8_t v[4])
 {
   v[0] = byte(w, 0);
   v[1] = byte(w, 1);
   v[2] = byte(w, 2);
   v[3] = byte(w, 3);
-}
-
-static uint32_t round_constant(uint32_t i)
-{
-  return Rcon[i] << 24;
 }
 
 static uint32_t sub_word(uint32_t w, const uint8_t *sbox)
@@ -85,17 +104,6 @@ static uint32_t sub_word(uint32_t w, const uint8_t *sbox)
   d = sbox[d];
 #endif
   return word4(a, b, c, d);
-}
-
-static uint32_t rot_word(uint32_t w)
-{
-  /* Takes
-   * word [a0,a1,a2,a3]
-   * returns
-   * word [a1,a2,a3,a0]
-   *
-   */
-  return rotl32(w, 8);
 }
 
 static void aes_schedule(cf_aes_context *ctx, const uint8_t *key, size_t nkey)
@@ -241,7 +249,6 @@ void cf_aes_encrypt(const cf_aes_context *ctx,
          ctx->rounds == AES192_ROUNDS ||
          ctx->rounds == AES256_ROUNDS);
 
-  size_t nb = AES_BLOCKSZ / 4;
   uint32_t state[4] = {
     word(in + 0),
     word(in + 4),
@@ -249,19 +256,22 @@ void cf_aes_encrypt(const cf_aes_context *ctx,
     word(in + 12)
   };
 
-  add_round_key(state, &ctx->ks[0]);
+  const uint32_t *round_keys = ctx->ks;
+  add_round_key(state, round_keys);
+  round_keys += 4;
 
   for (uint32_t round = 1; round < ctx->rounds; round++)
   {
     sub_block(state);
     shift_rows(state);
     mix_columns(state);
-    add_round_key(state, &ctx->ks[round * nb]);
+    add_round_key(state, round_keys);
+    round_keys += 4;
   }
 
   sub_block(state);
   shift_rows(state);
-  add_round_key(state, &ctx->ks[ctx->rounds * nb]);
+  add_round_key(state, round_keys);
 
   bytes_out(state[0], out + 0);
   bytes_out(state[1], out + 4);
@@ -359,7 +369,6 @@ void cf_aes_decrypt(const cf_aes_context *ctx,
          ctx->rounds == AES192_ROUNDS ||
          ctx->rounds == AES256_ROUNDS);
 
-  size_t nb = AES_BLOCKSZ / 4;
   uint32_t state[4] = {
     word(in + 0),
     word(in + 4),
@@ -367,19 +376,22 @@ void cf_aes_decrypt(const cf_aes_context *ctx,
     word(in + 12)
   };
 
-  add_round_key(state, &ctx->ks[ctx->rounds * nb]);
+  const uint32_t *round_keys = &ctx->ks[ctx->rounds << 2];
+  add_round_key(state, round_keys);
+  round_keys -= 4;
 
   for (uint32_t round = ctx->rounds - 1; round != 0; round--)
   {
     inv_shift_rows(state);
     inv_sub_block(state);
-    add_round_key(state, &ctx->ks[round * nb]);
+    add_round_key(state, round_keys);
     inv_mix_columns(state);
+    round_keys -= 4;
   }
 
   inv_shift_rows(state);
   inv_sub_block(state);
-  add_round_key(state, &ctx->ks[0]);
+  add_round_key(state, round_keys);
   
   bytes_out(state[0], out + 0);
   bytes_out(state[1], out + 4);
