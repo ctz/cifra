@@ -25,44 +25,12 @@ static const uint32_t K[64] = {
   0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
-#ifdef INLINE_FUNCS
-static inline uint32_t CH(uint32_t x, uint32_t y, uint32_t z)
-{
-  return (x & y) ^ (~x & z);
-}
-
-static inline uint32_t MAJ(uint32_t x, uint32_t y, uint32_t z)
-{
-  return (x & y) ^ (x & z) ^ (y & z);
-}
-
-static inline uint32_t BSIG0(uint32_t x)
-{
-  return rotr32(x, 2) ^ rotr32(x, 13) ^ rotr32(x, 22);
-}
-
-static inline uint32_t BSIG1(uint32_t x)
-{
-  return rotr32(x, 6) ^ rotr32(x, 11) ^ rotr32(x, 25);
-}
-
-static inline uint32_t SSIG0(uint32_t x)
-{
-  return rotr32(x, 7) ^ rotr32(x, 18) ^ (x >> 3);
-}
-
-static inline uint32_t SSIG1(uint32_t x)
-{
-  return rotr32(x, 17) ^ rotr32(x, 19) ^ (x >> 10);
-}
-#else
 # define CH(x, y, z) (((x) & (y)) ^ (~(x) & (z)))
 # define MAJ(x, y, z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 # define BSIG0(x) (rotr32((x), 2) ^ rotr32((x), 13) ^ rotr32((x), 22))
 # define BSIG1(x) (rotr32((x), 6) ^ rotr32((x), 11) ^ rotr32((x), 25))
 # define SSIG0(x) (rotr32((x), 7) ^ rotr32((x), 18) ^ ((x) >> 3))
 # define SSIG1(x) (rotr32((x), 17) ^ rotr32((x), 19) ^ ((x) >> 10))
-#endif
 
 void cf_sha256_init(cf_sha256_context *ctx)
 {

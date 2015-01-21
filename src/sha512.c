@@ -49,44 +49,12 @@ static const uint64_t K[80] = {
   UINT64_C(0x5fcb6fab3ad6faec), UINT64_C(0x6c44198c4a475817)
 };
 
-#ifdef INLINE_FUNCS
-static inline uint64_t CH(uint64_t x, uint64_t y, uint64_t z)
-{
-  return (x & y) ^ (~x & z);
-}
-
-static inline uint64_t MAJ(uint64_t x, uint64_t y, uint64_t z)
-{
-  return (x & y) ^ (x & z) ^ (y & z);
-}
-
-static inline uint64_t BSIG0(uint64_t x)
-{
-  return rotr64(x, 28) ^ rotr64(x, 34) ^ rotr64(x, 39);
-}
-
-static inline uint64_t BSIG1(uint64_t x)
-{
-  return rotr64(x, 14) ^ rotr64(x, 18) ^ rotr64(x, 41);
-}
-
-static inline uint64_t SSIG0(uint64_t x)
-{
-  return rotr64(x, 1) ^ rotr64(x, 8) ^ (x >> 7);
-}
-
-static inline uint64_t SSIG1(uint64_t x)
-{
-  return rotr64(x, 19) ^ rotr64(x, 61) ^ (x >> 6);
-}
-#else
 # define CH(x, y, z) (((x) & (y)) ^ (~(x) & (z)))
 # define MAJ(x, y, z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 # define BSIG0(x) (rotr64((x), 28) ^ rotr64((x), 34) ^ rotr64((x), 39))
 # define BSIG1(x) (rotr64((x), 14) ^ rotr64((x), 18) ^ rotr64((x), 41))
 # define SSIG0(x) (rotr64((x), 1) ^ rotr64((x), 8) ^ ((x) >> 7))
 # define SSIG1(x) (rotr64((x), 19) ^ rotr64((x), 61) ^ ((x) >> 6))
-#endif
 
 void cf_sha512_init(cf_sha512_context *ctx)
 {
