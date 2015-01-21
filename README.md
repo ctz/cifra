@@ -38,9 +38,35 @@ Additionally all embedded targets expect to find the `arm-none-eabi` toolchain
 to be on the path.
 
 ## Measurements
-All measurements performed on an ARM M0 (STM32F030F4P6).
+All measurements performed on an Cortex-M0 (STM32F030F4P6).
 
-### Curve25519
+## AES
+This test does a key schedule, then computes one block.
+
+* **128 bit key**:
+    * **Cycles**: 1231000
+    * **Stack**: 460B
+    * **Code size**: 2256B
+* **256 bit key**:
+    * **Cycles**: 1698000
+    * **Stack**: 476B
+    * **Code size**: 2256B
+
+## SHA256
+This test hashes the empty string (one compression function invocation).
+
+* **Cycles**: 23000
+* **Stack**: 492B
+* **Code size**: 1176B
+
+## SHA512
+This test hashes the empty string (one compression function invocation).
+
+* **Cycles**: 59000
+* **Stack**: 820B
+* **Code size**: 2848B
+
+## Curve25519 on Cortex-M0 shootout
 Implementation | Optimisation | Cycles      | Code size | Stack usage
 -------------- | ------------ | ----------- | --------- | -----------
 donna          | `-Os`        | 15748000    | 7.4KB     | 3148B
@@ -52,6 +78,9 @@ naclref        | `-O3`        | 35059000    | 4.1KB     | 4044B
 tweetnacl      | `-Os`        | 75979000    | 2.8KB     | 2244B
 tweetnacl      | `-O2`        | 68876000    | 3.0KB     | 2268B
 tweetnacl      | `-O3`        | 69622000    | 8.9KB     | 2900B
+
+naclref at -O2 seems to give a good balance.  If you can spare the flash,
+donna is quite significantly quicker.
 
 ## C library requirements
 Cifra requires `memcpy`, `memset`, `abort` and `assert`.
