@@ -38,17 +38,21 @@ Additionally all embedded targets expect to find the `arm-none-eabi` toolchain
 to be on the path.
 
 ## Measurements
-All measurements performed on an Cortex-M0 (STM32F030F4P6).
+All measurements performed on an Cortex-M0 (STM32F030F4P6) at `-Os` (optimise
+for space).  For reference, the STM32F030F4P6 runs at 48MHz, so 1 million
+cycles is approximately 20 milliseconds.
 
 ## AES
 This test does a key schedule, then computes one block.
 
 * **128 bit key**:
-    * **Cycles**: 1231000
+    * **Cycles (key schedule)**: 248000
+    * **Cycles (block)**: 983000
     * **Stack**: 460B
     * **Code size**: 2256B
 * **256 bit key**:
-    * **Cycles**: 1698000
+    * **Cycles (key schedule)**: 323000
+    * **Cycles (block)**: 1375000
     * **Stack**: 476B
     * **Code size**: 2256B
 
