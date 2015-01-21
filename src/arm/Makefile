@@ -27,7 +27,7 @@ EABI_M0 = libeabi-cortex-m0-lmul.s
 SRCS = boot.c semihost.c semihost.s \
        ../sha256.c ../sha512.c ../blockwise.c ../chash.c \
        ../curve25519.c \
-       ../aes.c ../eax.c ../modes.c ../cmac.c \
+       ../aes.c ../eax.c ../gcm.c ../modes.c ../cmac.c ../gf128.c \
        ../hmac.c ../pbkdf2.c ../salsa20.c ../chacha20.c
 
 $(patsubst %,%.stm32f0.elf, $(FUNCS)): $(SRCS) main.c
