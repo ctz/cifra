@@ -111,13 +111,17 @@ static inline void xor_bb(uint8_t *out, const uint8_t *x, const uint8_t *y, size
 /** Produce 0xffffffff if x == y, zero otherwise, without branching. */
 static inline uint32_t mask_u32(uint32_t x, uint32_t y)
 {
-  return - (uint32_t) (x == y);
+  uint32_t diff = x ^ y;
+  uint32_t diff_is_zero = ~diff & (diff - 1);
+  return - (diff_is_zero >> 31);
 }
 
 /** Product 0xff if x == y, zero otherwise, without branching. */
 static inline uint8_t mask_u8(uint32_t x, uint32_t y)
 {
-  return - (uint8_t) (x == y);
+  uint8_t diff = x ^ y;
+  uint8_t diff_is_zero = ~diff & (diff - 1);
+  return - (diff_is_zero >> 7);
 }
 
 /** Select the ith entry from the given table of n values, in a side channel-silent
