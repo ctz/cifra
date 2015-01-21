@@ -39,49 +39,51 @@ to be on the path.
 
 ## Measurements
 All measurements performed on an Cortex-M0 (STM32F030F4P6) at `-Os` (optimise
-for space).  For reference, the STM32F030F4P6 runs at 48MHz, so 1 million
-cycles is approximately 20 milliseconds.
+for space).  For reference, the STM32F030F4P6 runs at a maximum clock of 48MHz,
+so 1 million cycles is approximately 20 milliseconds.
+
+Cycle counts are given in thousands of cycles.
 
 ## AES
-This test does a key schedule, then computes one block.
+This test does a key schedule, then encrypts one block.
 
 * **128 bit key**:
-    * **Cycles (key schedule)**: 248000
-    * **Cycles (block)**: 983000
-    * **Stack**: 460B
-    * **Code size**: 2256B
+    * **Cycles (key schedule)**: 3K
+    * **Cycles (block)**: 5K
+    * **Stack**: 348B
+    * **Code size**: 1224B
 * **256 bit key**:
-    * **Cycles (key schedule)**: 323000
-    * **Cycles (block)**: 1375000
-    * **Stack**: 476B
-    * **Code size**: 2256B
+    * **Cycles (key schedule)**: 5K
+    * **Cycles (block)**: 12K
+    * **Stack**: 420B
+    * **Code size**: 1296B
 
 ## SHA256
 This test hashes the empty string (one compression function invocation).
 
-* **Cycles**: 23000
+* **Cycles**: 23K
 * **Stack**: 492B
 * **Code size**: 1176B
 
 ## SHA512
 This test hashes the empty string (one compression function invocation).
 
-* **Cycles**: 59000
+* **Cycles**: 59K
 * **Stack**: 820B
 * **Code size**: 2848B
 
 ## Curve25519 on Cortex-M0 shootout
-Implementation | Optimisation | Cycles      | Code size | Stack usage
--------------- | ------------ | ----------- | --------- | -----------
-donna          | `-Os`        | 15748000    | 7.4KB     | 3148B
-donna          | `-O2`        | 15218000    | 7.9KB     | 3148B
-donna          | `-O3`        | 12907000    | 16KB      | 3380B
-naclref        | `-Os`        | 47813000    | 3.2KB     | 4012B
-naclref        | `-O2`        | 34309000    | 3.5KB     | 4036B
-naclref        | `-O3`        | 35059000    | 4.1KB     | 4044B
-tweetnacl      | `-Os`        | 75979000    | 2.8KB     | 2244B
-tweetnacl      | `-O2`        | 68876000    | 3.0KB     | 2268B
-tweetnacl      | `-O3`        | 69622000    | 8.9KB     | 2900B
+Implementation | Optimisation | Cycles    | Code size | Stack usage
+-------------- | ------------ | --------- | --------- | -----------
+donna          | `-Os`        | 15748K    | 7.4KB     | 3148B
+donna          | `-O2`        | 15218K    | 7.9KB     | 3148B
+donna          | `-O3`        | 12907K    | 16KB      | 3380B
+naclref        | `-Os`        | 47813K    | 3.2KB     | 4012B
+naclref        | `-O2`        | 34309K    | 3.5KB     | 4036B
+naclref        | `-O3`        | 35059K    | 4.1KB     | 4044B
+tweetnacl      | `-Os`        | 75979K    | 2.8KB     | 2244B
+tweetnacl      | `-O2`        | 68876K    | 3.0KB     | 2268B
+tweetnacl      | `-O3`        | 69622K    | 8.9KB     | 2900B
 
 naclref at -O2 seems to give a good balance.  If you can spare the flash,
 donna is quite significantly quicker.
