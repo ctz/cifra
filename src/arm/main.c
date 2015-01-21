@@ -2,23 +2,6 @@
 # error You must select a function to test.
 #endif
 
-/* AES tuning. */
-#define AES_ROUNDS_aes128block_test AES128_ROUNDS
-#define AES_ROUNDS_aes256block_test AES256_ROUNDS
-
-#define AES_MAXROUNDS AES_ROUNDS_ ## TEST
-
-#ifdef AES_MAXROUNDS
-# undef AES_MAXROUNDS
-# define AES_MAXROUNDS AES256_ROUNDS
-#endif
-
-/* We don't have cache. */
-#define AES_SIDE_CHANNEL_PROTECTED 0
-
-/* We don't need to decrypt. */
-#define AES_ENCRYPT_ONLY 1
-
 #include "semihost.h"
 #include "aes.h"
 #include "sha2.h"
@@ -72,7 +55,13 @@ static void aes128block_test(void)
   cf_aes_context ctx;
   cf_aes_init(&ctx, key, sizeof key);
   cf_aes_encrypt(&ctx, block, block);
-  cf_aes_finish(&ctx);
+}
+
+static void aes128sched_test(void)
+{
+  uint8_t key[16] = { 0 };
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, key, sizeof key);
 }
 
 static void aes256block_test(void)
@@ -81,7 +70,13 @@ static void aes256block_test(void)
   cf_aes_context ctx;
   cf_aes_init(&ctx, key, sizeof key);
   cf_aes_encrypt(&ctx, block, block);
-  cf_aes_finish(&ctx);
+}
+
+static void aes256sched_test(void)
+{
+  uint8_t key[32] = { 0 };
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, key, sizeof key);
 }
 
 static void curve25519_test(void)
@@ -149,6 +144,8 @@ int main(void)
   (void) hashtest_sha256;
   (void) hashtest_sha512;
   (void) aes128block_test;
+  (void) aes128sched_test;
   (void) aes256block_test;
+  (void) aes256sched_test;
   (void) curve25519_test;
 }

@@ -1,5 +1,6 @@
 FUNCS = do_nothing stack_8w stack_64w hashtest_sha256 hashtest_sha512 \
-	aes128block_test aes256block_test \
+	aes128block_test aes128sched_test \
+	aes256block_test aes256sched_test \
 	curve25519_test
 TESTS = testcurve25519 testaes testsalsa20 testsha2
 ARCHS = stm32f0 stm32f3 qemucm0
@@ -9,17 +10,29 @@ all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
 	$(patsubst %,%.qemucm0.bin,$(FUNCS) $(TESTS))
 
 %.stm32f0.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(LDFLAGS) -T linkscript.stm32f0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* $(EABI_M0)
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* $(EABI_M0)
 
 %.stm32f3.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m3 -DCORTEX_M3 -o $@ $^ -DTEST=$*
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m3 -DCORTEX_M3 -o $@ $^ -DTEST=$*
 
 %.qemucm0.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(LDFLAGS) -T linkscript.qemucm0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* $(EABI_M0)
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.qemucm0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* $(EABI_M0)
 
 %.bin: %.elf
 	arm-none-eabi-objcopy -O binary $< $@
 .PRECIOUS: %.bin
+
+AES_OPTIONS = -DAES_ENCRYPT_ONLY=1 -DAES_SIDE_CHANNEL_PROTECTED=0
+AES128_OPTIONS = -DAES_MAXROUNDS=AES128_ROUNDS
+AES256_OPTIONS = -DAES_MAXROUNDS=AES256_ROUNDS
+
+CFLAGS_aes128block_test = $(AES_OPTIONS) $(AES128_OPTIONS)
+CFLAGS_aes128sched_test = $(AES_OPTIONS) $(AES128_OPTIONS)
+
+CFLAGS_aes256block_test = $(AES_OPTIONS) $(AES256_OPTIONS)
+CFLAGS_aes256sched_test = $(AES_OPTIONS) $(AES256_OPTIONS)
+
+CFLAGS_testaes = -DAES_SIDE_CHANNEL_PROTECTED=0
 
 CFLAGS = -I./ext -I../../../bignum -I.. -Os -ffunction-sections -g -Wall -Werror -std=gnu99 -mthumb
 LDFLAGS = -nostartfiles -nostdlib -Wl,-gc-sections
