@@ -1,4 +1,5 @@
 
+#include "cf_config.h"
 #include "gf128.h"
 #include "bitops.h"
 
@@ -32,7 +33,11 @@ void cf_gf128_double(const cf_gf128 in, cf_gf128 out)
   inword = in[1];   out[1] = (inword << 1) | borrow;  borrow = inword >> 31;
   inword = in[0];   out[0] = (inword << 1) | borrow;  borrow = inword >> 31;
   
+#if CF_SIDE_CHANNEL_PROTECTION
   out[3] ^= select_u8(borrow, table, 2);
+#else
+  out[3] ^= table[borrow];
+#endif
 }
 
 /* out = 2 * in.  Arguments may alias. */
@@ -47,7 +52,11 @@ void cf_gf128_double_le(const cf_gf128 in, cf_gf128 out)
   inword = in[2];   out[2] = (inword >> 1) | (borrow << 31);  borrow = inword & 1;
   inword = in[3];   out[3] = (inword >> 1) | (borrow << 31);  borrow = inword & 1;
 
+#if CF_SIDE_CHANNEL_PROTECTION
   out[0] ^= select_u8(borrow, table, 2) << 24;
+#else
+  out[0] ^= table[borrow] << 24;
+#endif
 }
 
 /* out = x + y.  Arguments may alias. */
@@ -62,10 +71,13 @@ void cf_gf128_add(const cf_gf128 x, const cf_gf128 y, cf_gf128 out)
 /* out = xy.  Arguments may alias. */
 void cf_gf128_mul(const cf_gf128 x, const cf_gf128 y, cf_gf128 out)
 {
-  cf_gf128 Z, V, zero = { 0 };
+#if CF_SIDE_CHANNEL_PROTECTION
+  cf_gf128 zero = { 0 };
+#endif
  
   /* Z_0 = 0^128
    * V_0 = Y */ 
+  cf_gf128 Z, V;
   memset(Z, 0, sizeof Z);
   memcpy(V, y, sizeof V);
 
@@ -74,7 +86,13 @@ void cf_gf128_mul(const cf_gf128 x, const cf_gf128 y, cf_gf128 out)
     uint32_t word = x[i >> 5];
     uint8_t bit = (word >> (31 - (i & 31))) & 1;
 
+#if CF_SIDE_CHANNEL_PROTECTION
     select_xor128(Z, zero, V, bit);
+#else
+    if (bit)
+      xor_words(Z, V, 4);
+#endif
+
     cf_gf128_double_le(V, V);
   }
 

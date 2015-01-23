@@ -23,24 +23,14 @@
  * supports. This reduces the storage needed by cf_aes_context.
  *
  * Default is good for 128- to 256-bit keys. */
-#ifndef AES_MAXROUNDS
-# define AES_MAXROUNDS AES256_ROUNDS
-#endif
-
-/* Define this as 1 if you need side channel protection against
- * AES s-box lookups.  This has a non-trivial performance
- * penalty.
- *
- * If you are targetting a microcontroller (with no cache)
- * you can turn this off. */
-#ifndef AES_SIDE_CHANNEL_PROTECTED
-# define AES_SIDE_CHANNEL_PROTECTED 1
+#ifndef CF_AES_MAXROUNDS
+# define CF_AES_MAXROUNDS AES256_ROUNDS
 #endif
 
 /* Define this to 1 if you don't need to decrypt anything
  * This saves space.  cf_aes_decrypt calls abort. */
-#ifndef AES_ENCRYPT_ONLY
-# define AES_ENCRYPT_ONLY 0
+#ifndef CF_AES_ENCRYPT_ONLY
+# define CF_AES_ENCRYPT_ONLY 0
 #endif
 
 typedef struct
@@ -49,7 +39,7 @@ typedef struct
   uint32_t rounds;
 
   /** Scheduled key material. */
-  uint32_t ks[AES_BLOCKSZ / 4 * (AES_MAXROUNDS + 1)];
+  uint32_t ks[AES_BLOCKSZ / 4 * (CF_AES_MAXROUNDS + 1)];
 } cf_aes_context;
 
 /** AES key scheduling.

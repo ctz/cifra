@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "cf_config.h"
 #include "aes.h"
 #include "handy.h"
 #include "bitops.h"
@@ -95,7 +96,7 @@ static uint32_t sub_word(uint32_t w, const uint8_t *sbox)
           b = byte(w, 1),
           c = byte(w, 2),
           d = byte(w, 3);
-#if AES_SIDE_CHANNEL_PROTECTED
+#if CF_SIDE_CHANNEL_PROTECTION
   select_u8x4(&a, &b, &c, &d, sbox, 256);
 #else
   a = sbox[a];
@@ -148,21 +149,21 @@ void cf_aes_init(cf_aes_context *ctx, const uint8_t *key, size_t nkey)
 
   switch (nkey)
   {
-#if AES_MAXROUNDS >= AES128_ROUNDS
+#if CF_AES_MAXROUNDS >= AES128_ROUNDS
     case 16:
       ctx->rounds = AES128_ROUNDS;
       aes_schedule(ctx, key, nkey);
       break;
 #endif
 
-#if AES_MAXROUNDS >= AES192_ROUNDS
+#if CF_AES_MAXROUNDS >= AES192_ROUNDS
     case 24:
       ctx->rounds = AES192_ROUNDS;
       aes_schedule(ctx, key, nkey);
       break;
 #endif
 
-#if AES_MAXROUNDS >= AES256_ROUNDS
+#if CF_AES_MAXROUNDS >= AES256_ROUNDS
     case 32:
       ctx->rounds = AES256_ROUNDS;
       aes_schedule(ctx, key, nkey);
@@ -279,7 +280,7 @@ void cf_aes_encrypt(const cf_aes_context *ctx,
   bytes_out(state[3], out + 12);
 }
 
-#if AES_ENCRYPT_ONLY == 0
+#if CF_AES_ENCRYPT_ONLY == 0
 static const uint8_t S_inv[256] =
 {
   0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81,

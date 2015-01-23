@@ -108,6 +108,14 @@ static inline void xor_bb(uint8_t *out, const uint8_t *x, const uint8_t *y, size
     out[i] = x[i] ^ y[i];
 }
 
+/* out ^= x
+ * out and x may alias. */
+static inline void xor_words(uint32_t *out, const uint32_t *x, size_t nwords)
+{
+  for (size_t i = 0; i < nwords; i++)
+    out[i] ^= x[i];
+}
+
 /** Produce 0xffffffff if x == y, zero otherwise, without branching. */
 static inline uint32_t mask_u32(uint32_t x, uint32_t y)
 {
