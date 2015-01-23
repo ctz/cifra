@@ -148,7 +148,8 @@ typedef struct
 #define STCTRL_TICKINT  0x02
 #define STCTRL_ENABLE   0x01
 
-#define STCTRL_MAX 999
+#define STCTRL_MAX 0xffffff
+#define STCTRL_SHIFT 24
 
 extern uint32_t get_ticks(void);
 extern void reset_ticks(void);
@@ -164,6 +165,6 @@ uint32_t reset_cycles(void)
 
 uint32_t get_cycles(void)
 {
-  return get_ticks();
+  return (get_ticks() << STCTRL_SHIFT) + (STCTRL_MAX - SysTick->current);
 }
 
