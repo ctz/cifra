@@ -5,6 +5,7 @@
 #include "semihost.h"
 #include "aes.h"
 #include "sha2.h"
+#include "modes.h"
 #include "curve25519.h"
 
 #include <stdio.h>
@@ -79,6 +80,46 @@ static void aes256sched_test(void)
   cf_aes_init(&ctx, key, sizeof key);
 }
 
+static void aes128gcm_test(void)
+{
+  uint8_t key[16] = { 0 };
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, key, sizeof key);
+
+  uint8_t msg[16] = { 0 };
+  uint8_t aad[16] = { 0 };
+  uint8_t nonce[12] = { 0 };
+  uint8_t cipher[16] = { 0 };
+  uint8_t tag[16] = { 0 };
+
+  cf_gcm_encrypt(&cf_aes, &ctx,
+                 msg, sizeof msg,
+                 aad, sizeof aad,
+                 nonce, sizeof nonce,
+                 cipher,
+                 tag, sizeof tag);
+}
+
+static void aes128eax_test(void)
+{
+  uint8_t key[16] = { 0 };
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, key, sizeof key);
+
+  uint8_t msg[16] = { 0 };
+  uint8_t aad[16] = { 0 };
+  uint8_t nonce[12] = { 0 };
+  uint8_t cipher[16] = { 0 };
+  uint8_t tag[16] = { 0 };
+
+  cf_eax_encrypt(&cf_aes, &ctx,
+                 msg, sizeof msg,
+                 aad, sizeof aad,
+                 nonce, sizeof nonce,
+                 cipher,
+                 tag, sizeof tag);
+}
+
 static void curve25519_test(void)
 {
   uint8_t secret[32] = { 1 };
@@ -124,7 +165,7 @@ static void measure(measure_fn fn)
   emit_uint32(end_cycles - start_cycles);
   emit("\n");
   emit("stack = ");
-  emit_uint32(stack_words);
+  emit_uint32(stack_words << 2);
   emit("\n");
 
 }
@@ -147,5 +188,7 @@ int main(void)
   (void) aes128sched_test;
   (void) aes256block_test;
   (void) aes256sched_test;
+  (void) aes128gcm_test;
+  (void) aes128eax_test;
   (void) curve25519_test;
 }

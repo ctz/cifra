@@ -1,6 +1,7 @@
 FUNCS = do_nothing stack_8w stack_64w hashtest_sha256 hashtest_sha512 \
 	aes128block_test aes128sched_test \
 	aes256block_test aes256sched_test \
+	aes128gcm_test aes128eax_test \
 	curve25519_test
 TESTS = testcurve25519 testaes testsalsa20 testsha2
 ARCHS = stm32f0 stm32f3 qemucm0
@@ -22,17 +23,19 @@ all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
 	arm-none-eabi-objcopy -O binary $< $@
 .PRECIOUS: %.bin
 
-AES_OPTIONS = -DAES_ENCRYPT_ONLY=1 -DAES_SIDE_CHANNEL_PROTECTED=0
-AES128_OPTIONS = -DAES_MAXROUNDS=AES128_ROUNDS
-AES256_OPTIONS = -DAES_MAXROUNDS=AES256_ROUNDS
+AES_OPTIONS = -DCF_AES_ENCRYPT_ONLY=1 -DCF_SIDE_CHANNEL_PROTECTION=0
+AES128_OPTIONS = -DCF_AES_MAXROUNDS=AES128_ROUNDS
+AES256_OPTIONS = -DCF_AES_MAXROUNDS=AES256_ROUNDS
 
 CFLAGS_aes128block_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128sched_test = $(AES_OPTIONS) $(AES128_OPTIONS)
+CFLAGS_aes128gcm_test = $(AES_OPTIONS) $(AES128_OPTIONS)
+CFLAGS_aes128eax_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 
 CFLAGS_aes256block_test = $(AES_OPTIONS) $(AES256_OPTIONS)
 CFLAGS_aes256sched_test = $(AES_OPTIONS) $(AES256_OPTIONS)
 
-CFLAGS_testaes = -DAES_SIDE_CHANNEL_PROTECTED=0
+CFLAGS_testaes = -DCF_SIDE_CHANNEL_PROTECTION=0
 
 CFLAGS = -I./ext -I../../../bignum -I.. -Os -ffunction-sections -g -Wall -Werror -std=gnu99 -mthumb
 LDFLAGS = -nostartfiles -nostdlib -Wl,-gc-sections
