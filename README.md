@@ -42,35 +42,52 @@ All measurements performed on an Cortex-M0 (STM32F030F4P6) at `-Os` (optimise
 for space).  For reference, the STM32F030F4P6 runs at a maximum clock of 48MHz,
 so 1 million cycles is approximately 20 milliseconds.
 
-Cycle counts are given in thousands of cycles.
-
 ## AES
 This test does a key schedule, then encrypts one block.
 
 * **128 bit key**:
-    * **Cycles (key schedule)**: 3K
-    * **Cycles (block)**: 5K
-    * **Stack**: 348B
+    * **Cycles (key schedule)**: 3412
+    * **Cycles (block)**: 5066
+    * **Stack**: 312B
     * **Code size**: 1224B
+
 * **256 bit key**:
-    * **Cycles (key schedule)**: 5K
-    * **Cycles (block)**: 12K
-    * **Stack**: 420B
+    * **Cycles (key schedule)**: 5397
+    * **Cycles (block)**: 7018
+    * **Stack**: 396B
     * **Code size**: 1296B
+
+## AES128-GCM
+This test encrypts and authenticates a 16 byte message,
+with 16 bytes additionally authenticated data.  It includes
+the initial key schedule.
+
+* **Cycles**: 60972
+* **Stack**: 820B
+* **Code size**: 3500B
+
+## AES128-EAX
+This test encrypts and authenticates a 16 byte message,
+with 16 bytes additionally authenticated data.  It includes
+the initial key schedule.
+
+* **Cycles**: 54409
+* **Stack**: 936B
+* **Code size**: 3348B
 
 ## SHA256
 This test hashes the empty string (one compression function invocation).
 
-* **Cycles**: 23K
-* **Stack**: 492B
-* **Code size**: 1176B
+* **Cycles**: 22730
+* **Stack**: 460B
+* **Code size**: 1776B
 
 ## SHA512
 This test hashes the empty string (one compression function invocation).
 
-* **Cycles**: 59K
-* **Stack**: 820B
-* **Code size**: 2848B
+* **Cycles**: 57474
+* **Stack**: 780B
+* **Code size**: 2844B
 
 ## Curve25519 on Cortex-M0 shootout
 Implementation | Optimisation | Cycles    | Code size | Stack usage
