@@ -46,12 +46,14 @@ so 1 million cycles is approximately 20 milliseconds.
 This test does a key schedule, then encrypts one block.
 
 * **128 bit key**:
+    * **Cycles (key schedule + block)**: 8478
     * **Cycles (key schedule)**: 3412
     * **Cycles (block)**: 5066
     * **Stack**: 312B
     * **Code size**: 1224B
 
 * **256 bit key**:
+    * **Cycles (key schedule + block)**: 12415
     * **Cycles (key schedule)**: 5397
     * **Cycles (block)**: 7018
     * **Stack**: 396B
@@ -74,6 +76,23 @@ the initial key schedule.
 * **Cycles**: 54409
 * **Stack**: 936B
 * **Code size**: 3348B
+
+## Chacha20
+This test encrypts a 64 byte message.
+
+* **Cycles**: 6871
+* **Stack**: 552B
+* **Code size**: 1616B
+
+(For comparison with AES, add an AES256 key schedule plus 4 blocks.
+That's about 33K cycles.)
+
+## Salsa20
+This test encrypts a 64 byte message.
+
+* **Cycles**: 7020
+* **Stack**: 552B
+* **Code size**: 1624B
 
 ## SHA256
 This test hashes the empty string (one compression function invocation).
