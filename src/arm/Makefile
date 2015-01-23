@@ -2,6 +2,7 @@ FUNCS = do_nothing stack_8w stack_64w hashtest_sha256 hashtest_sha512 \
 	aes128block_test aes128sched_test \
 	aes256block_test aes256sched_test \
 	aes128gcm_test aes128eax_test \
+	salsa20_test chacha20_test \
 	curve25519_test
 TESTS = testcurve25519 testaes testsalsa20 testsha2
 ARCHS = stm32f0 stm32f3 qemucm0

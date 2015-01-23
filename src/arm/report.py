@@ -8,6 +8,8 @@ hashtest_sha256
 hashtest_sha512
 aes128gcm_test
 aes128eax_test
+salsa20_test
+chacha20_test
 do_nothing
 """.split()
 
@@ -68,6 +70,7 @@ for arch in results.keys():
 
 def print_aes(label, block_test, sched_test):
     print '* **%s**:' % label
+    print '    * **Cycles (key schedule + block)**: %d' % block_test['cycle_count']
     print '    * **Cycles (key schedule)**: %d' % sched_test['cycle_count']
     print '    * **Cycles (block)**: %d' % (block_test['cycle_count'] - sched_test['cycle_count'])
     print '    * **Stack**: %dB' % block_test['stack_usage']
@@ -90,6 +93,12 @@ for arch in results.keys():
     
     print '## AES128-EAX (%s)' % arch
     print_std(results[arch]['aes128eax_test'])
+    
+    print '## Chacha20 (%s)' % arch
+    print_std(results[arch]['chacha20_test'])
+
+    print '## Salsa20 (%s)' % arch
+    print_std(results[arch]['salsa20_test'])
 
     print '## SHA256 (%s)' % arch
     print_std(results[arch]['hashtest_sha256'])

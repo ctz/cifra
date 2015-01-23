@@ -6,6 +6,7 @@
 #include "aes.h"
 #include "sha2.h"
 #include "modes.h"
+#include "salsa20.h"
 #include "curve25519.h"
 
 #include <stdio.h>
@@ -120,6 +121,30 @@ static void aes128eax_test(void)
                  tag, sizeof tag);
 }
 
+static void salsa20_test(void)
+{
+  uint8_t key[32] = { 0 };
+  uint8_t nonce[8] = { 0 };
+  uint8_t msg[64] = { 0 };
+  uint8_t cipher[64] = { 0 };
+
+  cf_salsa20_ctx ctx;
+  cf_salsa20_init(&ctx, key, sizeof key, nonce);
+  cf_salsa20_cipher(&ctx, msg, cipher, sizeof msg);
+}
+
+static void chacha20_test(void)
+{
+  uint8_t key[32] = { 0 };
+  uint8_t nonce[8] = { 0 };
+  uint8_t msg[64] = { 0 };
+  uint8_t cipher[64] = { 0 };
+
+  cf_chacha20_ctx ctx;
+  cf_chacha20_init(&ctx, key, sizeof key, nonce);
+  cf_chacha20_cipher(&ctx, msg, cipher, sizeof msg);
+}
+
 static void curve25519_test(void)
 {
   uint8_t secret[32] = { 1 };
@@ -190,5 +215,7 @@ int main(void)
   (void) aes256sched_test;
   (void) aes128gcm_test;
   (void) aes128eax_test;
+  (void) salsa20_test;
+  (void) chacha20_test;
   (void) curve25519_test;
 }
