@@ -10,6 +10,7 @@ aes128gcm_test
 aes128eax_test
 salsa20_test
 chacha20_test
+curve25519_test
 do_nothing
 """.split()
 
@@ -170,4 +171,5 @@ do_table('ChaCha20', 'chacha20_test')
 do_table('Salsa20', 'salsa20_test')
 do_table('SHA256', 'hashtest_sha256')
 do_table('SHA512', 'hashtest_sha512')
+do_table('Curve25519', 'curve25519_test')
 
