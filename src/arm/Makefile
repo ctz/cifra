@@ -5,17 +5,21 @@ FUNCS = do_nothing stack_8w stack_64w hashtest_sha256 hashtest_sha512 \
 	salsa20_test chacha20_test \
 	curve25519_test
 TESTS = testcurve25519 testaes testsalsa20 testsha2
-ARCHS = stm32f0 stm32f3 qemucm0
+ARCHS = stm32f0 stm32f1 stm32f3 qemucm0
 
 all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
+	$(patsubst %,%.stm32f1.bin,$(FUNCS) $(TESTS)) \
 	$(patsubst %,%.stm32f3.bin,$(FUNCS) $(TESTS)) \
 	$(patsubst %,%.qemucm0.bin,$(FUNCS) $(TESTS))
 
 %.stm32f0.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* $(EABI_M0)
 
+%.stm32f1.elf:
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f1.ld -mcpu=cortex-m3 -DCORTEX_M3 -o $@ $^ -DTEST=$*
+
 %.stm32f3.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m3 -DCORTEX_M3 -o $@ $^ -DTEST=$*
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m4 -DCORTEX_M4 -o $@ $^ -DTEST=$*
 
 %.qemucm0.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.qemucm0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* $(EABI_M0)
@@ -48,6 +52,7 @@ SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
        ../hmac.c ../pbkdf2.c ../salsa20.c ../chacha20.c
 
 $(patsubst %,%.stm32f0.elf, $(FUNCS)): $(SRCS) main.c
+$(patsubst %,%.stm32f1.elf, $(FUNCS)): $(SRCS) main.c
 $(patsubst %,%.stm32f3.elf, $(FUNCS)): $(SRCS) main.c
 $(patsubst %,%.qemucm0.elf, $(FUNCS)): $(SRCS) main.c
 
@@ -64,6 +69,20 @@ run.%.stm32f0: %.stm32f0.elf
 	arm-none-eabi-readelf -l $^ > $@.log
 	echo '-----' >> $@.log
 	openocd -f openocd.stm32f0.cfg >> $@.log &
+	arm-none-eabi-gdb --quiet --batch-silent \
+		$^ \
+		-ex 'target remote :3333' \
+		-ex 'monitor reset halt' \
+		-ex 'load' \
+		-ex 'monitor arm semihosting enable' \
+		-ex 'monitor reset run' \
+		-ex 'monitor wait_halt 240000' \
+		-ex 'monitor shutdown'
+
+run.%.stm32f1: %.stm32f1.elf
+	arm-none-eabi-readelf -l $^ > $@.log
+	echo '-----' >> $@.log
+	openocd -f openocd.stm32f1.cfg >> $@.log &
 	arm-none-eabi-gdb --quiet --batch-silent \
 		$^ \
 		-ex 'target remote :3333' \
@@ -93,6 +112,9 @@ test: $(patsubst %,run.%.qemucm0,$(FUNCS) $(TESTS))
 
 test.stm32f0: $(patsubst %,run.%.stm32f0,$(FUNCS) $(TESTS))
 .PHONY: test.stm32f0
+
+test.stm32f1: $(patsubst %,run.%.stm32f1,$(FUNCS) $(TESTS))
+.PHONY: test.stm32f1
 
 test.stm32f3: $(patsubst %,run.%.stm32f3,$(FUNCS) $(TESTS))
 .PHONY: test.stm32f3
