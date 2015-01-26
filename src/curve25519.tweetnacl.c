@@ -164,7 +164,7 @@ static void inv25519(gf o, const gf i)
 void cf_curve25519_mul(uint8_t *q, const uint8_t *n, const uint8_t *p)
 {
   uint8_t z[32];
-  int64_t x[80];
+  gf x;
   gf a, b, c, d, e, f;
 
   for (size_t i = 0; i < 31; i++)
@@ -209,17 +209,9 @@ void cf_curve25519_mul(uint8_t *q, const uint8_t *n, const uint8_t *p)
     sel25519(c, d, r);
   }
 
-  for (size_t i = 0; i < 16; i++)
-  {
-    x[i + 16] = a[i];
-    x[i + 32] = c[i];
-    x[i + 48] = b[i];
-    x[i + 64] = d[i];
-  }
-
-  inv25519(x + 32, x + 32);
-  mul(x + 16, x + 16, x + 32);
-  pack25519(q, x + 16);
+  inv25519(c, c);
+  mul(a, a, c);
+  pack25519(q, a);
 }
 
 void cf_curve25519_mul_base(uint8_t *q, const uint8_t *n)
