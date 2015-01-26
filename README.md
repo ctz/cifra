@@ -38,51 +38,62 @@ Additionally all embedded targets expect to find the `arm-none-eabi` toolchain
 to be on the path.
 
 ## Measurements
-All measurements performed on an Cortex-M0 (STM32F030F4P6) at `-Os` (optimise
-for space).  For reference, the STM32F030F4P6 runs at a maximum clock of 48MHz,
-so 1 million cycles is approximately 20 milliseconds.
+All measurements performed at `-Os` (optimise for space), on the following MCUs: 
+
+Core       | Part number   | Price (1s)   | Max clock  | Flash | SRAM
+---------- | ------------- | ------------ | ---------- | ----- | -----
+Cortex-M0  | STM32F030F4P6 | 0.32EUR      | 48MHz      | 16KB  | 4KB
+Cortex-M3  | STM32F103C8T6 | 2.87EUR      | 72MHz      | 64KB  | 20KB
+Cortex-M4F | STM32F303K6T6 | 4.53EUR      | 72MHz      | 32KB  | 12KB
 
 ## AES
 This test does a key schedule, then encrypts one block.
 
-* **128 bit key**:
-    * **Cycles (key schedule + block)**: 8478
-    * **Cycles (key schedule)**: 3412
-    * **Cycles (block)**: 5066
-    * **Stack**: 312B
-    * **Code size**: 1224B
+### 128-bit key
+Core       | Cycles (key schedule + block) | Cycles (key schedule) | Cycles (block) | Stack | Code size
+---------- | ----------------------------- | --------------------- | -------------- | ----- | ---------
+Cortex-M0  | 7083                          | 2113                  | 4970           | 312B  | 1220B    
+Cortex-M3  | 4681                          | 1595                  | 3086           | 300B  | 1160B    
+Cortex-M4F | 4446                          | 1553                  | 2893           | 300B  | 1160B    
 
-* **256 bit key**:
-    * **Cycles (key schedule + block)**: 12415
-    * **Cycles (key schedule)**: 5397
-    * **Cycles (block)**: 7018
-    * **Stack**: 396B
-    * **Code size**: 1296B
+### 256-bit key
+Core       | Cycles (key schedule + block) | Cycles (key schedule) | Cycles (block) | Stack | Code size
+---------- | ----------------------------- | --------------------- | -------------- | ----- | ---------
+Cortex-M0  | 10480                         | 3558                  | 6922           | 396B  | 1292B    
+Cortex-M3  | 6684                          | 2414                  | 4270           | 380B  | 1252B    
+Cortex-M4F | 6382                          | 2381                  | 4001           | 380B  | 1252B    
+
 
 ## AES128-GCM
 This test encrypts and authenticates a 16 byte message,
 with 16 bytes additionally authenticated data.  It includes
 the initial key schedule.
 
-* **Cycles**: 60972
-* **Stack**: 820B
-* **Code size**: 3500B
+Core       | Cycles | Stack | Code size
+---------- | ------ | ----- | ---------
+Cortex-M0  | 56897  | 820B  | 3496B    
+Cortex-M3  | 43126  | 836B  | 3548B    
+Cortex-M4F | 40947  | 836B  | 3548B    
 
 ## AES128-EAX
 This test encrypts and authenticates a 16 byte message,
 with 16 bytes additionally authenticated data.  It includes
 the initial key schedule.
 
-* **Cycles**: 54409
-* **Stack**: 936B
-* **Code size**: 3348B
+Core       | Cycles | Stack | Code size
+---------- | ------ | ----- | ---------
+Cortex-M0  | 50030  | 936B  | 3344B    
+Cortex-M3  | 32744  | 924B  | 3308B    
+Cortex-M4F | 31121  | 924B  | 3308B    
 
 ## Chacha20
 This test encrypts a 64 byte message.
 
-* **Cycles**: 6871
-* **Stack**: 552B
-* **Code size**: 1616B
+Core       | Cycles | Stack | Code size
+---------- | ------ | ----- | ---------
+Cortex-M0  | 5630   | 568B  | 1612B    
+Cortex-M3  | 3448   | 568B  | 1632B    
+Cortex-M4F | 3323   | 568B  | 1632B    
 
 (For comparison with AES, add an AES256 key schedule plus 4 blocks.
 That's about 33K cycles.)
@@ -90,23 +101,29 @@ That's about 33K cycles.)
 ## Salsa20
 This test encrypts a 64 byte message.
 
-* **Cycles**: 7020
-* **Stack**: 552B
-* **Code size**: 1624B
+Core       | Cycles | Stack | Code size
+---------- | ------ | ----- | ---------
+Cortex-M0  | 5779   | 568B  | 1620B    
+Cortex-M3  | 3231   | 572B  | 1544B    
+Cortex-M4F | 3115   | 572B  | 1544B    
 
 ## SHA256
 This test hashes the empty string (one compression function invocation).
 
-* **Cycles**: 22730
-* **Stack**: 460B
-* **Code size**: 1776B
+Core       | Cycles | Stack | Code size
+---------- | ------ | ----- | ---------
+Cortex-M0  | 21866  | 460B  | 1776B    
+Cortex-M3  | 15476  | 456B  | 1804B    
+Cortex-M4F | 15204  | 456B  | 1804B    
 
 ## SHA512
 This test hashes the empty string (one compression function invocation).
 
-* **Cycles**: 57474
-* **Stack**: 780B
-* **Code size**: 2844B
+Core       | Cycles | Stack | Code size
+---------- | ------ | ----- | ---------
+Cortex-M0  | 55828  | 780B  | 2848B    
+Cortex-M3  | 43029  | 836B  | 2976B    
+Cortex-M4F | 42019  | 836B  | 2968B    
 
 ## Curve25519 on Cortex-M0 shootout
 Implementation | Optimisation | Cycles    | Code size | Stack usage
