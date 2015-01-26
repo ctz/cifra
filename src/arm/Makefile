@@ -41,7 +41,7 @@ CFLAGS_testaes = -DCF_SIDE_CHANNEL_PROTECTION=0
 CFLAGS = -I./ext -I../../../bignum -I.. -Os -ffunction-sections -g -Wall -Werror -std=gnu99 -mthumb
 LDFLAGS = -nostartfiles -nostdlib -Wl,-gc-sections
 EABI_M0 = libeabi-cortex-m0-lmul.s
-SRCS = boot.c semihost.c semihost.s \
+SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
        ../sha256.c ../sha512.c ../blockwise.c ../chash.c \
        ../curve25519.c \
        ../aes.c ../eax.c ../gcm.c ../modes.c ../cmac.c ../gf128.c \

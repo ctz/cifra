@@ -117,23 +117,6 @@ void *memmove(void *vtarg, const void *vsrc, size_t len)
   return vtarg;
 }
 
-void *memcpy(void *vtarg, const void *vsrc, size_t len)
-{
-  uint8_t *targ = vtarg;
-  const uint8_t *src = vsrc;
-  for (size_t i = 0; i < len; i++)
-    targ[i] = src[i];
-  return vtarg;
-}
-
-void *memset(void *vtarg, int c, size_t len)
-{
-  volatile uint8_t *targ = vtarg;
-  for (size_t i = 0; i < len; i++)
-    targ[i] = (uint8_t) c;
-  return vtarg;
-}
-
 int memcmp(const void *va, const void *vb, size_t len)
 {
   const uint8_t *a = va, *b = vb;
