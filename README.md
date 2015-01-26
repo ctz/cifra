@@ -7,7 +7,7 @@ In order of descending emphasis, cifra aims for:
 * **Clarity** and **simplicity**.
 * Countermeasures for side channel leaks inherent in some
   algorithms.
-* Suitablity for embedded use.  Particularly: cifra uses an
+* Suitability for embedded use.  Particularly: cifra uses an
   absolute minimum of the standard C library and is reasonably
   efficient with respect to code and data space.
 
