@@ -134,6 +134,9 @@ Cortex-M0  | 73304448 | 1740B | 1584B
 Cortex-M3  | 30659678 | 1684B | 1552B    
 Cortex-M4F | 27143485 | 1684B | 1560B    
 
+See [curve25519-shootout](curve25519-shootout.md) for comparison
+between the included curve25519 implementations.
+
 ## C library requirements
 Cifra requires `memcpy`, `memset`, `abort` and `assert`.
 
