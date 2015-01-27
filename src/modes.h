@@ -96,6 +96,23 @@ void cf_cmac_stream_update(cf_cmac_stream *ctx, const uint8_t *data, size_t ndat
 void cf_cmac_stream_final(cf_cmac_stream *ctx, uint8_t out[CF_MAXBLOCK]);
 
 /* --- EAX --- */
+
+/** EAX authenticated encryption mode.
+ *
+ *  - prp and prpctx describe the block cipher to use.
+ *  - nplain bytes at plain is the message plaintext.
+ *    nplain may be zero.
+ *  - nheader bytes at header is the additionally
+ *    authenticated data.  nheader may be zero.
+ *  - nnonce bytes at nonce is the nonce (of any
+ *    length).  This must not repeat for any given key.
+ *  - nplain bytes of ciphertext is written at cipher.
+ *    This must point to at least that much storage.
+ *  - ntag bytes of authentication tag is written to tag.
+ *    ntag must be non-zero and no greater than prp->blocksz.
+ *
+ *  This function does not fail.
+ */
 void cf_eax_encrypt(const cf_prp *prp, void *prpctx,
                     const uint8_t *plain, size_t nplain,
                     const uint8_t *header, size_t nheader,
@@ -103,8 +120,23 @@ void cf_eax_encrypt(const cf_prp *prp, void *prpctx,
                     uint8_t *cipher, /* the same size as nplain */
                     uint8_t *tag, size_t ntag);
 
-/* Returns 0 on success; non-zero on error.  Nothing is written to
- * plain on error. */
+/** EAX authenticated decryption mode.
+ *
+ *  - prp and prpctx describe the block cipher to use.
+ *  - ncipher bytes at cipher is the message ciphertext.
+ *    ncipher may be zero.
+ *  - nheader bytes at header is the additionally
+ *    authenticated data.  nheader may be zero.
+ *  - nnonce bytes at nonce is the nonce (of any
+ *    length).
+ *  - ntag bytes of authentication tag is read from tag.
+ *    ntag must be non-zero and no greater than prp->blocksz.
+ *  - ncipher bytes of plaintext is written at plain.
+ *    This must point to at least that much storage.
+ *
+ * Returns 0 on success; non-zero on error.  Nothing is written to
+ * plain on error.
+ */
 int cf_eax_decrypt(const cf_prp *prp, void *prpctx,
                    const uint8_t *cipher, size_t ncipher,
                    const uint8_t *header, size_t nheader,
@@ -113,6 +145,23 @@ int cf_eax_decrypt(const cf_prp *prp, void *prpctx,
                    uint8_t *plain); /* the same size as ncipher */
 
 /* --- GCM --- */
+/** GCM authenticated encryption mode.
+ *
+ *  - prp and prpctx describe the block cipher to use.
+ *  - nplain bytes at plain is the message plaintext.
+ *    nplain may be zero.
+ *  - nheader bytes at header is the additionally
+ *    authenticated data.  nheader may be zero.
+ *  - nnonce bytes at nonce is the nonce (of any length,
+ *    with 12 byte values being strongly recommended.)
+ *    This must not repeat for any given key.
+ *  - nplain bytes of ciphertext is written at cipher.
+ *    This must point to at least that much storage.
+ *  - ntag bytes of authentication tag is written to tag.
+ *    ntag must be non-zero and no greater than prp->blocksz.
+ *
+ *  This function does not fail.
+ */
 void cf_gcm_encrypt(const cf_prp *prp, void *prpctx,
                     const uint8_t *plain, size_t nplain,
                     const uint8_t *header, size_t nhead,
@@ -120,8 +169,23 @@ void cf_gcm_encrypt(const cf_prp *prp, void *prpctx,
                     uint8_t *cipher, /* the same size as nplain */
                     uint8_t *tag, size_t ntag);
 
-/* Returns 0 on success; non-zero on error.  Nothing is written to
- * plain on error. */
+/** GCM authenticated decryption mode.
+ *
+ *  - prp and prpctx describe the block cipher to use.
+ *  - ncipher bytes at cipher is the message ciphertext.
+ *    ncipher may be zero.
+ *  - nheader bytes at header is the additionally
+ *    authenticated data.  nheader may be zero.
+ *  - nnonce bytes at nonce is the nonce (of any
+ *    length).
+ *  - ntag bytes of authentication tag is read from tag.
+ *    ntag must be non-zero and no greater than prp->blocksz.
+ *  - ncipher bytes of plaintext is written at plain.
+ *    This must point to at least that much storage.
+ *
+ * Returns 0 on success; non-zero on error.  Nothing is written to
+ * plain on error.
+ */
 int cf_gcm_decrypt(const cf_prp *prp, void *prpctx,
                    const uint8_t *cipher, size_t ncipher,
                    const uint8_t *header, size_t nheader,
