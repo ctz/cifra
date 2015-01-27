@@ -9,7 +9,7 @@
 
 static void test_memclean(void)
 {
-  uint8_t buf[32];
+  uint8_t buf[32], buf2[32];
   memset(buf, 0xff, sizeof buf);
   mem_clean(buf + 1, sizeof buf - 2);
   TEST_CHECK(buf[0] == 0xff);
@@ -17,6 +17,21 @@ static void test_memclean(void)
   TEST_CHECK(buf[16] == 0x00);
   TEST_CHECK(buf[30] == 0x00);
   TEST_CHECK(buf[31] == 0xff);
+
+  memcpy(buf2, buf, sizeof buf);
+  TEST_CHECK(buf2[0] == 0xff);
+  TEST_CHECK(buf2[1] == 0x00);
+  TEST_CHECK(buf2[16] == 0x00);
+  TEST_CHECK(buf2[30] == 0x00);
+  TEST_CHECK(buf2[31] == 0xff);
+
+  memset(buf2, 0xee, sizeof buf);
+  TEST_CHECK(buf2[0] == 0xee);
+  TEST_CHECK(buf2[1] == 0xee);
+  TEST_CHECK(buf2[2] == 0xee);
+  TEST_CHECK(buf2[3] == 0xee);
+  TEST_CHECK(buf2[30] == 0xee);
+  TEST_CHECK(buf2[31] == 0xee);
 }
 
 static void test_bitopts_select(void)
@@ -155,33 +170,6 @@ static void test_expand_256(void)
   };
 
   test_expand(key, sizeof key, answer, ARRAYCOUNT(answer));
-}
-
-static void test_cipher_example(void)
-{
-  const uint8_t key[] = {
-    0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88,
-    0x09, 0xcf, 0x4f, 0x3c
-  };
-
-  const uint8_t input[] = {
-    0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2,
-    0xe0, 0x37, 0x07, 0x34
-  };
-
-  const uint8_t expected[] = {
-    0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb, 0xdc, 0x11, 0x85, 0x97,
-    0x19, 0x6a, 0x0b, 0x32
-  };
-
-  uint8_t output[AES_BLOCKSZ];
-
-  cf_aes_context ctx;
-  cf_aes_init(&ctx, key, sizeof key);
-  cf_aes_encrypt(&ctx, input, output);
-  cf_aes_finish(&ctx);
-
-  TEST_CHECK(memcmp(expected, output, sizeof expected) == 0);
 }
 
 static void vector(const char *input, const char *output,
@@ -595,7 +583,6 @@ TEST_LIST = {
   { "key-expansion-128", test_expand_128 },
   { "key-expansion-192", test_expand_192 },
   { "key-expansion-256", test_expand_256 },
-  { "cipher-example", test_cipher_example },
   { "vectors", test_vectors },
   { "cbc", test_cbc },
   { "ctr", test_ctr },
