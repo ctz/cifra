@@ -2,6 +2,7 @@ FUNCS = do_nothing stack_8w stack_64w hashtest_sha256 hashtest_sha512 \
 	aes128block_test aes128sched_test \
 	aes256block_test aes256sched_test \
 	aes128gcm_test aes128eax_test \
+	aes128ccm_test \
 	salsa20_test chacha20_test \
 	curve25519_test
 TESTS = testcurve25519 testaes testsalsa20 testsha2
@@ -36,6 +37,7 @@ CFLAGS_aes128block_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128sched_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128gcm_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128eax_test = $(AES_OPTIONS) $(AES128_OPTIONS)
+CFLAGS_aes128ccm_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 
 CFLAGS_aes256block_test = $(AES_OPTIONS) $(AES256_OPTIONS)
 CFLAGS_aes256sched_test = $(AES_OPTIONS) $(AES256_OPTIONS)
@@ -48,7 +50,8 @@ EABI_M0 = libeabi-cortex-m0-lmul.s
 SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
        ../sha256.c ../sha512.c ../blockwise.c ../chash.c \
        ../curve25519.c \
-       ../aes.c ../eax.c ../gcm.c ../modes.c ../cmac.c ../gf128.c \
+       ../aes.c ../eax.c ../gcm.c ../cbcmac.c ../ccm.c \
+       ../modes.c ../cmac.c ../gf128.c \
        ../hmac.c ../pbkdf2.c ../salsa20.c ../chacha20.c
 
 $(patsubst %,%.stm32f0.elf, $(FUNCS)): $(SRCS) main.c

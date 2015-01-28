@@ -71,9 +71,9 @@ the initial key schedule.
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 56897  | 820B  | 3496B    
-Cortex-M3  | 43126  | 836B  | 3548B    
-Cortex-M4F | 40947  | 836B  | 3548B    
+Cortex-M0  | 56997  | 820B  | 3468B    
+Cortex-M3  | 43202  | 836B  | 3520B    
+Cortex-M4F | 41017  | 836B  | 3520B    
 
 ## AES128-EAX
 This test encrypts and authenticates a 16 byte message,
@@ -82,9 +82,20 @@ the initial key schedule.
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 50030  | 936B  | 3344B    
-Cortex-M3  | 32744  | 924B  | 3308B    
-Cortex-M4F | 31121  | 924B  | 3308B    
+Cortex-M0  | 50111  | 936B  | 3332B    
+Cortex-M3  | 32789  | 924B  | 3292B    
+Cortex-M4F | 31161  | 924B  | 3292B    
+
+## AES128-CCM
+This test encrypts and authenticates a 16 byte message,
+with 16 bytes additionally authenticated data.  It includes
+the initial key schedule.
+
+Core       | Cycles | Stack | Code size
+---------- | ------ | ----- | ---------
+Cortex-M0  | 40252  | 816B  | 3168B    
+Cortex-M3  | 26626  | 796B  | 3096B    
+Cortex-M4F | 25353  | 796B  | 3096B    
 
 ## Chacha20
 This test encrypts a 64 byte message.

@@ -121,6 +121,26 @@ static void aes128eax_test(void)
                  tag, sizeof tag);
 }
 
+static void aes128ccm_test(void)
+{
+  uint8_t key[16] = { 0 };
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, key, sizeof key);
+
+  uint8_t msg[16] = { 0 };
+  uint8_t aad[16] = { 0 };
+  uint8_t nonce[11] = { 0 };
+  uint8_t cipher[16] = { 0 };
+  uint8_t tag[16] = { 0 };
+
+  cf_ccm_encrypt(&cf_aes, &ctx,
+                 msg, sizeof msg, 4,
+                 aad, sizeof aad,
+                 nonce, sizeof nonce,
+                 tag, sizeof tag,
+                 cipher);
+}
+
 static void salsa20_test(void)
 {
   uint8_t key[32] = { 0 };
@@ -215,6 +235,7 @@ int main(void)
   (void) aes256sched_test;
   (void) aes128gcm_test;
   (void) aes128eax_test;
+  (void) aes128ccm_test;
   (void) salsa20_test;
   (void) chacha20_test;
   (void) curve25519_test;

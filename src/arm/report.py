@@ -8,6 +8,7 @@ hashtest_sha256
 hashtest_sha512
 aes128gcm_test
 aes128eax_test
+aes128ccm_test
 salsa20_test
 chacha20_test
 curve25519_test
@@ -167,6 +168,7 @@ def do_table(title, test):
 
 do_table('AES128-GCM', 'aes128gcm_test')
 do_table('AES128-EAX', 'aes128eax_test')
+do_table('AES128-CCM', 'aes128ccm_test')
 do_table('ChaCha20', 'chacha20_test')
 do_table('Salsa20', 'salsa20_test')
 do_table('SHA256', 'hashtest_sha256')
