@@ -6,7 +6,7 @@ ifdef COVERAGE
 	CFLAGS += -coverage
 endif
 
-TARGETS = testaes testsha2 testsalsa20 testcurve25519 
+TARGETS = testaes testmodes testsha2 testsalsa20 testcurve25519
 all: $(TARGETS)
 
 SOURCES = aes.o sha256.o sha512.o chash.o hmac.o pbkdf2.o modes.o eax.o \
@@ -14,6 +14,7 @@ SOURCES = aes.o sha256.o sha512.o chash.o hmac.o pbkdf2.o modes.o eax.o \
 	  gcm.o
 
 testaes: $(SOURCES) testaes.o
+testmodes: $(SOURCES) testmodes.o
 testsha2: $(SOURCES) testsha2.o
 testsalsa20: $(SOURCES) testsalsa20.o
 testcurve25519: $(SOURCES) testcurve25519.o
@@ -23,6 +24,7 @@ clean:
 
 test: $(TARGETS)
 	./testaes
+	./testmodes
 	./testsha2
 	./testsalsa20
 	./testcurve25519
