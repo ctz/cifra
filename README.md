@@ -32,7 +32,7 @@ There is quite a lot of testing available:
 * **Cortex-M0 on-target tests**: run `make test.stm32f0` in the `src/arm` directory.
   This expects to find `openocd` on the path, with an STM32F0xx attached via
   stlinkv2.  It uses ARM semihosting to report results.
-* **Cortex-M3 on-target tests**: run `make test.stm32f3` as above.
+* **Cortex-M3/4 on-target tests**: run `make test.stm32f1` or `make test.stm32f3` as above.
 
 Additionally all embedded targets expect to find the `arm-none-eabi` toolchain
 to be on the path.
