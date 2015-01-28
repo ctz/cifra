@@ -1,5 +1,5 @@
 # Cifra
-Cifra is a collection of cryptographic primitives.
+Cifra is a collection of cryptographic primitives targetted at embedded use.
 
 ## Aims
 In order of descending emphasis, cifra aims for:
