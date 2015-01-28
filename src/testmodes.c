@@ -418,11 +418,6 @@ static void check_ccm(const char *keystr,
 
   assert(ncipher == nplain);
 
-  dump("key", key, nkey);
-  dump("header", header, nheader);
-  dump("plain", plain, nplain);
-  dump("nonce", nonce, nnonce);
-
   cf_aes_context ctx;
   cf_aes_init(&ctx, key, nkey);
 
