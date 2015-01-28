@@ -51,6 +51,41 @@ void cf_ctr_custom_counter(cf_ctr *ctx, size_t offset, size_t width);
  * input and output may alias and must point to specified number of bytes. */
 void cf_ctr_cipher(cf_ctr *ctx, const uint8_t *input, uint8_t *output, size_t bytes);
 
+/* Discards the rest of this block of key stream. */
+void cf_ctr_discard_block(cf_ctr *ctx);
+
+/* --- CBCMAC --- */
+
+/* Stream interface to CBCMAC signing.  You shouldn't use CBCMAC.
+ * Use CMAC instead. */
+typedef struct
+{
+  const cf_prp *prp;
+  void *prpctx;
+  cf_cbc cbc;
+  uint8_t buffer[CF_MAXBLOCK];
+  size_t used;
+} cf_cbcmac_stream;
+
+/* Initialise CBCMAC signing context using selected prp. */
+void cf_cbcmac_stream_init(cf_cbcmac_stream *ctx, const cf_prp *prp, void *prpctx);
+
+/* Reset the streaming signing context, to sign a new message. */
+void cf_cbcmac_stream_reset(cf_cbcmac_stream *ctx);
+
+/* Process ndata bytes at data. */
+void cf_cbcmac_stream_update(cf_cbcmac_stream *ctx, const uint8_t *data, size_t ndata);
+
+/* Output the MAC to ctx->prp->blocksz bytes at out.
+ * ctx->used must be zero: the inputed message must be an exact number of
+ * blocks. */
+void cf_cbcmac_stream_nopad_final(cf_cbcmac_stream *ctx, uint8_t out[CF_MAXBLOCK]);
+
+/* Output the MAC to ctx->prp->blocksz bytes at out.
+ *
+ * The message is padded with PKCS#5 padding. */
+void cf_cbcmac_stream_pad_final(cf_cbcmac_stream *ctx, uint8_t out[CF_MAXBLOCK]);
+
 /* --- CMAC --- */
 typedef struct
 {
@@ -164,7 +199,7 @@ int cf_eax_decrypt(const cf_prp *prp, void *prpctx,
  */
 void cf_gcm_encrypt(const cf_prp *prp, void *prpctx,
                     const uint8_t *plain, size_t nplain,
-                    const uint8_t *header, size_t nhead,
+                    const uint8_t *header, size_t nheader,
                     const uint8_t *nonce, size_t nnonce,
                     uint8_t *cipher, /* the same size as nplain */
                     uint8_t *tag, size_t ntag);
@@ -192,4 +227,58 @@ int cf_gcm_decrypt(const cf_prp *prp, void *prpctx,
                    const uint8_t *nonce, size_t nnonce,
                    const uint8_t *tag, size_t ntag,
                    uint8_t *plain); /* the same size as ncipher */
+
+/* --- CCM --- */
+/** CCM authenticated encryption mode.
+ *
+ *  - prp and prpctx describe the block cipher to use.
+ *  - nplain bytes at plain is the message plaintext.
+ *    nplain may be zero.  nplain must meet the constraints
+ *    imposed on it by L.
+ *  - L is the length of the message length encoding.  This must
+ *    be in the interval [2, 8] and gives a maximum message
+ *    size of 2 ** 8L bytes.
+ *  - nheader bytes at header is the additionally
+ *    authenticated data.  nheader may be zero.
+ *  - nnonce bytes at nonce is the nonce (of exactly 15 - L
+ *    octets for a 128-bit block cipher).
+ *    This must not repeat for any given key.
+ *  - ntag bytes of authentication tag is written to tag.
+ *    ntag must be 4, 6, 8, 10, 12, 14 or 16.
+ *  - nplain bytes of ciphertext is written at cipher.
+ *    This must point to at least that much storage.
+ */
+void cf_ccm_encrypt(const cf_prp *prp, void *prpctx,
+                    const uint8_t *plain, size_t nplain, size_t L,
+                    const uint8_t *header, size_t nheader,
+                    const uint8_t *nonce, size_t nnonce,
+                    uint8_t *tag, size_t ntag,
+                    uint8_t *cipher);
+
+/** CCM authenticated decryption mode.
+ *
+ *  - prp and prpctx describe the block cipher to use.
+ *  - ncipher bytes at cipher is the message ciphertext.
+ *  - L is the length of the message length encoding.  This must
+ *    be in the interval [2, 8] and gives a maximum message
+ *    size of 2 ** 8L bytes.
+ *  - nheader bytes at header is the additionally
+ *    authenticated data.  nheader may be zero.
+ *  - nnonce bytes at nonce is the nonce (of exactly 15 - L
+ *    octets for a 128-bit block cipher).
+ *    This must not repeat for any given key.
+ *  - ntag bytes of authentication tag is expected at tag.
+ *    ntag must be 4, 6, 8, 10, 12, 14 or 16.
+ *  - ncipher bytes of plaintext is written at plain.
+ *    This must point to at least that much storage.
+ *
+ * Returns 0 on success; non-zero on error.  Plain is cleared
+ * on error.
+ */
+int cf_ccm_decrypt(const cf_prp *prp, void *prpctx,
+                   const uint8_t *cipher, size_t ncipher, size_t L,
+                   const uint8_t *header, size_t nheader,
+                   const uint8_t *nonce, size_t nnonce,
+                   const uint8_t *tag, size_t ntag,
+                   uint8_t *plain);
 #endif

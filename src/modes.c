@@ -79,3 +79,8 @@ void cf_ctr_cipher(cf_ctr *ctx, const uint8_t *input, uint8_t *output, size_t by
                    ctr_next_block,
                    ctx);
 }
+
+void cf_ctr_discard_block(cf_ctr *ctx)
+{
+  ctx->nkeymat = 0;
+}

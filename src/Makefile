@@ -11,7 +11,7 @@ all: $(TARGETS)
 
 SOURCES = aes.o sha256.o sha512.o chash.o hmac.o pbkdf2.o modes.o eax.o \
 	  gf128.o blockwise.o cmac.o salsa20.o chacha20.o curve25519.o \
-	  gcm.o
+	  gcm.o cbcmac.o ccm.o
 
 testaes: $(SOURCES) testaes.o
 testmodes: $(SOURCES) testmodes.o
