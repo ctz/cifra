@@ -12,7 +12,7 @@ In order of descending emphasis, cifra aims for:
   efficient with respect to code and data space.
 
 ## Features
-* **AES** in the **GCM** and **EAX** authenticated encryption modes.
+* **AES** in the **GCM**, **CCM** and **EAX** authenticated encryption modes.
 * **SHA224**, **SHA256**, **SHA384** and **SHA512** hash functions (including **HMAC** and **PBKDF2**).
 * **ChaCha20** and **Salsa20** stream ciphers.
 * 100% code coverage by line.
