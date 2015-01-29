@@ -50,7 +50,7 @@ typedef struct
 /** The maximum size of a @ref cf_chash_ctx.  This allows
  *  use to put a structure in automatic storage that can
  *  store working data for any supported hash function. */
-#define CF_CHASH_MAXCTX 224
+#define CF_CHASH_MAXCTX 360
 
 /** Maximum hash function block size (bytes). */
 #define CF_CHASH_MAXBLK 128

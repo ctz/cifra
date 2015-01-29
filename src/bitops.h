@@ -61,6 +61,15 @@ static inline uint64_t read64_be(const uint8_t buf[8])
          lo;
 }
 
+/** Read 8 bytes from buf, as a 64-bit little endian quantity. */
+static inline uint64_t read64_le(const uint8_t buf[8])
+{
+  uint32_t hi = read32_le(buf + 4),
+           lo = read32_le(buf);
+  return ((uint64_t)hi) << 32 |
+         lo;
+}
+
 /** Encode v as a 32-bit big endian quantity into buf. */
 static inline void write32_be(uint32_t v, uint8_t buf[4])
 {
@@ -76,7 +85,7 @@ static inline void write32_le(uint32_t v, uint8_t buf[4])
   *buf++ = v & 0xff;
   *buf++ = (v >> 8) & 0xff;
   *buf++ = (v >> 16) & 0xff;
-  *buf++ = (v >> 24) & 0xff;
+  *buf   = (v >> 24) & 0xff;
 }
 
 /** Encode v as a 64-bit big endian quantity into buf. */
@@ -90,6 +99,19 @@ static inline void write64_be(uint64_t v, uint8_t buf[8])
   *buf++ = (v >> 16) & 0xff;
   *buf++ = (v >> 8) & 0xff;
   *buf   = v & 0xff;
+}
+
+/** Encode v as a 64-bit little endian quantity into buf. */
+static inline void write64_le(uint64_t v, uint8_t buf[8])
+{
+  *buf++ = v & 0xff;
+  *buf++ = (v >> 8) & 0xff;
+  *buf++ = (v >> 16) & 0xff;
+  *buf++ = (v >> 24) & 0xff;
+  *buf++ = (v >> 32) & 0xff;
+  *buf++ = (v >> 40) & 0xff;
+  *buf++ = (v >> 48) & 0xff;
+  *buf   = (v >> 56) & 0xff;
 }
 
 /** out = in ^ b8.
