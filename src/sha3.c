@@ -134,8 +134,15 @@ static void squeeze(cf_sha3_context *ctx, uint8_t *out, size_t nbytes)
     out += take;
     nbytes -= take;
 
+    assert(nbytes == 0);
+#if 0
+    /* Note: if we ever have |H| >= rate, we need to permute
+     * after each rate-length block.
+     *
+     * This cannot currently happen. */
     if (nbytes)
       permute(ctx);
+#endif
   }
 }
 
@@ -198,6 +205,7 @@ static void pad_and_squeeze(cf_sha3_context *ctx, uint8_t *out, size_t nout)
   assert(ctx->npartial == 0);
 
   squeeze(ctx, out, nout);
+  mem_clean(ctx, sizeof *ctx);
 }
 
 /* SHA3-224 */

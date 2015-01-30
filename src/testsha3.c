@@ -32,6 +32,10 @@ static void test_sha3_224(void)
          "8a24108b154ada21c9fd5574494479ba5c7e7ab76ef264ead0fcce33");
   vector(H, "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu",
          "543e6868e1666c1a643630df77367ae5a62a85070a51c14cbf665cbc");
+
+  /* Artificial exercise for len(msg) = rate_bytes - 1 codepath */
+  vector(H, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         "73b1b22b54f515f626a6abdde6af25cd4801dc6e9dc7fa3f77e1c122");
 }
 
 static void test_sha3_256(void)
