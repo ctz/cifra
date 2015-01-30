@@ -153,7 +153,7 @@ between the included curve25519 implementations.
 Cifra requires `memcpy`, `memset`, `abort` and `assert`.
 
 ## Future
-* <strike>Keccak hash function (aka SHA3)</strike>.
+* ~~Keccak hash function (aka SHA3)~~.
 * Poly1305 one-time MAC.
 * Constant time curve25519 for Cortex-M4F using the FPU.
 * Constant time curve25519 for Cortex-M3 (avoiding the variable-time multiplier).
