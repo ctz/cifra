@@ -154,19 +154,33 @@ static void sha3_update(cf_sha3_context *ctx, const void *data, size_t nbytes)
                           sha3_block, ctx);
 }
 
-static void pad(cf_sha3_context *ctx, size_t npad)
+/* Padding and domain separation constants.
+ *
+ * FIPS 202 specifies that 0b01 is appended to hash function
+ * input, and 0b1111 is appended to SHAKE input.
+ *
+ * This is done in internal (little endian) bit ordering, and
+ * we convolve it with the leftmost (first) padding bit, so:
+ *
+ * Hash: 0b110
+ * SHAKE: 0b11111
+ */
+  
+#define DOMAIN_HASH_PAD  0x06
+#define DOMAIN_SHAKE_PAD 0x1f
+
+static void pad(cf_sha3_context *ctx, uint8_t domain, size_t npad)
 {
   uint8_t byte;
 
   if (npad == 1)
   {
-    byte = 0x81;
+    byte = domain | 0x80;
     sha3_update(ctx, &byte, 1);
     return;
   }
 
-  /* add 0x01, 0x00, 0x00, ..., 0x80 */
-  byte = 0x01;
+  byte = domain;
   sha3_update(ctx, &byte, 1);
   npad--;
 
@@ -180,7 +194,7 @@ static void pad(cf_sha3_context *ctx, size_t npad)
 
 static void pad_and_squeeze(cf_sha3_context *ctx, uint8_t *out, size_t nout)
 {
-  pad(ctx, ctx->rate - ctx->npartial);
+  pad(ctx, DOMAIN_HASH_PAD, ctx->rate - ctx->npartial);
   assert(ctx->npartial == 0);
 
   squeeze(ctx, out, nout);
