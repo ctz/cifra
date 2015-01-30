@@ -29,22 +29,39 @@ static void test_cbc(void)
   TEST_CHECK(memcmp(expect, inp, 16) == 0);
 }
 
-static void test_cbcmac(void)
+static void cbcmac_vector(const char *tagstr, const char *keystr, const char *msgstr)
 {
-  uint8_t key[16], inp[16], out[16], expect[16];
+  uint8_t message[40], key[32], tag[16], tag_expect[16];
 
-  unhex(key, sizeof key, "2b7e151628aed2a6abf7158809cf4f3c");
-  unhex(inp, sizeof inp, "6bc0bce12a459991e134741a7f9e1925");
-  unhex(expect, sizeof expect, "7649abac8119b246cee98e9b12e9197d");
+  size_t nmessage = unhex(message, sizeof message, msgstr);
+  size_t nkey = unhex(key, sizeof key, keystr);
+  unhex(tag_expect, sizeof tag_expect, tagstr);
 
   cf_aes_context aes;
-  cf_aes_init(&aes, key, sizeof key);
+  cf_aes_init(&aes, key, nkey);
 
   cf_cbcmac_stream cm;
   cf_cbcmac_stream_init(&cm, &cf_aes, &aes);
-  cf_cbcmac_stream_update(&cm, inp, sizeof inp);
-  cf_cbcmac_stream_nopad_final(&cm, out);
-  TEST_CHECK(memcmp(out, expect, sizeof out) == 0);
+  cf_cbcmac_stream_update(&cm, message, nmessage);
+  cf_cbcmac_stream_pad_final(&cm, tag);
+
+  TEST_CHECK(memcmp(tag, tag_expect, sizeof tag) == 0);
+}
+
+static void test_cbcmac(void)
+{
+  cbcmac_vector("f0f18975a0859d13a49d3dbfc6cd65d9", "04f7f778621d1e2c8647822a50d98a83", "831be74b9be685c838e22a25a311cb14796235f52898d0");
+  cbcmac_vector("0d6a138f75b75694d515c5555eeedd92", "ff845afc51f20635a48f6cec9f781f2e", "c5853e6b3f7ef510936e30d554135f0d5543928c53fc2f81a3");
+  cbcmac_vector("96813db17eac06b97942a73a7c5a0aad", "10771647232eda4023d7c5c9bb512e93", "06535f70d96c8050856b024f67ae87dec8d29dabb71f559351000a3c8ffc6360");
+  cbcmac_vector("20dda5b1c11400909741ef3bc6ace8ec", "5b39db4ba4531f97f9ca4bdded9b2853", "4991b33540da4d8adfe9374bb4e1c5");
+  cbcmac_vector("c02f8f0aba134b6b1669fb582fc1c876", "d022c7e785d2fca4d67faa18b1a9fd9d7a47370933430632", "2ba28ea562dd9c5e80ccaf801677");
+  cbcmac_vector("05794b5fc8f2ee8774cd889f7c29eba0", "e451db268e2a26d1bf783eab5dc6f93fb2c5e25ce861283c", "ea14faaa954812cb");
+  cbcmac_vector("6a144baa39f619716265d34e53b4c67c", "ff46380f62a9377fb2418844392a97f5b99ac037f9c6753f", "6404534ca80a60f65e22b6c4d7f3a933f93e");
+  cbcmac_vector("f71d165cbaac0ff01a1275f85b6a8e15", "67ce476c110ea1bcf081302b5fe23bbc34c54d4601ed4904", "94b125634949467e7aa00ea11025219ac91f0deda110307e0884ee09e8315381");
+  cbcmac_vector("22fb7e4c77127ced2caaf98d9f351560", "1c50c0797cd67f8926d1c9b985f9eeaf183f070b3ad25f7efa0895fe98e34391", "7d1e7e199ad4f43fcfff55f7c981e613c022ab7f83922172657978cdf08b36");
+  cbcmac_vector("40c1eff3f4715458773cd30796dffd54", "3c1eaea74af6ee439bd7a37638d6082160e61b232bf8a45d05d5f489043e2d19", "d2a3381a82d6b6c25293431ddc1d73b5148240fe00c324528d69c6114e4ca940cdfb2917");
+  cbcmac_vector("697c6595a21fa2fa3ad360687aed6837", "c2da01b412a5cd1c75b5085fd2ee79c347d9f912863d81d04289759658704705", "65229b7715e502540490fbe2bf5a8eb0bf64ff7fb7ab7f18697b");
+  cbcmac_vector("f52d651684430de81f295106ecf0a5d2", "76ffb3385bca7c93c012d7bcb3a3d0f287a70a913676a78d2847058e75ae5e3c", "129091653237d035f64042a74f61a99c8fd6849a860e57e7e4");
 }
 
 static void test_ctr(void)
@@ -452,6 +469,45 @@ static void check_ccm(const char *keystr,
   TEST_CHECK(err == 1);
 }
 
+static void fill(uint8_t *buf, size_t len, uint8_t b)
+{
+  for (size_t i = 0; i < len; i++)
+    buf[i] = b++;
+}
+
+static void check_ccm_long(void)
+{
+  /* This is example 4 from SP800-38C, to test the long AAD code path. */
+  uint8_t header[0x10000];
+  uint8_t key[16];
+  uint8_t tag[14], expect_tag[14];
+  uint8_t nonce[13];
+  uint8_t plain[32], cipher[32], expect_cipher[32];
+
+  fill(header, sizeof header, 0x00);
+  fill(key, sizeof key, 0x40);
+  fill(nonce, sizeof nonce, 0x10);
+  fill(plain, sizeof plain, 0x20);
+
+  unhex(expect_tag, sizeof expect_tag,
+        "b4ac6bec93e8598e7f0dadbcea5b");
+  unhex(expect_cipher, sizeof expect_cipher,
+        "69915dad1e84c6376a68c2967e4dab615ae0fd1faec44cc484828529463ccf72");
+
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, key, sizeof key);
+
+  cf_ccm_encrypt(&cf_aes, &ctx,
+                 plain, sizeof plain, 15 - sizeof nonce,
+                 header, sizeof header,
+                 nonce, sizeof nonce,
+                 tag, sizeof tag,
+                 cipher);
+
+  TEST_CHECK(memcmp(expect_tag, tag, sizeof tag) == 0);
+  TEST_CHECK(memcmp(expect_cipher, cipher, sizeof cipher) == 0);
+}
+
 static void test_ccm(void)
 {
   check_ccm("c0c1c2c3c4c5c6c7c8c9cacbcccdcecf",
@@ -474,6 +530,8 @@ static void test_ccm(void)
             "101112131415161718191a1b",
             "e3b201a9f5b71a7a9b1ceaeccd97e70b6176aad9a4428aa5",
             "484392fbc1b09951");
+
+  check_ccm_long();
 }
 
 TEST_LIST = {

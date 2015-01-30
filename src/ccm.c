@@ -31,20 +31,17 @@ static void zero_pad(cf_cbcmac_stream *cm)
 static void add_aad(cf_cbcmac_stream *cm, uint8_t block[CF_MAXBLOCK],
                     const uint8_t *header, size_t nheader)
 {
+  assert(nheader <= 0xffffffff); /* we don't support 64 bit lengths. */
+
   /* Add length using stupidly complicated rules. */
   if (nheader < 0xff00)
   {
     write_be(block, nheader, 2);
     cf_cbcmac_stream_update(cm, block, 2);
-  } else if (nheader <= 0xffffffff) {
+  } else {
     write_be(block, 0xfffe, 2);
     write_be(block + 2, nheader, 4);
     cf_cbcmac_stream_update(cm, block, 6);
-  } else {
-    assert(sizeof(nheader) == 8);
-    write_be(block, 0xffff, 2);
-    write_be(block + 2, nheader, 8);
-    cf_cbcmac_stream_update(cm, block, 10);
   }
 
   cf_cbcmac_stream_update(cm, header, nheader);
