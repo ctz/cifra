@@ -8,7 +8,7 @@
 #include <assert.h>
 
 /* CBC */
-void cf_cbc_init(cf_cbc *ctx, const cf_prp *prp, void *prpctx, uint8_t iv[CF_MAXBLOCK])
+void cf_cbc_init(cf_cbc *ctx, const cf_prp *prp, void *prpctx, const uint8_t iv[CF_MAXBLOCK])
 {
   ctx->prp = prp;
   ctx->prpctx = prpctx;
@@ -46,7 +46,7 @@ void cf_cbc_decrypt(cf_cbc *ctx, const uint8_t *input, uint8_t *output, size_t b
 }
 
 /* CTR */
-void cf_ctr_init(cf_ctr *ctx, const cf_prp *prp, void *prpctx, uint8_t nonce[CF_MAXBLOCK])
+void cf_ctr_init(cf_ctr *ctx, const cf_prp *prp, void *prpctx, const uint8_t nonce[CF_MAXBLOCK])
 {
   memset(ctx, 0, sizeof *ctx);
   ctx->counter_offset = 0;

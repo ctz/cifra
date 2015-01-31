@@ -15,7 +15,7 @@ typedef struct
 } cf_cbc;
 
 /* Initialise CBC encryption/decryption context using selected prp, prp context and IV. */
-void cf_cbc_init(cf_cbc *ctx, const cf_prp *prp, void *prpctx, uint8_t iv[CF_MAXBLOCK]);
+void cf_cbc_init(cf_cbc *ctx, const cf_prp *prp, void *prpctx, const uint8_t iv[CF_MAXBLOCK]);
 
 /* Encrypt blocks in CBC mode.  input and output
  * must point to blocks * ctx->prp->blocksz bytes of storage (and may alias). */
@@ -39,7 +39,7 @@ typedef struct
 
 /* Initialise CTR encryption/decryption context using selected prp and nonce.
  * (nb, this only increments the whole nonce as a big endian block) */
-void cf_ctr_init(cf_ctr *ctx, const cf_prp *prp, void *prpctx, uint8_t nonce[CF_MAXBLOCK]);
+void cf_ctr_init(cf_ctr *ctx, const cf_prp *prp, void *prpctx, const uint8_t nonce[CF_MAXBLOCK]);
 
 /* Set the location and width of the nonce counter.  
  *
