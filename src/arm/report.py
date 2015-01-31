@@ -6,6 +6,8 @@ aes128sched_test
 aes256sched_test
 hashtest_sha256
 hashtest_sha512
+hashtest_sha3_256
+hashtest_sha3_512
 aes128gcm_test
 aes128eax_test
 aes128ccm_test
@@ -173,5 +175,7 @@ do_table('ChaCha20', 'chacha20_test')
 do_table('Salsa20', 'salsa20_test')
 do_table('SHA256', 'hashtest_sha256')
 do_table('SHA512', 'hashtest_sha512')
+do_table('SHA3-256', 'hashtest_sha3_256')
+do_table('SHA3-512', 'hashtest_sha3_512')
 do_table('Curve25519', 'curve25519_test')
 
