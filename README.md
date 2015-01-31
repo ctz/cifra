@@ -137,6 +137,24 @@ Cortex-M0  | 55828  | 780B  | 2848B
 Cortex-M3  | 43029  | 836B  | 2976B    
 Cortex-M4F | 42019  | 836B  | 2968B    
 
+## SHA3-256
+This test hashes the empty string (one sponge permutation).
+
+Core       | Cycles | Stack | Code size
+---------- | ------ | ----- | ---------
+Cortex-M0  | 148553 | 848B  | 2204B    
+Cortex-M3  | 114933 | 968B  | 2328B    
+Cortex-M4F | 113622 | 968B  | 2328B    
+
+## SHA3-512
+This test hashes the empty string (one sponge permutation).
+
+Core       | Cycles | Stack | Code size
+---------- | ------ | ----- | ---------
+Cortex-M0  | 135136 | 880B  | 2204B    
+Cortex-M3  | 104328 | 1000B | 2328B    
+Cortex-M4F | 103154 | 1000B | 2328B    
+
 ## Curve25519 (tweetnacl)
 This test is one point multiplication.
 
