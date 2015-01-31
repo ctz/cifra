@@ -7,13 +7,13 @@
 
 #undef REALLY_SLOW_TEST
 
-static void vector(const cf_chash *hash, const void *vmsg, size_t nmsg, const char *answer)
+static void vector(const cf_chash *hash,
+                   const void *vmsg, size_t nmsg,
+                   const char *expect, size_t nexpect)
 {
-  uint8_t digest[CF_MAXHASH], expect[CF_MAXHASH];
+  uint8_t digest[CF_MAXHASH];
   const uint8_t *msg = vmsg;
   size_t orig_nmsg = nmsg;
-
-  unhex(expect, sizeof expect, answer);
 
   cf_chash_ctx ctx;
   hash->init(&ctx);
@@ -28,7 +28,8 @@ static void vector(const cf_chash *hash, const void *vmsg, size_t nmsg, const ch
 
   hash->update(&ctx, msg, nmsg);
   hash->digest(&ctx, digest);
-  TEST_CHECK(memcmp(digest, expect, hash->hashsz) == 0);
+  TEST_CHECK(nexpect == hash->hashsz);
+  TEST_CHECK(memcmp(digest, expect, nexpect) == 0);
   
   /* Now try with other arrangements. */
   msg = vmsg;
@@ -44,83 +45,77 @@ static void vector(const cf_chash *hash, const void *vmsg, size_t nmsg, const ch
 
   hash->update(&ctx, msg, nmsg);
   hash->digest(&ctx, digest);
-  TEST_CHECK(memcmp(digest, expect, hash->hashsz) == 0);
+  TEST_CHECK(memcmp(digest, expect, nexpect) == 0);
 }
 
 static void hmac_test(const cf_chash *hash,
-                      const char *hi_there,
-                      const char *jefe,
-                      const char *aa_dd,
-                      const char *counter_key,
-                      const char *long_key,
-                      const char *long_message)
+                      const void *hi_there,
+                      const void *jefe,
+                      const void *aa_dd,
+                      const void *counter_key,
+                      const void *long_key,
+                      const void *long_message)
 {
-  uint8_t expect[CF_MAXHASH], sig[CF_MAXHASH];
+  uint8_t sig[CF_MAXHASH];
   uint8_t key[131], message[152];
 
   /* Key: 0x0b * 20
    * Message: "Hi There"
    */
-  unhex(expect, sizeof expect, hi_there);
   memset(key, 0x0b, 20);
   memcpy(message, "Hi There", 8);
   cf_hmac(key, 20, message, 8, sig, hash);
-  TEST_CHECK(memcmp(sig, expect, hash->hashsz) == 0);
+
+  TEST_CHECK(memcmp(sig, hi_there, hash->hashsz) == 0);
 
   /* Key: "Jefe"
    * Message: "what do ya want for nothing?"
    */
-  unhex(expect, sizeof expect, jefe);
   memcpy(key, "Jefe", 4);
   memcpy(message, "what do ya want for nothing?", 28);
   cf_hmac(key, 4, message, 28, sig, hash);
-  TEST_CHECK(memcmp(sig, expect, hash->hashsz) == 0);
+  TEST_CHECK(memcmp(sig, jefe, hash->hashsz) == 0);
 
   /* Key: 0xaa * 20
    * Message: 0xdd * 50
    */
-  unhex(expect, sizeof expect, aa_dd);
   memset(key, 0xaa, 20);
   memset(message, 0xdd, 50);
   cf_hmac(key, 20, message, 50, sig, hash);
-  TEST_CHECK(memcmp(sig, expect, hash->hashsz) == 0);
+  TEST_CHECK(memcmp(sig, aa_dd, hash->hashsz) == 0);
 
   /* Key: 0x01..0x19
    * Message: 0xcd * 50
    */
-  unhex(expect, sizeof expect, counter_key);
   for (uint8_t i = 1; i < 26; i++)
     key[i - 1] = i;
   memset(message, 0xcd, 50);
   cf_hmac(key, 25, message, 50, sig, hash);
-  TEST_CHECK(memcmp(sig, expect, hash->hashsz) == 0);
+  TEST_CHECK(memcmp(sig, counter_key, hash->hashsz) == 0);
 
   /* Key: 0xaa * 131
    * Message: "Test Using Larger Than Block-Size Key - Hash Key First"
    */
-  unhex(expect, sizeof expect, long_key);
   memset(key, 0xaa, 131);
   memcpy(message, "Test Using Larger Than Block-Size Key - Hash Key First", 54);
   cf_hmac(key, 131, message, 54, sig, hash);
-  TEST_CHECK(memcmp(sig, expect, hash->hashsz) == 0);
+  TEST_CHECK(memcmp(sig, long_key, hash->hashsz) == 0);
 
   /* Key: 0xaa * 131
    * Message: "This is a test using a larger than block-size key and a larger than block-size data. The key needs to be hashed before being used by the HMAC algorithm."
    */
-  unhex(expect, sizeof expect, long_message);
   memset(key, 0xaa, 131);
   memcpy(message, "This is a test using a larger than block-size key and a larger than block-size data. The key needs to be hashed before being used by the HMAC algorithm.", 152);
   cf_hmac(key, 131, message, 152, sig, hash);
-  TEST_CHECK(memcmp(sig, expect, hash->hashsz) == 0);
+  TEST_CHECK(memcmp(sig, long_message, hash->hashsz) == 0);
 }
 
 typedef void (*final_fn)(void *ctx, uint8_t *out);
 
-static void vector_abc_final(const cf_chash *hash, const void *vfinal_fn, const char *answer)
+static void vector_abc_final(const cf_chash *hash, const void *vfinal_fn,
+                             const void *expect, size_t nexpect)
 {
-  uint8_t expect[CF_MAXHASH], digest[CF_MAXHASH];
-
-  unhex(expect, sizeof expect, answer);
+  uint8_t digest[CF_MAXHASH];
 
   final_fn final = vfinal_fn;
   cf_chash_ctx ctx;
@@ -132,104 +127,105 @@ static void vector_abc_final(const cf_chash *hash, const void *vfinal_fn, const 
   hash->update(&ctx, "c", 1);
   final(&ctx, digest);
 
-  TEST_CHECK(memcmp(expect, digest, hash->hashsz) == 0);
+  TEST_CHECK(hash->hashsz == nexpect);
+  TEST_CHECK(memcmp(expect, digest, nexpect) == 0);
 }
 
 static void test_sha224(void)
 {
   const cf_chash *h = &cf_sha224;
-  vector(h, "", 0, "d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f");
-  vector(h, "abc", 3, "23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7");
+  vector(h, "", 0, "\xd1\x4a\x02\x8c\x2a\x3a\x2b\xc9\x47\x61\x02\xbb\x28\x82\x34\xc4\x15\xa2\xb0\x1f\x82\x8e\xa6\x2a\xc5\xb3\xe4\x2f", 28);
+  vector(h, "abc", 3, "\x23\x09\x7d\x22\x34\x05\xd8\x22\x86\x42\xa4\x77\xbd\xa2\x55\xb3\x2a\xad\xbc\xe4\xbd\xa0\xb3\xf7\xe3\x6c\x9d\xa7", 28);
   vector(h, "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", 56,
-         "75388b16512776cc5dba5da1fd890150b0c6455cb4f58b1952522525");
+         "\x75\x38\x8b\x16\x51\x27\x76\xcc\x5d\xba\x5d\xa1\xfd\x89\x01\x50\xb0\xc6\x45\x5c\xb4\xf5\x8b\x19\x52\x52\x25\x25", 28);
   vector(h, "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu", 112,
-         "c97ca9a559850ce97a04a96def6d99a9e0e0e2ab14e6b8df265fc0b3");
+         "\xc9\x7c\xa9\xa5\x59\x85\x0c\xe9\x7a\x04\xa9\x6d\xef\x6d\x99\xa9\xe0\xe0\xe2\xab\x14\xe6\xb8\xdf\x26\x5f\xc0\xb3", 28);
   
   /* Check that incremental interface produces correct results. */
-  vector_abc_final(h, cf_sha224_digest_final, "23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7");
+  vector_abc_final(h, cf_sha224_digest_final, "\x23\x09\x7d\x22\x34\x05\xd8\x22\x86\x42\xa4\x77\xbd\xa2\x55\xb3\x2a\xad\xbc\xe4\xbd\xa0\xb3\xf7\xe3\x6c\x9d\xa7", 28);
 }
 
 static void test_hmac_sha224(void)
 {
   hmac_test(&cf_sha224,
-            "896fb1128abbdf196832107cd49df33f47b4b1169912ba4f53684b22",
-            "a30e01098bc6dbbf45690f3a7e9e6d0f8bbea2a39e6148008fd05e44",
-            "7fb3cb3588c6c1f6ffa9694d7d6ad2649365b0c1f65d69d1ec8333ea",
-            "6c11506874013cac6a2abc1bb382627cec6a90d86efc012de7afec5a",
-            "95e9a0db962095adaebe9b2d6f0dbce2d499f112f2d2b7273fa6870e",
-            "3a854166ac5d9f023f54d517d0b39dbd946770db9c2b95c9f6f565d1");
+            "\x89\x6f\xb1\x12\x8a\xbb\xdf\x19\x68\x32\x10\x7c\xd4\x9d\xf3\x3f\x47\xb4\xb1\x16\x99\x12\xba\x4f\x53\x68\x4b\x22",
+            "\xa3\x0e\x01\x09\x8b\xc6\xdb\xbf\x45\x69\x0f\x3a\x7e\x9e\x6d\x0f\x8b\xbe\xa2\xa3\x9e\x61\x48\x00\x8f\xd0\x5e\x44",
+            "\x7f\xb3\xcb\x35\x88\xc6\xc1\xf6\xff\xa9\x69\x4d\x7d\x6a\xd2\x64\x93\x65\xb0\xc1\xf6\x5d\x69\xd1\xec\x83\x33\xea",
+            "\x6c\x11\x50\x68\x74\x01\x3c\xac\x6a\x2a\xbc\x1b\xb3\x82\x62\x7c\xec\x6a\x90\xd8\x6e\xfc\x01\x2d\xe7\xaf\xec\x5a",
+            "\x95\xe9\xa0\xdb\x96\x20\x95\xad\xae\xbe\x9b\x2d\x6f\x0d\xbc\xe2\xd4\x99\xf1\x12\xf2\xd2\xb7\x27\x3f\xa6\x87\x0e",
+            "\x3a\x85\x41\x66\xac\x5d\x9f\x02\x3f\x54\xd5\x17\xd0\xb3\x9d\xbd\x94\x67\x70\xdb\x9c\x2b\x95\xc9\xf6\xf5\x65\xd1");
 }
 
 static void test_sha256(void)
 {
   const cf_chash *h = &cf_sha256;
-  vector(h, "", 0, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
-  vector(h, "abc", 3, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+  vector(h, "", 0, "\xe3\xb0\xc4\x42\x98\xfc\x1c\x14\x9a\xfb\xf4\xc8\x99\x6f\xb9\x24\x27\xae\x41\xe4\x64\x9b\x93\x4c\xa4\x95\x99\x1b\x78\x52\xb8\x55", 32);
+  vector(h, "abc", 3, "\xba\x78\x16\xbf\x8f\x01\xcf\xea\x41\x41\x40\xde\x5d\xae\x22\x23\xb0\x03\x61\xa3\x96\x17\x7a\x9c\xb4\x10\xff\x61\xf2\x00\x15\xad", 32);
   vector(h, "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", 56,
-         "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1");
+         "\x24\x8d\x6a\x61\xd2\x06\x38\xb8\xe5\xc0\x26\x93\x0c\x3e\x60\x39\xa3\x3c\xe4\x59\x64\xff\x21\x67\xf6\xec\xed\xd4\x19\xdb\x06\xc1", 32);
   vector(h, "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu", 112,
-         "cf5b16a778af8380036ce59e7b0492370b249b11e8f07a51afac45037afee9d1");
+         "\xcf\x5b\x16\xa7\x78\xaf\x83\x80\x03\x6c\xe5\x9e\x7b\x04\x92\x37\x0b\x24\x9b\x11\xe8\xf0\x7a\x51\xaf\xac\x45\x03\x7a\xfe\xe9\xd1", 32);
 
-  vector_abc_final(h, cf_sha256_digest_final, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+  vector_abc_final(h, cf_sha256_digest_final, "\xba\x78\x16\xbf\x8f\x01\xcf\xea\x41\x41\x40\xde\x5d\xae\x22\x23\xb0\x03\x61\xa3\x96\x17\x7a\x9c\xb4\x10\xff\x61\xf2\x00\x15\xad", 32);
 }
 
 static void test_hmac_sha256(void)
 {
   hmac_test(&cf_sha256,
-            "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7",
-            "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843",
-            "773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe",
-            "82558a389a443c0ea4cc819899f2083a85f0faa3e578f8077a2e3ff46729665b",
-            "60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54",
-            "9b09ffa71b942fcb27635fbcd5b0e944bfdc63644f0713938a7f51535c3a35e2");
+            "\xb0\x34\x4c\x61\xd8\xdb\x38\x53\x5c\xa8\xaf\xce\xaf\x0b\xf1\x2b\x88\x1d\xc2\x00\xc9\x83\x3d\xa7\x26\xe9\x37\x6c\x2e\x32\xcf\xf7",
+            "\x5b\xdc\xc1\x46\xbf\x60\x75\x4e\x6a\x04\x24\x26\x08\x95\x75\xc7\x5a\x00\x3f\x08\x9d\x27\x39\x83\x9d\xec\x58\xb9\x64\xec\x38\x43",
+            "\x77\x3e\xa9\x1e\x36\x80\x0e\x46\x85\x4d\xb8\xeb\xd0\x91\x81\xa7\x29\x59\x09\x8b\x3e\xf8\xc1\x22\xd9\x63\x55\x14\xce\xd5\x65\xfe",
+            "\x82\x55\x8a\x38\x9a\x44\x3c\x0e\xa4\xcc\x81\x98\x99\xf2\x08\x3a\x85\xf0\xfa\xa3\xe5\x78\xf8\x07\x7a\x2e\x3f\xf4\x67\x29\x66\x5b",
+            "\x60\xe4\x31\x59\x1e\xe0\xb6\x7f\x0d\x8a\x26\xaa\xcb\xf5\xb7\x7f\x8e\x0b\xc6\x21\x37\x28\xc5\x14\x05\x46\x04\x0f\x0e\xe3\x7f\x54",
+            "\x9b\x09\xff\xa7\x1b\x94\x2f\xcb\x27\x63\x5f\xbc\xd5\xb0\xe9\x44\xbf\xdc\x63\x64\x4f\x07\x13\x93\x8a\x7f\x51\x53\x5c\x3a\x35\xe2");
 }
 
 static void test_sha384(void)
 {
   const cf_chash *h = &cf_sha384;
-  vector(h, "", 0, "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b");
-  vector(h, "abc", 3, "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7");
+  vector(h, "", 0, "\x38\xb0\x60\xa7\x51\xac\x96\x38\x4c\xd9\x32\x7e\xb1\xb1\xe3\x6a\x21\xfd\xb7\x11\x14\xbe\x07\x43\x4c\x0c\xc7\xbf\x63\xf6\xe1\xda\x27\x4e\xde\xbf\xe7\x6f\x65\xfb\xd5\x1a\xd2\xf1\x48\x98\xb9\x5b", 48);
+  vector(h, "abc", 3, "\xcb\x00\x75\x3f\x45\xa3\x5e\x8b\xb5\xa0\x3d\x69\x9a\xc6\x50\x07\x27\x2c\x32\xab\x0e\xde\xd1\x63\x1a\x8b\x60\x5a\x43\xff\x5b\xed\x80\x86\x07\x2b\xa1\xe7\xcc\x23\x58\xba\xec\xa1\x34\xc8\x25\xa7", 48);
   vector(h, "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", 56,
-         "3391fdddfc8dc7393707a65b1b4709397cf8b1d162af05abfe8f450de5f36bc6b0455a8520bc4e6f5fe95b1fe3c8452b");
+         "\x33\x91\xfd\xdd\xfc\x8d\xc7\x39\x37\x07\xa6\x5b\x1b\x47\x09\x39\x7c\xf8\xb1\xd1\x62\xaf\x05\xab\xfe\x8f\x45\x0d\xe5\xf3\x6b\xc6\xb0\x45\x5a\x85\x20\xbc\x4e\x6f\x5f\xe9\x5b\x1f\xe3\xc8\x45\x2b", 48);
   vector(h, "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu", 112,
-         "09330c33f71147e83d192fc782cd1b4753111b173b3b05d22fa08086e3b0f712fcc7c71a557e2db966c3e9fa91746039");
+         "\x09\x33\x0c\x33\xf7\x11\x47\xe8\x3d\x19\x2f\xc7\x82\xcd\x1b\x47\x53\x11\x1b\x17\x3b\x3b\x05\xd2\x2f\xa0\x80\x86\xe3\xb0\xf7\x12\xfc\xc7\xc7\x1a\x55\x7e\x2d\xb9\x66\xc3\xe9\xfa\x91\x74\x60\x39", 48);
 
-  vector_abc_final(h, cf_sha384_digest_final, "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7");
+  vector_abc_final(h, cf_sha384_digest_final, "\xcb\x00\x75\x3f\x45\xa3\x5e\x8b\xb5\xa0\x3d\x69\x9a\xc6\x50\x07\x27\x2c\x32\xab\x0e\xde\xd1\x63\x1a\x8b\x60\x5a\x43\xff\x5b\xed\x80\x86\x07\x2b\xa1\xe7\xcc\x23\x58\xba\xec\xa1\x34\xc8\x25\xa7", 48);
 }
 
 static void test_hmac_sha384(void)
 {
   hmac_test(&cf_sha384,
-            "afd03944d84895626b0825f4ab46907f15f9dadbe4101ec682aa034c7cebc59cfaea9ea9076ede7f4af152e8b2fa9cb6",
-            "af45d2e376484031617f78d2b58a6b1b9c7ef464f5a01b47e42ec3736322445e8e2240ca5e69e2c78b3239ecfab21649",
-            "88062608d3e6ad8a0aa2ace014c8a86f0aa635d947ac9febe83ef4e55966144b2a5ab39dc13814b94e3ab6e101a34f27",
-            "3e8a69b7783c25851933ab6290af6ca77a9981480850009cc5577c6e1f573b4e6801dd23c4a7d679ccf8a386c674cffb",
-            "4ece084485813e9088d2c63a041bc5b44f9ef1012a2b588f3cd11f05033ac4c60c2ef6ab4030fe8296248df163f44952",
-            "6617178e941f020d351e2f254e8fd32c602420feb0b8fb9adccebb82461e99c5a678cc31e799176d3860e6110c46523e");
+            "\xaf\xd0\x39\x44\xd8\x48\x95\x62\x6b\x08\x25\xf4\xab\x46\x90\x7f\x15\xf9\xda\xdb\xe4\x10\x1e\xc6\x82\xaa\x03\x4c\x7c\xeb\xc5\x9c\xfa\xea\x9e\xa9\x07\x6e\xde\x7f\x4a\xf1\x52\xe8\xb2\xfa\x9c\xb6",
+            "\xaf\x45\xd2\xe3\x76\x48\x40\x31\x61\x7f\x78\xd2\xb5\x8a\x6b\x1b\x9c\x7e\xf4\x64\xf5\xa0\x1b\x47\xe4\x2e\xc3\x73\x63\x22\x44\x5e\x8e\x22\x40\xca\x5e\x69\xe2\xc7\x8b\x32\x39\xec\xfa\xb2\x16\x49",
+            "\x88\x06\x26\x08\xd3\xe6\xad\x8a\x0a\xa2\xac\xe0\x14\xc8\xa8\x6f\x0a\xa6\x35\xd9\x47\xac\x9f\xeb\xe8\x3e\xf4\xe5\x59\x66\x14\x4b\x2a\x5a\xb3\x9d\xc1\x38\x14\xb9\x4e\x3a\xb6\xe1\x01\xa3\x4f\x27",
+            "\x3e\x8a\x69\xb7\x78\x3c\x25\x85\x19\x33\xab\x62\x90\xaf\x6c\xa7\x7a\x99\x81\x48\x08\x50\x00\x9c\xc5\x57\x7c\x6e\x1f\x57\x3b\x4e\x68\x01\xdd\x23\xc4\xa7\xd6\x79\xcc\xf8\xa3\x86\xc6\x74\xcf\xfb",
+            "\x4e\xce\x08\x44\x85\x81\x3e\x90\x88\xd2\xc6\x3a\x04\x1b\xc5\xb4\x4f\x9e\xf1\x01\x2a\x2b\x58\x8f\x3c\xd1\x1f\x05\x03\x3a\xc4\xc6\x0c\x2e\xf6\xab\x40\x30\xfe\x82\x96\x24\x8d\xf1\x63\xf4\x49\x52",
+            "\x66\x17\x17\x8e\x94\x1f\x02\x0d\x35\x1e\x2f\x25\x4e\x8f\xd3\x2c\x60\x24\x20\xfe\xb0\xb8\xfb\x9a\xdc\xce\xbb\x82\x46\x1e\x99\xc5\xa6\x78\xcc\x31\xe7\x99\x17\x6d\x38\x60\xe6\x11\x0c\x46\x52\x3e");
 }
 
 static void test_sha512(void)
 {
   const cf_chash *h = &cf_sha512;
-  vector(h, "", 0, "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e");
-  vector(h, "abc", 3, "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f");
+  vector(h, "", 0, "\xcf\x83\xe1\x35\x7e\xef\xb8\xbd\xf1\x54\x28\x50\xd6\x6d\x80\x07\xd6\x20\xe4\x05\x0b\x57\x15\xdc\x83\xf4\xa9\x21\xd3\x6c\xe9\xce\x47\xd0\xd1\x3c\x5d\x85\xf2\xb0\xff\x83\x18\xd2\x87\x7e\xec\x2f\x63\xb9\x31\xbd\x47\x41\x7a\x81\xa5\x38\x32\x7a\xf9\x27\xda\x3e", 64);
+  vector(h, "abc", 3, "\xdd\xaf\x35\xa1\x93\x61\x7a\xba\xcc\x41\x73\x49\xae\x20\x41\x31\x12\xe6\xfa\x4e\x89\xa9\x7e\xa2\x0a\x9e\xee\xe6\x4b\x55\xd3\x9a\x21\x92\x99\x2a\x27\x4f\xc1\xa8\x36\xba\x3c\x23\xa3\xfe\xeb\xbd\x45\x4d\x44\x23\x64\x3c\xe8\x0e\x2a\x9a\xc9\x4f\xa5\x4c\xa4\x9f", 64);
   vector(h, "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", 56,
-         "204a8fc6dda82f0a0ced7beb8e08a41657c16ef468b228a8279be331a703c33596fd15c13b1b07f9aa1d3bea57789ca031ad85c7a71dd70354ec631238ca3445");
+         "\x20\x4a\x8f\xc6\xdd\xa8\x2f\x0a\x0c\xed\x7b\xeb\x8e\x08\xa4\x16\x57\xc1\x6e\xf4\x68\xb2\x28\xa8\x27\x9b\xe3\x31\xa7\x03\xc3\x35\x96\xfd\x15\xc1\x3b\x1b\x07\xf9\xaa\x1d\x3b\xea\x57\x78\x9c\xa0\x31\xad\x85\xc7\xa7\x1d\xd7\x03\x54\xec\x63\x12\x38\xca\x34\x45", 64);
   vector(h, "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu", 112,
-         "8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909");
+         "\x8e\x95\x9b\x75\xda\xe3\x13\xda\x8c\xf4\xf7\x28\x14\xfc\x14\x3f\x8f\x77\x79\xc6\xeb\x9f\x7f\xa1\x72\x99\xae\xad\xb6\x88\x90\x18\x50\x1d\x28\x9e\x49\x00\xf7\xe4\x33\x1b\x99\xde\xc4\xb5\x43\x3a\xc7\xd3\x29\xee\xb6\xdd\x26\x54\x5e\x96\xe5\x5b\x87\x4b\xe9\x09", 64);
 
-  vector_abc_final(h, cf_sha512_digest_final, "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f");
+  vector_abc_final(h, cf_sha512_digest_final, "\xdd\xaf\x35\xa1\x93\x61\x7a\xba\xcc\x41\x73\x49\xae\x20\x41\x31\x12\xe6\xfa\x4e\x89\xa9\x7e\xa2\x0a\x9e\xee\xe6\x4b\x55\xd3\x9a\x21\x92\x99\x2a\x27\x4f\xc1\xa8\x36\xba\x3c\x23\xa3\xfe\xeb\xbd\x45\x4d\x44\x23\x64\x3c\xe8\x0e\x2a\x9a\xc9\x4f\xa5\x4c\xa4\x9f", 64);
 }
 
 static void test_hmac_sha512(void)
 {
   hmac_test(&cf_sha512,
-            "87aa7cdea5ef619d4ff0b4241a1d6cb02379f4e2ce4ec2787ad0b30545e17cdedaa833b7d6b8a702038b274eaea3f4e4be9d914eeb61f1702e696c203a126854",
-            "164b7a7bfcf819e2e395fbe73b56e0a387bd64222e831fd610270cd7ea2505549758bf75c05a994a6d034f65f8f0e6fdcaeab1a34d4a6b4b636e070a38bce737",
-            "fa73b0089d56a284efb0f0756c890be9b1b5dbdd8ee81a3655f83e33b2279d39bf3e848279a722c806b485a47e67c807b946a337bee8942674278859e13292fb",
-            "b0ba465637458c6990e5a8c5f61d4af7e576d97ff94b872de76f8050361ee3dba91ca5c11aa25eb4d679275cc5788063a5f19741120c4f2de2adebeb10a298dd",
-            "80b24263c7c1a3ebb71493c1dd7be8b49b46d1f41b4aeec1121b013783f8f3526b56d037e05f2598bd0fd2215d6a1e5295e64f73f63f0aec8b915a985d786598",
-            "e37b6a775dc87dbaa4dfa9f96e5e3ffddebd71f8867289865df5a32d20cdc944b6022cac3c4982b10d5eeb55c3e4de15134676fb6de0446065c97440fa8c6a58");
+            "\x87\xaa\x7c\xde\xa5\xef\x61\x9d\x4f\xf0\xb4\x24\x1a\x1d\x6c\xb0\x23\x79\xf4\xe2\xce\x4e\xc2\x78\x7a\xd0\xb3\x05\x45\xe1\x7c\xde\xda\xa8\x33\xb7\xd6\xb8\xa7\x02\x03\x8b\x27\x4e\xae\xa3\xf4\xe4\xbe\x9d\x91\x4e\xeb\x61\xf1\x70\x2e\x69\x6c\x20\x3a\x12\x68\x54",
+            "\x16\x4b\x7a\x7b\xfc\xf8\x19\xe2\xe3\x95\xfb\xe7\x3b\x56\xe0\xa3\x87\xbd\x64\x22\x2e\x83\x1f\xd6\x10\x27\x0c\xd7\xea\x25\x05\x54\x97\x58\xbf\x75\xc0\x5a\x99\x4a\x6d\x03\x4f\x65\xf8\xf0\xe6\xfd\xca\xea\xb1\xa3\x4d\x4a\x6b\x4b\x63\x6e\x07\x0a\x38\xbc\xe7\x37",
+            "\xfa\x73\xb0\x08\x9d\x56\xa2\x84\xef\xb0\xf0\x75\x6c\x89\x0b\xe9\xb1\xb5\xdb\xdd\x8e\xe8\x1a\x36\x55\xf8\x3e\x33\xb2\x27\x9d\x39\xbf\x3e\x84\x82\x79\xa7\x22\xc8\x06\xb4\x85\xa4\x7e\x67\xc8\x07\xb9\x46\xa3\x37\xbe\xe8\x94\x26\x74\x27\x88\x59\xe1\x32\x92\xfb",
+            "\xb0\xba\x46\x56\x37\x45\x8c\x69\x90\xe5\xa8\xc5\xf6\x1d\x4a\xf7\xe5\x76\xd9\x7f\xf9\x4b\x87\x2d\xe7\x6f\x80\x50\x36\x1e\xe3\xdb\xa9\x1c\xa5\xc1\x1a\xa2\x5e\xb4\xd6\x79\x27\x5c\xc5\x78\x80\x63\xa5\xf1\x97\x41\x12\x0c\x4f\x2d\xe2\xad\xeb\xeb\x10\xa2\x98\xdd",
+            "\x80\xb2\x42\x63\xc7\xc1\xa3\xeb\xb7\x14\x93\xc1\xdd\x7b\xe8\xb4\x9b\x46\xd1\xf4\x1b\x4a\xee\xc1\x12\x1b\x01\x37\x83\xf8\xf3\x52\x6b\x56\xd0\x37\xe0\x5f\x25\x98\xbd\x0f\xd2\x21\x5d\x6a\x1e\x52\x95\xe6\x4f\x73\xf6\x3f\x0a\xec\x8b\x91\x5a\x98\x5d\x78\x65\x98",
+            "\xe3\x7b\x6a\x77\x5d\xc8\x7d\xba\xa4\xdf\xa9\xf9\x6e\x5e\x3f\xfd\xde\xbd\x71\xf8\x86\x72\x89\x86\x5d\xf5\xa3\x2d\x20\xcd\xc9\x44\xb6\x02\x2c\xac\x3c\x49\x82\xb1\x0d\x5e\xeb\x55\xc3\xe4\xde\x15\x13\x46\x76\xfb\x6d\xe0\x44\x60\x65\xc9\x74\x40\xfa\x8c\x6a\x58");
 }
 
 #ifdef REALLY_SLOW_TEST
@@ -244,21 +240,18 @@ static void test_sha256_long(void)
   cf_sha256_digest_final(&ctx, digest);
 
   uint8_t expect[32];
-  unhex(expect, sizeof expect, "50e72a0e26442fe2552dc3938ac58658228c0cbfb1d2ca872ae435266fcd055e");
+  unhex(expect, sizeof expect, "\x50\xe7\x2a\x0e\x26\x44\x2f\xe2\x55\x2d\xc3\x93\x8a\xc5\x86\x58\x22\x8c\x0c\xbf\xb1\xd2\xca\x87\x2a\xe4\x35\x26\x6f\xcd\x05\x5e", 32);
   TEST_CHECK(memcmp(expect, digest, sizeof digest) == 0);
 }
 #endif
 
-static void check_pkbdf2_sha256(const char *pw, size_t npw,
-                                const char *salt, size_t nsalt,
+static void check_pkbdf2_sha256(const void *pw, size_t npw,
+                                const void *salt, size_t nsalt,
                                 uint32_t iters,
-                                const char *answer)
+                                const void *expect, size_t nexpect)
 {
-  uint8_t expect[64];
-  size_t nexpect;
   uint8_t output[64];
 
-  nexpect = unhex(expect, sizeof expect, answer);
   cf_pbkdf2_hmac((const void *) pw, npw, 
                  (const void *) salt, nsalt,
                  iters,
@@ -273,37 +266,37 @@ static void test_pbkdf2_sha256(void)
   check_pkbdf2_sha256("password", 8,
                       "salt", 4,
                       1,
-                      "120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b");
+                      "\x12\x0f\xb6\xcf\xfc\xf8\xb3\x2c\x43\xe7\x22\x52\x56\xc4\xf8\x37\xa8\x65\x48\xc9\x2c\xcc\x35\x48\x08\x05\x98\x7c\xb7\x0b\xe1\x7b", 32);
 
   check_pkbdf2_sha256("password", 8,
                       "salt", 4,
                       2,
-                      "ae4d0c95af6b46d32d0adff928f06dd02a303f8ef3c251dfd6e2d85a95474c43");
+                      "\xae\x4d\x0c\x95\xaf\x6b\x46\xd3\x2d\x0a\xdf\xf9\x28\xf0\x6d\xd0\x2a\x30\x3f\x8e\xf3\xc2\x51\xdf\xd6\xe2\xd8\x5a\x95\x47\x4c\x43", 32);
 
   check_pkbdf2_sha256("password", 8,
                       "salt", 4,
                       4096,
-                      "c5e478d59288c841aa530db6845c4c8d962893a001ce4e11a4963873aa98134a");
+                      "\xc5\xe4\x78\xd5\x92\x88\xc8\x41\xaa\x53\x0d\xb6\x84\x5c\x4c\x8d\x96\x28\x93\xa0\x01\xce\x4e\x11\xa4\x96\x38\x73\xaa\x98\x13\x4a", 32);
 
   check_pkbdf2_sha256("passwordPASSWORDpassword", 24,
                       "saltSALTsaltSALTsaltSALTsaltSALTsalt", 36,
                       4096,
-                      "348c89dbcbd32b2f32d814b8116e84cf2b17347ebc1800181c4e2a1fb8dd53e1c635518c7dac47e9");
+                      "\x34\x8c\x89\xdb\xcb\xd3\x2b\x2f\x32\xd8\x14\xb8\x11\x6e\x84\xcf\x2b\x17\x34\x7e\xbc\x18\x00\x18\x1c\x4e\x2a\x1f\xb8\xdd\x53\xe1\xc6\x35\x51\x8c\x7d\xac\x47\xe9", 40);
 
   check_pkbdf2_sha256("", 0,
                       "salt", 4,
                       1024,
-                      "9e83f279c040f2a11aa4a02b24c418f2d3cb39560c9627fa4f47e3bcc2897c3d");
+                      "\x9e\x83\xf2\x79\xc0\x40\xf2\xa1\x1a\xa4\xa0\x2b\x24\xc4\x18\xf2\xd3\xcb\x39\x56\x0c\x96\x27\xfa\x4f\x47\xe3\xbc\xc2\x89\x7c\x3d", 32);
 
   check_pkbdf2_sha256("password", 8,
                       "", 0,
                       1024,
-                      "ea5808411eb0c7e830deab55096cee582761e22a9bc034e3ece925225b07bf46");
+                      "\xea\x58\x08\x41\x1e\xb0\xc7\xe8\x30\xde\xab\x55\x09\x6c\xee\x58\x27\x61\xe2\x2a\x9b\xc0\x34\xe3\xec\xe9\x25\x22\x5b\x07\xbf\x46", 32);
 
   check_pkbdf2_sha256("\x70\x61\x73\x73\x00\x77\x6f\x72\x64", 9,
                       "\x73\x61\x00\x6c\x74", 5,
                       4096,
-                      "89b69d0516f829893c696226650a8687");
+                      "\x89\xb6\x9d\x05\x16\xf8\x29\x89\x3c\x69\x62\x26\x65\x0a\x86\x87", 16);
 }
 
 TEST_LIST = {

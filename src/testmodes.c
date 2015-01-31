@@ -9,72 +9,72 @@
 
 static void test_cbc(void)
 {
-  uint8_t iv[16], key[16], inp[16], out[16], expect[16];
+  uint8_t out[16];
 
-  unhex(iv, 16, "000102030405060708090A0B0C0D0E0F");
-  unhex(key, 16, "2b7e151628aed2a6abf7158809cf4f3c");
-  unhex(inp, 16, "6bc1bee22e409f96e93d7e117393172a");
-  unhex(expect, 16, "7649abac8119b246cee98e9b12e9197d");
+  const void *iv =  "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f";
+  const void *key = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c";
+  const void *inp = "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a";
+  const void *expect = "\x76\x49\xab\xac\x81\x19\xb2\x46\xce\xe9\x8e\x9b\x12\xe9\x19\x7d";
 
   cf_aes_context aes;
-  cf_aes_init(&aes, key, sizeof key);
+  cf_aes_init(&aes, key, 16);
 
   cf_cbc cbc;
   cf_cbc_init(&cbc, &cf_aes, &aes, iv);
   cf_cbc_encrypt(&cbc, inp, out, 1);
   TEST_CHECK(memcmp(out, expect, 16) == 0);
 
+  uint8_t decrypt[16];
   cf_cbc_init(&cbc, &cf_aes, &aes, iv);
-  cf_cbc_decrypt(&cbc, out, expect, 1);
-  TEST_CHECK(memcmp(expect, inp, 16) == 0);
+  cf_cbc_decrypt(&cbc, out, decrypt, 1);
+  TEST_CHECK(memcmp(decrypt, inp, 16) == 0);
 }
 
-static void cbcmac_vector(const char *tagstr, const char *keystr, const char *msgstr)
+static void cbcmac_vector(const void *tag_expect, size_t ntag,
+                          const void *key, size_t nkey,
+                          const void *msg, size_t nmsg)
 {
-  uint8_t message[40], key[32], tag[16], tag_expect[16];
-
-  size_t nmessage = unhex(message, sizeof message, msgstr);
-  size_t nkey = unhex(key, sizeof key, keystr);
-  unhex(tag_expect, sizeof tag_expect, tagstr);
+  uint8_t tag[16];
 
   cf_aes_context aes;
   cf_aes_init(&aes, key, nkey);
 
   cf_cbcmac_stream cm;
   cf_cbcmac_stream_init(&cm, &cf_aes, &aes);
-  cf_cbcmac_stream_update(&cm, message, nmessage);
+  cf_cbcmac_stream_update(&cm, msg, nmsg);
   cf_cbcmac_stream_pad_final(&cm, tag);
 
+  TEST_CHECK(sizeof tag == ntag);
   TEST_CHECK(memcmp(tag, tag_expect, sizeof tag) == 0);
 }
 
 static void test_cbcmac(void)
 {
-  cbcmac_vector("f0f18975a0859d13a49d3dbfc6cd65d9", "04f7f778621d1e2c8647822a50d98a83", "831be74b9be685c838e22a25a311cb14796235f52898d0");
-  cbcmac_vector("0d6a138f75b75694d515c5555eeedd92", "ff845afc51f20635a48f6cec9f781f2e", "c5853e6b3f7ef510936e30d554135f0d5543928c53fc2f81a3");
-  cbcmac_vector("96813db17eac06b97942a73a7c5a0aad", "10771647232eda4023d7c5c9bb512e93", "06535f70d96c8050856b024f67ae87dec8d29dabb71f559351000a3c8ffc6360");
-  cbcmac_vector("20dda5b1c11400909741ef3bc6ace8ec", "5b39db4ba4531f97f9ca4bdded9b2853", "4991b33540da4d8adfe9374bb4e1c5");
-  cbcmac_vector("c02f8f0aba134b6b1669fb582fc1c876", "d022c7e785d2fca4d67faa18b1a9fd9d7a47370933430632", "2ba28ea562dd9c5e80ccaf801677");
-  cbcmac_vector("05794b5fc8f2ee8774cd889f7c29eba0", "e451db268e2a26d1bf783eab5dc6f93fb2c5e25ce861283c", "ea14faaa954812cb");
-  cbcmac_vector("6a144baa39f619716265d34e53b4c67c", "ff46380f62a9377fb2418844392a97f5b99ac037f9c6753f", "6404534ca80a60f65e22b6c4d7f3a933f93e");
-  cbcmac_vector("f71d165cbaac0ff01a1275f85b6a8e15", "67ce476c110ea1bcf081302b5fe23bbc34c54d4601ed4904", "94b125634949467e7aa00ea11025219ac91f0deda110307e0884ee09e8315381");
-  cbcmac_vector("22fb7e4c77127ced2caaf98d9f351560", "1c50c0797cd67f8926d1c9b985f9eeaf183f070b3ad25f7efa0895fe98e34391", "7d1e7e199ad4f43fcfff55f7c981e613c022ab7f83922172657978cdf08b36");
-  cbcmac_vector("40c1eff3f4715458773cd30796dffd54", "3c1eaea74af6ee439bd7a37638d6082160e61b232bf8a45d05d5f489043e2d19", "d2a3381a82d6b6c25293431ddc1d73b5148240fe00c324528d69c6114e4ca940cdfb2917");
-  cbcmac_vector("697c6595a21fa2fa3ad360687aed6837", "c2da01b412a5cd1c75b5085fd2ee79c347d9f912863d81d04289759658704705", "65229b7715e502540490fbe2bf5a8eb0bf64ff7fb7ab7f18697b");
-  cbcmac_vector("f52d651684430de81f295106ecf0a5d2", "76ffb3385bca7c93c012d7bcb3a3d0f287a70a913676a78d2847058e75ae5e3c", "129091653237d035f64042a74f61a99c8fd6849a860e57e7e4");
+  cbcmac_vector("\xf0\xf1\x89\x75\xa0\x85\x9d\x13\xa4\x9d\x3d\xbf\xc6\xcd\x65\xd9", 16, "\x04\xf7\xf7\x78\x62\x1d\x1e\x2c\x86\x47\x82\x2a\x50\xd9\x8a\x83", 16, "\x83\x1b\xe7\x4b\x9b\xe6\x85\xc8\x38\xe2\x2a\x25\xa3\x11\xcb\x14\x79\x62\x35\xf5\x28\x98\xd0", 23);
+  cbcmac_vector("\x0d\x6a\x13\x8f\x75\xb7\x56\x94\xd5\x15\xc5\x55\x5e\xee\xdd\x92", 16, "\xff\x84\x5a\xfc\x51\xf2\x06\x35\xa4\x8f\x6c\xec\x9f\x78\x1f\x2e", 16, "\xc5\x85\x3e\x6b\x3f\x7e\xf5\x10\x93\x6e\x30\xd5\x54\x13\x5f\x0d\x55\x43\x92\x8c\x53\xfc\x2f\x81\xa3", 25);
+  cbcmac_vector("\x96\x81\x3d\xb1\x7e\xac\x06\xb9\x79\x42\xa7\x3a\x7c\x5a\x0a\xad", 16, "\x10\x77\x16\x47\x23\x2e\xda\x40\x23\xd7\xc5\xc9\xbb\x51\x2e\x93", 16, "\x06\x53\x5f\x70\xd9\x6c\x80\x50\x85\x6b\x02\x4f\x67\xae\x87\xde\xc8\xd2\x9d\xab\xb7\x1f\x55\x93\x51\x00\x0a\x3c\x8f\xfc\x63\x60", 32);
+  cbcmac_vector("\x20\xdd\xa5\xb1\xc1\x14\x00\x90\x97\x41\xef\x3b\xc6\xac\xe8\xec", 16, "\x5b\x39\xdb\x4b\xa4\x53\x1f\x97\xf9\xca\x4b\xdd\xed\x9b\x28\x53", 16, "\x49\x91\xb3\x35\x40\xda\x4d\x8a\xdf\xe9\x37\x4b\xb4\xe1\xc5", 15);
+  cbcmac_vector("\xc0\x2f\x8f\x0a\xba\x13\x4b\x6b\x16\x69\xfb\x58\x2f\xc1\xc8\x76", 16, "\xd0\x22\xc7\xe7\x85\xd2\xfc\xa4\xd6\x7f\xaa\x18\xb1\xa9\xfd\x9d\x7a\x47\x37\x09\x33\x43\x06\x32", 24, "\x2b\xa2\x8e\xa5\x62\xdd\x9c\x5e\x80\xcc\xaf\x80\x16\x77", 14);
+  cbcmac_vector("\x05\x79\x4b\x5f\xc8\xf2\xee\x87\x74\xcd\x88\x9f\x7c\x29\xeb\xa0", 16, "\xe4\x51\xdb\x26\x8e\x2a\x26\xd1\xbf\x78\x3e\xab\x5d\xc6\xf9\x3f\xb2\xc5\xe2\x5c\xe8\x61\x28\x3c", 24, "\xea\x14\xfa\xaa\x95\x48\x12\xcb", 8);
+  cbcmac_vector("\x6a\x14\x4b\xaa\x39\xf6\x19\x71\x62\x65\xd3\x4e\x53\xb4\xc6\x7c", 16, "\xff\x46\x38\x0f\x62\xa9\x37\x7f\xb2\x41\x88\x44\x39\x2a\x97\xf5\xb9\x9a\xc0\x37\xf9\xc6\x75\x3f", 24, "\x64\x04\x53\x4c\xa8\x0a\x60\xf6\x5e\x22\xb6\xc4\xd7\xf3\xa9\x33\xf9\x3e", 18);
+  cbcmac_vector("\xf7\x1d\x16\x5c\xba\xac\x0f\xf0\x1a\x12\x75\xf8\x5b\x6a\x8e\x15", 16, "\x67\xce\x47\x6c\x11\x0e\xa1\xbc\xf0\x81\x30\x2b\x5f\xe2\x3b\xbc\x34\xc5\x4d\x46\x01\xed\x49\x04", 24, "\x94\xb1\x25\x63\x49\x49\x46\x7e\x7a\xa0\x0e\xa1\x10\x25\x21\x9a\xc9\x1f\x0d\xed\xa1\x10\x30\x7e\x08\x84\xee\x09\xe8\x31\x53\x81", 32);
+  cbcmac_vector("\x22\xfb\x7e\x4c\x77\x12\x7c\xed\x2c\xaa\xf9\x8d\x9f\x35\x15\x60", 16, "\x1c\x50\xc0\x79\x7c\xd6\x7f\x89\x26\xd1\xc9\xb9\x85\xf9\xee\xaf\x18\x3f\x07\x0b\x3a\xd2\x5f\x7e\xfa\x08\x95\xfe\x98\xe3\x43\x91", 32, "\x7d\x1e\x7e\x19\x9a\xd4\xf4\x3f\xcf\xff\x55\xf7\xc9\x81\xe6\x13\xc0\x22\xab\x7f\x83\x92\x21\x72\x65\x79\x78\xcd\xf0\x8b\x36", 31);
+  cbcmac_vector("\x40\xc1\xef\xf3\xf4\x71\x54\x58\x77\x3c\xd3\x07\x96\xdf\xfd\x54", 16, "\x3c\x1e\xae\xa7\x4a\xf6\xee\x43\x9b\xd7\xa3\x76\x38\xd6\x08\x21\x60\xe6\x1b\x23\x2b\xf8\xa4\x5d\x05\xd5\xf4\x89\x04\x3e\x2d\x19", 32, "\xd2\xa3\x38\x1a\x82\xd6\xb6\xc2\x52\x93\x43\x1d\xdc\x1d\x73\xb5\x14\x82\x40\xfe\x00\xc3\x24\x52\x8d\x69\xc6\x11\x4e\x4c\xa9\x40\xcd\xfb\x29\x17", 36);
+  cbcmac_vector("\x69\x7c\x65\x95\xa2\x1f\xa2\xfa\x3a\xd3\x60\x68\x7a\xed\x68\x37", 16, "\xc2\xda\x01\xb4\x12\xa5\xcd\x1c\x75\xb5\x08\x5f\xd2\xee\x79\xc3\x47\xd9\xf9\x12\x86\x3d\x81\xd0\x42\x89\x75\x96\x58\x70\x47\x05", 32, "\x65\x22\x9b\x77\x15\xe5\x02\x54\x04\x90\xfb\xe2\xbf\x5a\x8e\xb0\xbf\x64\xff\x7f\xb7\xab\x7f\x18\x69\x7b", 26);
+  cbcmac_vector("\xf5\x2d\x65\x16\x84\x43\x0d\xe8\x1f\x29\x51\x06\xec\xf0\xa5\xd2", 16, "\x76\xff\xb3\x38\x5b\xca\x7c\x93\xc0\x12\xd7\xbc\xb3\xa3\xd0\xf2\x87\xa7\x0a\x91\x36\x76\xa7\x8d\x28\x47\x05\x8e\x75\xae\x5e\x3c", 32, "\x12\x90\x91\x65\x32\x37\xd0\x35\xf6\x40\x42\xa7\x4f\x61\xa9\x9c\x8f\xd6\x84\x9a\x86\x0e\x57\xe7\xe4", 25);
 }
 
 static void test_ctr(void)
 {
-  uint8_t nonce[16], key[16], inp[16], out[16], expect[16];
+  uint8_t out[16];
 
-  unhex(nonce, 16, "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff");
-  unhex(key, 16, "2b7e151628aed2a6abf7158809cf4f3c");
-  unhex(inp, 16, "6bc1bee22e409f96e93d7e117393172a");
-  unhex(expect, 16, "874d6191b620e3261bef6864990db6ce");
+  const void *nonce = "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
+  const void *key = "\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c";
+  const void *inp = "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a";
+  const void *expect = "\x87\x4d\x61\x91\xb6\x20\xe3\x26\x1b\xef\x68\x64\x99\x0d\xb6\xce";
 
   cf_aes_context aes;
-  cf_aes_init(&aes, key, sizeof key);
+  cf_aes_init(&aes, key, 16);
 
   cf_ctr ctr;
   cf_ctr_init(&ctr, &cf_aes, &aes, nonce);
@@ -91,34 +91,37 @@ static void test_ctr(void)
   cf_ctr_cipher(&ctr, inp + 1, out + 1, 15);
   TEST_CHECK(memcmp(expect, out, 16) == 0);
 
+  uint8_t decrypt[16];
   cf_ctr_init(&ctr, &cf_aes, &aes, nonce);
-  cf_ctr_cipher(&ctr, out, expect, 16); /* decrypt */
-  TEST_CHECK(memcmp(expect, inp, 16) == 0);
+  cf_ctr_cipher(&ctr, out, decrypt, 16);
+  TEST_CHECK(memcmp(decrypt, inp, 16) == 0);
 
-  memset(nonce, 0xff, 16);
-  memset(inp, 0x00, 16);
-  cf_ctr_init(&ctr, &cf_aes, &aes, nonce);
+  /* Test we use the right number of blocks up. */
+  uint8_t test_nonce[16], test_inp[16];
+  memset(test_nonce, 0xff, 16);
+  memset(test_inp, 0x00, 16);
+  cf_ctr_init(&ctr, &cf_aes, &aes, test_nonce);
 
   /* Exercise cf_blockwise_xor code paths. */
   for (int i = 0; i < 1024; i++)
   {
-    cf_ctr_cipher(&ctr, inp, out, i % 16);
+    cf_ctr_cipher(&ctr, test_inp, out, i % 16);
   }
 
   /* expected counter value is 1024 * 7.5 / 16 - 1:
    * 479 = 0x1df
    */
 
-  memset(nonce, 0, 16);
-  nonce[15] = 0xdf;
-  nonce[14] = 0x01;
+  memset(test_nonce, 0, sizeof test_nonce);
+  test_nonce[15] = 0xdf;
+  test_nonce[14] = 0x01;
 
-  TEST_CHECK(memcmp(nonce, ctr.nonce, 16) == 0);
+  TEST_CHECK(memcmp(test_nonce, ctr.nonce, 16) == 0);
 }
 
 static void test_eax(void)
 {
-  uint8_t key[16], nonce[16], header[8], msg[2], cipher[2], tag[16];
+  uint8_t cipher[2], tag[16];
 
   /*
    * MSG: F7FB
@@ -128,18 +131,21 @@ static void test_eax(void)
    * CIPHER: 19DD5C4C9331049D0BDAB0277408F67967E5
    */
 
-  unhex(key, 16, "91945D3F4DCBEE0BF45EF52255F095A4");
-  unhex(nonce, 16, "BECAF043B0A23D843194BA972C66DEBD");
-  unhex(header, 8, "FA3BFD4806EB53FA");
-  unhex(msg, 2, "F7FB");
+  const void *key = "\x91\x94\x5d\x3f\x4d\xcb\xee\x0b\xf4\x5e\xf5\x22\x55\xf0\x95\xa4";
+  const void *nonce = "\xbe\xca\xf0\x43\xb0\xa2\x3d\x84\x31\x94\xba\x97\x2c\x66\xde\xbd";
+  size_t nnonce = 16;
+  const void *header = "\xfa\x3b\xfd\x48\x06\xeb\x53\xfa";
+  size_t nheader = 8;
+  const void *msg = "\xf7\xfb";
+  size_t nmsg = 2;
 
   cf_aes_context aes;
-  cf_aes_init(&aes, key, sizeof key);
+  cf_aes_init(&aes, key, 16);
 
   cf_eax_encrypt(&cf_aes, &aes,
-                 msg, sizeof msg,
-                 header, sizeof header,
-                 nonce, sizeof nonce,
+                 msg, nmsg,
+                 header, nheader,
+                 nonce, nnonce,
                  cipher,
                  tag, sizeof tag);
 
@@ -150,32 +156,30 @@ static void test_eax(void)
   uint8_t tmp[2];
   rc = cf_eax_decrypt(&cf_aes, &aes,
                       cipher, sizeof cipher,
-                      header, sizeof header,
-                      nonce, sizeof nonce,
+                      header, nheader,
+                      nonce, nnonce,
                       tag, sizeof tag,
                       tmp);
   TEST_CHECK(rc == 0);
-  TEST_CHECK(memcmp(tmp, msg, sizeof msg) == 0);
+  TEST_CHECK(memcmp(tmp, msg, nmsg) == 0);
 
   tag[0] ^= 0xff;
   rc = cf_eax_decrypt(&cf_aes, &aes,
                       cipher, sizeof cipher,
-                      header, sizeof header,
-                      nonce, sizeof nonce,
+                      header, nheader,
+                      nonce, nnonce,
                       tag, sizeof tag,
                       tmp);
   TEST_CHECK(rc == 1);
 }
 
-static void check_cmac(const char *keystr, size_t nkey,
-                       const char *msgstr, size_t nmsg,
-                       const char *tagstr)
+static void check_cmac(const void *key, size_t nkey,
+                       const void *msg, size_t nmsg,
+                       const void *wanttag, size_t ntag)
 {
-  uint8_t key[32], msg[256], gottag[16], wanttag[16];
+  uint8_t gottag[16];
 
-  unhex(key, nkey, keystr);
-  unhex(msg, nmsg, msgstr);
-  unhex(wanttag, 16, tagstr);
+  TEST_CHECK(cf_aes.blocksz == ntag);
 
   cf_aes_context aes;
   cf_aes_init(&aes, key, nkey);
@@ -190,53 +194,53 @@ static void check_cmac(const char *keystr, size_t nkey,
 static void test_cmac(void)
 {
   /* These from SP800-38B */
-  check_cmac("2b7e151628aed2a6abf7158809cf4f3c", 16,
+  check_cmac("\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c", 16,
              "", 0,
-             "bb1d6929e95937287fa37d129b756746");
-  check_cmac("2b7e151628aed2a6abf7158809cf4f3c", 16,
-             "6bc1bee22e409f96e93d7e117393172a", 16,
-             "070a16b46b4d4144f79bdd9dd04a287c");
-  check_cmac("2b7e151628aed2a6abf7158809cf4f3c", 16,
-             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411", 40,
-             "dfa66747de9ae63030ca32611497c827");
-  check_cmac("2b7e151628aed2a6abf7158809cf4f3c", 16,
-             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710", 64,
-             "51f0bebf7e3b9d92fc49741779363cfe");
+             "\xbb\x1d\x69\x29\xe9\x59\x37\x28\x7f\xa3\x7d\x12\x9b\x75\x67\x46", 16);
+  check_cmac("\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c", 16,
+             "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a", 16,
+             "\x07\x0a\x16\xb4\x6b\x4d\x41\x44\xf7\x9b\xdd\x9d\xd0\x4a\x28\x7c", 16);
+  check_cmac("\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c", 16,
+             "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51\x30\xc8\x1c\x46\xa3\x5c\xe4\x11", 40,
+             "\xdf\xa6\x67\x47\xde\x9a\xe6\x30\x30\xca\x32\x61\x14\x97\xc8\x27", 16);
+  check_cmac("\x2b\x7e\x15\x16\x28\xae\xd2\xa6\xab\xf7\x15\x88\x09\xcf\x4f\x3c", 16,
+             "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51\x30\xc8\x1c\x46\xa3\x5c\xe4\x11\xe5\xfb\xc1\x19\x1a\x0a\x52\xef\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10", 64,
+             "\x51\xf0\xbe\xbf\x7e\x3b\x9d\x92\xfc\x49\x74\x17\x79\x36\x3c\xfe", 16);
 
-  check_cmac("8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b", 24,
+  check_cmac("\x8e\x73\xb0\xf7\xda\x0e\x64\x52\xc8\x10\xf3\x2b\x80\x90\x79\xe5\x62\xf8\xea\xd2\x52\x2c\x6b\x7b", 24,
              "", 0,
-             "d17ddf46adaacde531cac483de7a9367");
-  check_cmac("8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b", 24,
-             "6bc1bee22e409f96e93d7e117393172a", 16,
-             "9e99a7bf31e710900662f65e617c5184");
-  check_cmac("8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b", 24,
-             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411", 40,
-             "8a1de5be2eb31aad089a82e6ee908b0e");
-  check_cmac("8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b", 24,
-             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710", 64,
-             "a1d5df0eed790f794d77589659f39a11");
+             "\xd1\x7d\xdf\x46\xad\xaa\xcd\xe5\x31\xca\xc4\x83\xde\x7a\x93\x67", 16);
+  check_cmac("\x8e\x73\xb0\xf7\xda\x0e\x64\x52\xc8\x10\xf3\x2b\x80\x90\x79\xe5\x62\xf8\xea\xd2\x52\x2c\x6b\x7b", 24,
+             "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a", 16,
+             "\x9e\x99\xa7\xbf\x31\xe7\x10\x90\x06\x62\xf6\x5e\x61\x7c\x51\x84", 16);
+  check_cmac("\x8e\x73\xb0\xf7\xda\x0e\x64\x52\xc8\x10\xf3\x2b\x80\x90\x79\xe5\x62\xf8\xea\xd2\x52\x2c\x6b\x7b", 24,
+             "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51\x30\xc8\x1c\x46\xa3\x5c\xe4\x11", 40,
+             "\x8a\x1d\xe5\xbe\x2e\xb3\x1a\xad\x08\x9a\x82\xe6\xee\x90\x8b\x0e", 16);
+  check_cmac("\x8e\x73\xb0\xf7\xda\x0e\x64\x52\xc8\x10\xf3\x2b\x80\x90\x79\xe5\x62\xf8\xea\xd2\x52\x2c\x6b\x7b", 24,
+             "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51\x30\xc8\x1c\x46\xa3\x5c\xe4\x11\xe5\xfb\xc1\x19\x1a\x0a\x52\xef\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10", 64,
+             "\xa1\xd5\xdf\x0e\xed\x79\x0f\x79\x4d\x77\x58\x96\x59\xf3\x9a\x11", 16);
 
-  check_cmac("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", 32,
+  check_cmac("\x60\x3d\xeb\x10\x15\xca\x71\xbe\x2b\x73\xae\xf0\x85\x7d\x77\x81\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4", 32,
              "", 0,
-             "028962f61b7bf89efc6b551f4667d983");
-  check_cmac("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", 32,
-             "6bc1bee22e409f96e93d7e117393172a", 16,
-             "28a7023f452e8f82bd4bf28d8c37c35c");
-  check_cmac("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", 32,
-             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411", 40,
-             "aaf3d8f1de5640c232f5b169b9c911e6");
-  check_cmac("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", 32,
-             "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710", 64,
-             "e1992190549f6ed5696a2c056c315410");
+             "\x02\x89\x62\xf6\x1b\x7b\xf8\x9e\xfc\x6b\x55\x1f\x46\x67\xd9\x83", 16);
+  check_cmac("\x60\x3d\xeb\x10\x15\xca\x71\xbe\x2b\x73\xae\xf0\x85\x7d\x77\x81\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4", 32,
+             "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a", 16,
+             "\x28\xa7\x02\x3f\x45\x2e\x8f\x82\xbd\x4b\xf2\x8d\x8c\x37\xc3\x5c", 16);
+  check_cmac("\x60\x3d\xeb\x10\x15\xca\x71\xbe\x2b\x73\xae\xf0\x85\x7d\x77\x81\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4", 32,
+             "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51\x30\xc8\x1c\x46\xa3\x5c\xe4\x11", 40,
+             "\xaa\xf3\xd8\xf1\xde\x56\x40\xc2\x32\xf5\xb1\x69\xb9\xc9\x11\xe6", 16);
+  check_cmac("\x60\x3d\xeb\x10\x15\xca\x71\xbe\x2b\x73\xae\xf0\x85\x7d\x77\x81\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4", 32,
+             "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51\x30\xc8\x1c\x46\xa3\x5c\xe4\x11\xe5\xfb\xc1\x19\x1a\x0a\x52\xef\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10", 64,
+             "\xe1\x99\x21\x90\x54\x9f\x6e\xd5\x69\x6a\x2c\x05\x6c\x31\x54\x10", 16);
 }
 
 static void test_gf128_mul(void)
 {
-  uint8_t bx[16], by[16], bout[16], bexpect[16];
+  uint8_t bout[16];
 
-  unhex(bx, sizeof bx, "0388dace60b6a392f328c2b971b2fe78");
-  unhex(by, sizeof by, "66e94bd4ef8a2c3b884cfa59ca342b2e");
-  unhex(bexpect, sizeof bexpect, "5e2ec746917062882c85b0685353deb7");
+  const void *bx = "\x03\x88\xda\xce\x60\xb6\xa3\x92\xf3\x28\xc2\xb9\x71\xb2\xfe\x78";
+  const void *by = "\x66\xe9\x4b\xd4\xef\x8a\x2c\x3b\x88\x4c\xfa\x59\xca\x34\x2b\x2e";
+  const void *bexpect = "\x5e\x2e\xc7\x46\x91\x70\x62\x88\x2c\x85\xb0\x68\x53\x53\xde\xb7";
 
   cf_gf128 x, y, out;
   cf_gf128_frombytes_be(bx, x);
@@ -246,29 +250,16 @@ static void test_gf128_mul(void)
   TEST_CHECK(memcmp(bexpect, bout, 16) == 0);
 }
 
-static void check_gcm(const char *keystr,
-                      const char *plainstr,
-                      const char *aadstr,
-                      const char *ivstr,
-                      const char *cipherstr,
-                      const char *tagstr)
+static void check_gcm(const void *key, size_t nkey,
+                      const void *plain, size_t nplain,
+                      const void *aad, size_t naad,
+                      const void *iv, size_t niv,
+                      const void *cipher_expect, size_t ncipher,
+                      const void *tag_expect, size_t ntag)
 {
-  uint8_t key[32],
-          plain[64],
-          plain_decrypt[64],
-          aad[64],
-          iv[64],
-          cipher_expect[64],
+  uint8_t plain_decrypt[64],
           cipher[64],
-          tag_expect[16],
           tag[16];
-
-  size_t nkey = unhex(key, sizeof key, keystr),
-         nplain = unhex(plain, sizeof plain, plainstr),
-         naad = unhex(aad, sizeof aad, aadstr),
-         niv = unhex(iv, sizeof iv, ivstr),
-         ncipher = unhex(cipher_expect, sizeof cipher_expect, cipherstr),
-         ntag = unhex(tag_expect, sizeof tag_expect, tagstr);
 
   assert(ncipher == nplain);
 
@@ -306,132 +297,124 @@ static void check_gcm(const char *keystr,
 
 static void test_gcm(void)
 {
-  check_gcm("00000000000000000000000000000000",
-            "",
-            "",
-            "000000000000000000000000",
-            "",
-            "58e2fccefa7e3061367f1d57a4e7455a");
-  check_gcm("00000000000000000000000000000000",
-            "00000000000000000000000000000000",
-            "",
-            "000000000000000000000000",
-            "0388dace60b6a392f328c2b971b2fe78",
-            "ab6e47d42cec13bdf53a67b21257bddf");
-  check_gcm("feffe9928665731c6d6a8f9467308308",
-            "d9313225f88406e5a55909c5aff5269a"
-            "86a7a9531534f7da2e4c303d8a318a72"
-            "1c3c0c95956809532fcf0e2449a6b525"
-            "b16aedf5aa0de657ba637b391aafd255",
-            "",
-            "cafebabefacedbaddecaf888",
-            "42831ec2217774244b7221b784d0d49c"
-            "e3aa212f2c02a4e035c17e2329aca12e"
-            "21d514b25466931c7d8f6a5aac84aa05"
-            "1ba30b396a0aac973d58e091473f5985",
-            "4d5c2af327cd64a62cf35abd2ba6fab4");
-  check_gcm("feffe9928665731c6d6a8f9467308308",
-            "d9313225f88406e5a55909c5aff5269a"
-            "86a7a9531534f7da2e4c303d8a318a72"
-            "1c3c0c95956809532fcf0e2449a6b525"
-            "b16aedf5aa0de657ba637b39",
-            "feedfacedeadbeeffeedfacedeadbeef"
-            "abaddad2",
-            "cafebabefacedbaddecaf888",
-            "42831ec2217774244b7221b784d0d49c"
-            "e3aa212f2c02a4e035c17e2329aca12e"
-            "21d514b25466931c7d8f6a5aac84aa05"
-            "1ba30b396a0aac973d58e091",
-            "5bc94fbc3221a5db94fae95ae7121a47");
-  check_gcm("feffe9928665731c6d6a8f9467308308",
-            "d9313225f88406e5a55909c5aff5269a"
-            "86a7a9531534f7da2e4c303d8a318a72"
-            "1c3c0c95956809532fcf0e2449a6b525"
-            "b16aedf5aa0de657ba637b39",
-            "feedfacedeadbeeffeedfacedeadbeef"
-            "abaddad2",
-            "cafebabefacedbad",
-            "61353b4c2806934a777ff51fa22a4755"
-            "699b2a714fcdc6f83766e5f97b6c7423"
-            "73806900e49f24b22b097544d4896b42"
-            "4989b5e1ebac0f07c23f4598",
-            "3612d2e79e3b0785561be14aaca2fccb");
-  check_gcm("feffe9928665731c6d6a8f9467308308",
-            "d9313225f88406e5a55909c5aff5269a"
-            "86a7a9531534f7da2e4c303d8a318a72"
-            "1c3c0c95956809532fcf0e2449a6b525"
-            "b16aedf5aa0de657ba637b39",
-            "feedfacedeadbeeffeedfacedeadbeef"
-            "abaddad2",
-            "9313225df88406e555909c5aff5269aa"
-            "6a7a9538534f7da1e4c303d2a318a728"
-            "c3c0c95156809539fcf0e2429a6b5254"
-            "16aedbf5a0de6a57a637b39b",
-            "8ce24998625615b603a033aca13fb894"
-            "be9112a5c3a211a8ba262a3cca7e2ca7"
-            "01e4a9a4fba43c90ccdcb281d48c7c6f"
-            "d62875d2aca417034c34aee5",
-            "619cc5aefffe0bfa462af43c1699d050");
+  check_gcm("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16,
+            "", 0,
+            "", 0,
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 12,
+            "", 0,
+            "\x58\xe2\xfc\xce\xfa\x7e\x30\x61\x36\x7f\x1d\x57\xa4\xe7\x45\x5a", 16);
+  check_gcm("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16,
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16,
+            "", 0,
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 12,
+            "\x03\x88\xda\xce\x60\xb6\xa3\x92\xf3\x28\xc2\xb9\x71\xb2\xfe\x78", 16,
+            "\xab\x6e\x47\xd4\x2c\xec\x13\xbd\xf5\x3a\x67\xb2\x12\x57\xbd\xdf", 16);
+  check_gcm("\xfe\xff\xe9\x92\x86\x65\x73\x1c\x6d\x6a\x8f\x94\x67\x30\x83\x08", 16,
+            "\xd9\x31\x32\x25\xf8\x84\x06\xe5\xa5\x59\x09\xc5\xaf\xf5\x26\x9a"
+            "\x86\xa7\xa9\x53\x15\x34\xf7\xda\x2e\x4c\x30\x3d\x8a\x31\x8a\x72"
+            "\x1c\x3c\x0c\x95\x95\x68\x09\x53\x2f\xcf\x0e\x24\x49\xa6\xb5\x25"
+            "\xb1\x6a\xed\xf5\xaa\x0d\xe6\x57\xba\x63\x7b\x39\x1a\xaf\xd2\x55", 64,
+            "", 0,
+            "\xca\xfe\xba\xbe\xfa\xce\xdb\xad\xde\xca\xf8\x88", 12,
+            "\x42\x83\x1e\xc2\x21\x77\x74\x24\x4b\x72\x21\xb7\x84\xd0\xd4\x9c"
+            "\xe3\xaa\x21\x2f\x2c\x02\xa4\xe0\x35\xc1\x7e\x23\x29\xac\xa1\x2e"
+            "\x21\xd5\x14\xb2\x54\x66\x93\x1c\x7d\x8f\x6a\x5a\xac\x84\xaa\x05"
+            "\x1b\xa3\x0b\x39\x6a\x0a\xac\x97\x3d\x58\xe0\x91\x47\x3f\x59\x85", 64,
+            "\x4d\x5c\x2a\xf3\x27\xcd\x64\xa6\x2c\xf3\x5a\xbd\x2b\xa6\xfa\xb4", 16);
+  check_gcm("\xfe\xff\xe9\x92\x86\x65\x73\x1c\x6d\x6a\x8f\x94\x67\x30\x83\x08", 16,
+            "\xd9\x31\x32\x25\xf8\x84\x06\xe5\xa5\x59\x09\xc5\xaf\xf5\x26\x9a"
+            "\x86\xa7\xa9\x53\x15\x34\xf7\xda\x2e\x4c\x30\x3d\x8a\x31\x8a\x72"
+            "\x1c\x3c\x0c\x95\x95\x68\x09\x53\x2f\xcf\x0e\x24\x49\xa6\xb5\x25"
+            "\xb1\x6a\xed\xf5\xaa\x0d\xe6\x57\xba\x63\x7b\x39", 60,
+            "\xfe\xed\xfa\xce\xde\xad\xbe\xef\xfe\xed\xfa\xce\xde\xad\xbe\xef"
+            "\xab\xad\xda\xd2", 20,
+            "\xca\xfe\xba\xbe\xfa\xce\xdb\xad\xde\xca\xf8\x88", 12,
+            "\x42\x83\x1e\xc2\x21\x77\x74\x24\x4b\x72\x21\xb7\x84\xd0\xd4\x9c"
+            "\xe3\xaa\x21\x2f\x2c\x02\xa4\xe0\x35\xc1\x7e\x23\x29\xac\xa1\x2e"
+            "\x21\xd5\x14\xb2\x54\x66\x93\x1c\x7d\x8f\x6a\x5a\xac\x84\xaa\x05"
+            "\x1b\xa3\x0b\x39\x6a\x0a\xac\x97\x3d\x58\xe0\x91", 60,
+            "\x5b\xc9\x4f\xbc\x32\x21\xa5\xdb\x94\xfa\xe9\x5a\xe7\x12\x1a\x47", 16);
+  check_gcm("\xfe\xff\xe9\x92\x86\x65\x73\x1c\x6d\x6a\x8f\x94\x67\x30\x83\x08", 16,
+            "\xd9\x31\x32\x25\xf8\x84\x06\xe5\xa5\x59\x09\xc5\xaf\xf5\x26\x9a"
+            "\x86\xa7\xa9\x53\x15\x34\xf7\xda\x2e\x4c\x30\x3d\x8a\x31\x8a\x72"
+            "\x1c\x3c\x0c\x95\x95\x68\x09\x53\x2f\xcf\x0e\x24\x49\xa6\xb5\x25"
+            "\xb1\x6a\xed\xf5\xaa\x0d\xe6\x57\xba\x63\x7b\x39", 60,
+            "\xfe\xed\xfa\xce\xde\xad\xbe\xef\xfe\xed\xfa\xce\xde\xad\xbe\xef"
+            "\xab\xad\xda\xd2", 20,
+            "\xca\xfe\xba\xbe\xfa\xce\xdb\xad", 8,
+            "\x61\x35\x3b\x4c\x28\x06\x93\x4a\x77\x7f\xf5\x1f\xa2\x2a\x47\x55"
+            "\x69\x9b\x2a\x71\x4f\xcd\xc6\xf8\x37\x66\xe5\xf9\x7b\x6c\x74\x23"
+            "\x73\x80\x69\x00\xe4\x9f\x24\xb2\x2b\x09\x75\x44\xd4\x89\x6b\x42"
+            "\x49\x89\xb5\xe1\xeb\xac\x0f\x07\xc2\x3f\x45\x98", 60,
+            "\x36\x12\xd2\xe7\x9e\x3b\x07\x85\x56\x1b\xe1\x4a\xac\xa2\xfc\xcb", 16);
+  check_gcm("\xfe\xff\xe9\x92\x86\x65\x73\x1c\x6d\x6a\x8f\x94\x67\x30\x83\x08", 16,
+            "\xd9\x31\x32\x25\xf8\x84\x06\xe5\xa5\x59\x09\xc5\xaf\xf5\x26\x9a"
+            "\x86\xa7\xa9\x53\x15\x34\xf7\xda\x2e\x4c\x30\x3d\x8a\x31\x8a\x72"
+            "\x1c\x3c\x0c\x95\x95\x68\x09\x53\x2f\xcf\x0e\x24\x49\xa6\xb5\x25"
+            "\xb1\x6a\xed\xf5\xaa\x0d\xe6\x57\xba\x63\x7b\x39", 60,
+            "\xfe\xed\xfa\xce\xde\xad\xbe\xef\xfe\xed\xfa\xce\xde\xad\xbe\xef"
+            "\xab\xad\xda\xd2", 20,
+            "\x93\x13\x22\x5d\xf8\x84\x06\xe5\x55\x90\x9c\x5a\xff\x52\x69\xaa"
+            "\x6a\x7a\x95\x38\x53\x4f\x7d\xa1\xe4\xc3\x03\xd2\xa3\x18\xa7\x28"
+            "\xc3\xc0\xc9\x51\x56\x80\x95\x39\xfc\xf0\xe2\x42\x9a\x6b\x52\x54"
+            "\x16\xae\xdb\xf5\xa0\xde\x6a\x57\xa6\x37\xb3\x9b", 60,
+            "\x8c\xe2\x49\x98\x62\x56\x15\xb6\x03\xa0\x33\xac\xa1\x3f\xb8\x94"
+            "\xbe\x91\x12\xa5\xc3\xa2\x11\xa8\xba\x26\x2a\x3c\xca\x7e\x2c\xa7"
+            "\x01\xe4\xa9\xa4\xfb\xa4\x3c\x90\xcc\xdc\xb2\x81\xd4\x8c\x7c\x6f"
+            "\xd6\x28\x75\xd2\xac\xa4\x17\x03\x4c\x34\xae\xe5", 60,
+            "\x61\x9c\xc5\xae\xff\xfe\x0b\xfa\x46\x2a\xf4\x3c\x16\x99\xd0\x50", 16);
 
-  check_gcm("feffe9928665731c6d6a8f9467308308",
-            "d9313225f88406e5a55909c5aff5269a"
-            "86a7a9531534f7da2e4c303d8a318a72"
-            "1c3c0c95956809532fcf0e2449a6b525"
-            "b16aedf5aa0de657ba637b39",
-            "feedfacedeadbeeffeedfacedeadbeef"
-            "abaddad2",
-            "9313225df88406e555909c5aff5269aa"
-            "6a7a9538534f7da1e4c303d2a318a728"
-            "c3c0c95156809539fcf0e2429a6b5254"
-            "16aedbf5a0de6a57a637b39b",
-            "8ce24998625615b603a033aca13fb894"
-            "be9112a5c3a211a8ba262a3cca7e2ca7"
-            "01e4a9a4fba43c90ccdcb281d48c7c6f"
-            "d62875d2aca417034c34aee5",
-            "619cc5aefffe0bfa462af43c1699d050");
-  check_gcm("000000000000000000000000000000000000000000000000",
-            "",
-            "",
-            "000000000000000000000000",
-            "",
-            "cd33b28ac773f74ba00ed1f312572435");
-  check_gcm("000000000000000000000000000000000000000000000000",
-            "00000000000000000000000000000000",
-            "",
-            "000000000000000000000000",
-            "98e7247c07f0fe411c267e4384b0f600",
-            "2ff58d80033927ab8ef4d4587514f0fb");
-  check_gcm("feffe9928665731c6d6a8f9467308308"
-            "feffe9928665731c",
-            "d9313225f88406e5a55909c5aff5269a"
-            "86a7a9531534f7da2e4c303d8a318a72"
-            "1c3c0c95956809532fcf0e2449a6b525"
-            "b16aedf5aa0de657ba637b391aafd255",
-            "",
-            "cafebabefacedbaddecaf888",
-            "3980ca0b3c00e841eb06fac4872a2757"
-            "859e1ceaa6efd984628593b40ca1e19c"
-            "7d773d00c144c525ac619d18c84a3f47"
-            "18e2448b2fe324d9ccda2710acade256",
-            "9924a7c8587336bfb118024db8674a14");
+  check_gcm("\xfe\xff\xe9\x92\x86\x65\x73\x1c\x6d\x6a\x8f\x94\x67\x30\x83\x08", 16,
+            "\xd9\x31\x32\x25\xf8\x84\x06\xe5\xa5\x59\x09\xc5\xaf\xf5\x26\x9a"
+            "\x86\xa7\xa9\x53\x15\x34\xf7\xda\x2e\x4c\x30\x3d\x8a\x31\x8a\x72"
+            "\x1c\x3c\x0c\x95\x95\x68\x09\x53\x2f\xcf\x0e\x24\x49\xa6\xb5\x25"
+            "\xb1\x6a\xed\xf5\xaa\x0d\xe6\x57\xba\x63\x7b\x39", 60,
+            "\xfe\xed\xfa\xce\xde\xad\xbe\xef\xfe\xed\xfa\xce\xde\xad\xbe\xef"
+            "\xab\xad\xda\xd2", 20,
+            "\x93\x13\x22\x5d\xf8\x84\x06\xe5\x55\x90\x9c\x5a\xff\x52\x69\xaa"
+            "\x6a\x7a\x95\x38\x53\x4f\x7d\xa1\xe4\xc3\x03\xd2\xa3\x18\xa7\x28"
+            "\xc3\xc0\xc9\x51\x56\x80\x95\x39\xfc\xf0\xe2\x42\x9a\x6b\x52\x54"
+            "\x16\xae\xdb\xf5\xa0\xde\x6a\x57\xa6\x37\xb3\x9b", 60,
+            "\x8c\xe2\x49\x98\x62\x56\x15\xb6\x03\xa0\x33\xac\xa1\x3f\xb8\x94"
+            "\xbe\x91\x12\xa5\xc3\xa2\x11\xa8\xba\x26\x2a\x3c\xca\x7e\x2c\xa7"
+            "\x01\xe4\xa9\xa4\xfb\xa4\x3c\x90\xcc\xdc\xb2\x81\xd4\x8c\x7c\x6f"
+            "\xd6\x28\x75\xd2\xac\xa4\x17\x03\x4c\x34\xae\xe5", 60,
+            "\x61\x9c\xc5\xae\xff\xfe\x0b\xfa\x46\x2a\xf4\x3c\x16\x99\xd0\x50", 16);
+  check_gcm("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 24,
+            "", 0,
+            "", 0,
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 12,
+            "", 0,
+            "\xcd\x33\xb2\x8a\xc7\x73\xf7\x4b\xa0\x0e\xd1\xf3\x12\x57\x24\x35", 16);
+  check_gcm("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 24,
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16,
+            "", 0,
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 12,
+            "\x98\xe7\x24\x7c\x07\xf0\xfe\x41\x1c\x26\x7e\x43\x84\xb0\xf6\x00", 16,
+            "\x2f\xf5\x8d\x80\x03\x39\x27\xab\x8e\xf4\xd4\x58\x75\x14\xf0\xfb", 16);
+  check_gcm("\xfe\xff\xe9\x92\x86\x65\x73\x1c\x6d\x6a\x8f\x94\x67\x30\x83\x08"
+            "\xfe\xff\xe9\x92\x86\x65\x73\x1c", 24,
+            "\xd9\x31\x32\x25\xf8\x84\x06\xe5\xa5\x59\x09\xc5\xaf\xf5\x26\x9a"
+            "\x86\xa7\xa9\x53\x15\x34\xf7\xda\x2e\x4c\x30\x3d\x8a\x31\x8a\x72"
+            "\x1c\x3c\x0c\x95\x95\x68\x09\x53\x2f\xcf\x0e\x24\x49\xa6\xb5\x25"
+            "\xb1\x6a\xed\xf5\xaa\x0d\xe6\x57\xba\x63\x7b\x39\x1a\xaf\xd2\x55", 64,
+            "", 0,
+            "\xca\xfe\xba\xbe\xfa\xce\xdb\xad\xde\xca\xf8\x88", 12,
+            "\x39\x80\xca\x0b\x3c\x00\xe8\x41\xeb\x06\xfa\xc4\x87\x2a\x27\x57"
+            "\x85\x9e\x1c\xea\xa6\xef\xd9\x84\x62\x85\x93\xb4\x0c\xa1\xe1\x9c"
+            "\x7d\x77\x3d\x00\xc1\x44\xc5\x25\xac\x61\x9d\x18\xc8\x4a\x3f\x47"
+            "\x18\xe2\x44\x8b\x2f\xe3\x24\xd9\xcc\xda\x27\x10\xac\xad\xe2\x56", 64,
+            "\x99\x24\xa7\xc8\x58\x73\x36\xbf\xb1\x18\x02\x4d\xb8\x67\x4a\x14", 16);
 }
 
-static void check_ccm(const char *keystr,
-                      const char *headerstr,
-                      const char *plainstr,
-                      const char *noncestr,
-                      const char *cipherstr,
-                      const char *tagstr)
+static void check_ccm(const void *key, size_t nkey,
+                      const void *header, size_t nheader,
+                      const void *plain, size_t nplain,
+                      const void *nonce, size_t nnonce,
+                      const void *expect_cipher, size_t ncipher,
+                      const void *expect_tag, size_t ntag)
 {
-  uint8_t key[32], header[32], plain[32], nonce[32], cipher[32], tag[16];
-  uint8_t expectcipher[32], expecttag[16], decrypted[32];
-
-  size_t nkey = unhex(key, sizeof key, keystr);
-  size_t nheader = unhex(header, sizeof header, headerstr);
-  size_t nplain = unhex(plain, sizeof plain, plainstr);
-  size_t nnonce = unhex(nonce, sizeof nonce, noncestr);
-  size_t ncipher = unhex(expectcipher, sizeof expectcipher, cipherstr);
-  size_t ntag = unhex(expecttag, sizeof expecttag, tagstr);
+  uint8_t cipher[32], tag[16], decrypted[32];
 
   assert(ncipher == nplain);
 
@@ -445,12 +428,12 @@ static void check_ccm(const char *keystr,
                  tag, ntag,
                  cipher);
 
-  TEST_CHECK(memcmp(tag, expecttag, ntag) == 0);
-  TEST_CHECK(memcmp(cipher, expectcipher, ncipher) == 0);
+  TEST_CHECK(memcmp(tag, expect_tag, ntag) == 0);
+  TEST_CHECK(memcmp(cipher, expect_cipher, ncipher) == 0);
 
   int err;
   err = cf_ccm_decrypt(&cf_aes, &ctx,
-                       expectcipher, ncipher, 15 - nnonce,
+                       expect_cipher, ncipher, 15 - nnonce,
                        header, nheader,
                        nonce, nnonce,
                        tag, ntag,
@@ -461,7 +444,7 @@ static void check_ccm(const char *keystr,
   tag[0] ^= 0xff;
   
   err = cf_ccm_decrypt(&cf_aes, &ctx,
-                       expectcipher, ncipher, 15 - nnonce,
+                       expect_cipher, ncipher, 15 - nnonce,
                        header, nheader,
                        nonce, nnonce,
                        tag, ntag,
@@ -477,22 +460,22 @@ static void fill(uint8_t *buf, size_t len, uint8_t b)
 
 static void check_ccm_long(void)
 {
+  /* This test is too big for embedded runs.  Needs a streaming interface. */
+#if ! (defined(CORTEX_M0) || defined(CORTEX_M3) || defined(CORTEX_M4))
   /* This is example 4 from SP800-38C, to test the long AAD code path. */
   uint8_t header[0x10000];
   uint8_t key[16];
-  uint8_t tag[14], expect_tag[14];
+  uint8_t tag[14];
   uint8_t nonce[13];
-  uint8_t plain[32], cipher[32], expect_cipher[32];
+  uint8_t plain[32], cipher[32];
 
   fill(header, sizeof header, 0x00);
   fill(key, sizeof key, 0x40);
   fill(nonce, sizeof nonce, 0x10);
   fill(plain, sizeof plain, 0x20);
 
-  unhex(expect_tag, sizeof expect_tag,
-        "b4ac6bec93e8598e7f0dadbcea5b");
-  unhex(expect_cipher, sizeof expect_cipher,
-        "69915dad1e84c6376a68c2967e4dab615ae0fd1faec44cc484828529463ccf72");
+  const void *expect_tag = "\xb4\xac\x6b\xec\x93\xe8\x59\x8e\x7f\x0d\xad\xbc\xea\x5b";
+  const void *expect_cipher = "\x69\x91\x5d\xad\x1e\x84\xc6\x37\x6a\x68\xc2\x96\x7e\x4d\xab\x61\x5a\xe0\xfd\x1f\xae\xc4\x4c\xc4\x84\x82\x85\x29\x46\x3c\xcf\x72";
 
   cf_aes_context ctx;
   cf_aes_init(&ctx, key, sizeof key);
@@ -506,30 +489,33 @@ static void check_ccm_long(void)
 
   TEST_CHECK(memcmp(expect_tag, tag, sizeof tag) == 0);
   TEST_CHECK(memcmp(expect_cipher, cipher, sizeof cipher) == 0);
+#endif
+
+  (void) fill;
 }
 
 static void test_ccm(void)
 {
-  check_ccm("c0c1c2c3c4c5c6c7c8c9cacbcccdcecf",
-            "0001020304050607",
-            "08090a0b0c0d0e0f101112131415161718191a1b1c1d1e",
-            "00000003020100a0a1a2a3a4a5",
-            "588C979A61C663D2F066D0C2C0F989806D5F6B61DAC384",
-            "17E8D12CFDF926E0");
+  check_ccm("\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf", 16,
+            "\x00\x01\x02\x03\x04\x05\x06\x07", 8,
+            "\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e", 23,
+            "\x00\x00\x00\x03\x02\x01\x00\xa0\xa1\xa2\xa3\xa4\xa5", 13,
+            "\x58\x8c\x97\x9a\x61\xc6\x63\xd2\xf0\x66\xd0\xc2\xc0\xf9\x89\x80\x6d\x5f\x6b\x61\xda\xc3\x84", 23,
+            "\x17\xe8\xd1\x2c\xfd\xf9\x26\xe0", 8);
 
-  check_ccm("404142434445464748494a4b4c4d4e4f",
-            "0001020304050607",
-            "20212223",
-            "10111213141516",
-            "7162015b",
-            "4dac255d");
+  check_ccm("\x40\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f", 16,
+            "\x00\x01\x02\x03\x04\x05\x06\x07", 8,
+            "\x20\x21\x22\x23", 4,
+            "\x10\x11\x12\x13\x14\x15\x16", 7,
+            "\x71\x62\x01\x5b", 4,
+            "\x4d\xac\x25\x5d", 4);
 
-  check_ccm("404142434445464748494a4b4c4d4e4f",
-            "000102030405060708090a0b0c0d0e0f10111213",
-            "202122232425262728292a2b2c2d2e2f3031323334353637",
-            "101112131415161718191a1b",
-            "e3b201a9f5b71a7a9b1ceaeccd97e70b6176aad9a4428aa5",
-            "484392fbc1b09951");
+  check_ccm("\x40\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f", 16,
+            "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13", 20,
+            "\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37", 24,
+            "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b", 12,
+            "\xe3\xb2\x01\xa9\xf5\xb7\x1a\x7a\x9b\x1c\xea\xec\xcd\x97\xe7\x0b\x61\x76\xaa\xd9\xa4\x42\x8a\xa5", 24,
+            "\x48\x43\x92\xfb\xc1\xb0\x99\x51", 8);
 
   check_ccm_long();
 }
