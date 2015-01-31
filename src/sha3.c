@@ -54,7 +54,20 @@ static void absorb(cf_sha3_context *ctx, const uint8_t *data, uint16_t sz)
   }
 }
 
+#if defined(CORTEX_M0) || defined(CORTEX_M3) || defined(CORTEX_M4)
+/* Integers [-1,20] mod 5. To avoid a divmod where we don't
+ * have a cache side channel. */
+static const uint8_t mod5_table[] = {
+  4,
+  0,
+  1, 2, 3, 4, 0, 1, 2, 3, 4, 0,
+  1, 2, 3, 4, 0, 1, 2, 3, 4, 0
+};
+
+#define MOD5(x) (mod5_table[(x) + 1])
+#else
 #define MOD5(x) ((x) < 0 ? (5 + (x)) : ((x) % 5))
+#endif
 
 static void theta(cf_sha3_context *ctx)
 {
