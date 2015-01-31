@@ -1,11 +1,13 @@
-FUNCS = do_nothing stack_8w stack_64w hashtest_sha256 hashtest_sha512 \
+FUNCS = do_nothing stack_8w stack_64w \
+	hashtest_sha256 hashtest_sha512 \
+	hashtest_sha3_256 hashtest_sha3_512 \
 	aes128block_test aes128sched_test \
 	aes256block_test aes256sched_test \
 	aes128gcm_test aes128eax_test \
 	aes128ccm_test \
 	salsa20_test chacha20_test \
 	curve25519_test
-TESTS = testcurve25519 testaes testsalsa20 testsha2
+TESTS = testcurve25519 testaes testmodes testsalsa20 testsha2 testsha3
 ARCHS = stm32f0 stm32f1 stm32f3 qemucm0
 
 all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
@@ -14,7 +16,7 @@ all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
 	$(patsubst %,%.qemucm0.bin,$(FUNCS) $(TESTS))
 
 %.stm32f0.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* $(EABI_M0)
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* -lgcc
 
 %.stm32f1.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f1.ld -mcpu=cortex-m3 -DCORTEX_M3 -o $@ $^ -DTEST=$*
@@ -23,7 +25,7 @@ all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m4 -DCORTEX_M4 -o $@ $^ -DTEST=$*
 
 %.qemucm0.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.qemucm0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* $(EABI_M0)
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.qemucm0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* -lgcc
 
 %.bin: %.elf
 	arm-none-eabi-objcopy -O binary $< $@
@@ -46,9 +48,8 @@ CFLAGS_testaes = -DCF_SIDE_CHANNEL_PROTECTION=0
 
 CFLAGS = -I./ext -I../../../bignum -I.. -Os -ffunction-sections -g -Wall -Werror -std=gnu99 -mthumb
 LDFLAGS = -nostartfiles -nostdlib -Wl,-gc-sections
-EABI_M0 = libeabi-cortex-m0-lmul.s
 SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
-       ../sha256.c ../sha512.c ../blockwise.c ../chash.c \
+       ../sha256.c ../sha512.c ../sha3.c ../blockwise.c ../chash.c \
        ../curve25519.c \
        ../aes.c ../eax.c ../gcm.c ../cbcmac.c ../ccm.c \
        ../modes.c ../cmac.c ../gf128.c \
@@ -61,8 +62,10 @@ $(patsubst %,%.qemucm0.elf, $(FUNCS)): $(SRCS) main.c
 
 $(patsubst %,testcurve25519.%.elf, $(ARCHS)): $(SRCS) ../testcurve25519.c
 $(patsubst %,testaes.%.elf, $(ARCHS)): $(SRCS) ../testaes.c
+$(patsubst %,testmodes.%.elf, $(ARCHS)): $(SRCS) ../testmodes.c
 $(patsubst %,testsalsa20.%.elf, $(ARCHS)): $(SRCS) ../testsalsa20.c
 $(patsubst %,testsha2.%.elf, $(ARCHS)): $(SRCS) ../testsha2.c
+$(patsubst %,testsha3.%.elf, $(ARCHS)): $(SRCS) ../testsha3.c
 
 run.%.qemucm0: %.qemucm0.bin
 	qemu-system-gnuarmeclipse -verbose -verbose -M STM32F0-Discovery -kernel $^ -semihosting -nographic -monitor null -serial null 2> $@.log

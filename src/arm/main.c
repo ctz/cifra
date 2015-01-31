@@ -5,6 +5,7 @@
 #include "semihost.h"
 #include "aes.h"
 #include "sha2.h"
+#include "sha3.h"
 #include "modes.h"
 #include "salsa20.h"
 #include "curve25519.h"
@@ -49,6 +50,24 @@ static void hashtest_sha512(void)
   cf_sha512_init(&ctx);
   cf_sha512_update(&ctx, "", 0);
   cf_sha512_digest_final(&ctx, hash);
+}
+
+static void hashtest_sha3_256(void)
+{
+  uint8_t hash[CF_SHA3_256_HASHSZ];
+  cf_sha3_context ctx;
+  cf_sha3_256_init(&ctx);
+  cf_sha3_256_update(&ctx, "", 0);
+  cf_sha3_256_digest_final(&ctx, hash);
+}
+
+static void hashtest_sha3_512(void)
+{
+  uint8_t hash[CF_SHA3_512_HASHSZ];
+  cf_sha3_context ctx;
+  cf_sha3_512_init(&ctx);
+  cf_sha3_512_update(&ctx, "", 0);
+  cf_sha3_512_digest_final(&ctx, hash);
 }
 
 static void aes128block_test(void)
@@ -229,6 +248,8 @@ int main(void)
   (void) stack_64w;
   (void) hashtest_sha256;
   (void) hashtest_sha512;
+  (void) hashtest_sha3_256;
+  (void) hashtest_sha3_512;
   (void) aes128block_test;
   (void) aes128sched_test;
   (void) aes256block_test;
