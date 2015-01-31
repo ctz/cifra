@@ -19,10 +19,10 @@ all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* -lgcc
 
 %.stm32f1.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f1.ld -mcpu=cortex-m3 -DCORTEX_M3 -o $@ $^ -DTEST=$*
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f1.ld -mcpu=cortex-m3 -DCORTEX_M3 -o $@ $^ -DTEST=$* -lgcc
 
 %.stm32f3.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m4 -DCORTEX_M4 -o $@ $^ -DTEST=$*
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m4 -DCORTEX_M4 -o $@ $^ -DTEST=$* -lgcc
 
 %.qemucm0.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.qemucm0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* -lgcc
