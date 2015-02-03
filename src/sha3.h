@@ -16,10 +16,19 @@
 #define CF_SHA3_384_BLOCKSZ 104
 #define CF_SHA3_512_BLOCKSZ 72
 
+/* We use bit-interleaved internal representation.  This
+ * stores a 64 bit quantity in two 32 bit words: one word
+ * contains odd bits, the other even.  This means 64-bit rotations
+ * are cheaper to compute. */
+typedef struct
+{
+  uint32_t odd, evn;
+} cf_sha3_bi;
+
 typedef struct
 {
   /* State is a 5x5 block of 64-bit values, for Keccak-f[1600]. */
-  uint64_t A[5][5];
+  cf_sha3_bi A[5][5];
   uint8_t partial[CF_SHA3_224_BLOCKSZ];
   size_t npartial;
   uint16_t rate, capacity; /* rate and capacity, in bytes. */

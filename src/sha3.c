@@ -6,19 +6,20 @@
 #include "handy.h"
 #include "bitops.h"
 
-static const uint64_t round_constants[24] = {
-  UINT64_C(0x0000000000000001), UINT64_C(0x0000000000008082),
-  UINT64_C(0x800000000000808A), UINT64_C(0x8000000080008000),
-  UINT64_C(0x000000000000808B), UINT64_C(0x0000000080000001),
-  UINT64_C(0x8000000080008081), UINT64_C(0x8000000000008009),
-  UINT64_C(0x000000000000008A), UINT64_C(0x0000000000000088),
-  UINT64_C(0x0000000080008009), UINT64_C(0x000000008000000A),
-  UINT64_C(0x000000008000808B), UINT64_C(0x800000000000008B),
-  UINT64_C(0x8000000000008089), UINT64_C(0x8000000000008003),
-  UINT64_C(0x8000000000008002), UINT64_C(0x8000000000000080),
-  UINT64_C(0x000000000000800A), UINT64_C(0x800000008000000A),
-  UINT64_C(0x8000000080008081), UINT64_C(0x8000000000008080),
-  UINT64_C(0x0000000080000001), UINT64_C(0x8000000080008008)
+/* The round constants, pre-interleaved.  See bitinter.py */
+static const cf_sha3_bi round_constants[24] = {
+  { 0x00000001, 0x00000000 }, { 0x00000000, 0x00000089 },
+  { 0x00000000, 0x8000008b }, { 0x00000000, 0x80008080 },
+  { 0x00000001, 0x0000008b }, { 0x00000001, 0x00008000 },
+  { 0x00000001, 0x80008088 }, { 0x00000001, 0x80000082 },
+  { 0x00000000, 0x0000000b }, { 0x00000000, 0x0000000a },
+  { 0x00000001, 0x00008082 }, { 0x00000000, 0x00008003 },
+  { 0x00000001, 0x0000808b }, { 0x00000001, 0x8000000b },
+  { 0x00000001, 0x8000008a }, { 0x00000001, 0x80000081 },
+  { 0x00000000, 0x80000081 }, { 0x00000000, 0x80000008 },
+  { 0x00000000, 0x00000083 }, { 0x00000000, 0x80008003 },
+  { 0x00000001, 0x80008088 }, { 0x00000000, 0x80000088 },
+  { 0x00000001, 0x00008000 }, { 0x00000000, 0x80008082 }
 };
 
 static const uint8_t rotation_constants[5][5] = {
@@ -28,6 +29,96 @@ static const uint8_t rotation_constants[5][5] = {
   { 41, 45, 15, 21,  8, },
   { 18,  2, 61, 56, 14, }
 };
+
+/* --- Bit interleaving and uninterleaving --- */
+/* See bitinter.py for models of these bit twiddles.  The originals
+ * come from "Hacker's Delight" by Henry Warren, where they are named
+ * shuffle2 and unshuffle.
+ * See:
+ *   http://www.hackersdelight.org/hdcodetxt/shuffle.c.txt
+ *
+ * The overriding aim is to change bit ordering:
+ *   AaBbCcDd -> ABCDabcd
+ * and back.  Once they're in the shuffled form, we can extract
+ * odd/even bits by taking the half words from each pair.
+ */
+
+static inline uint32_t shuffle_out(uint32_t x)
+{
+  uint32_t t;
+  t = (x ^ (x >> 1)) & 0x22222222;  x = x ^ t ^ (t << 1);
+  t = (x ^ (x >> 2)) & 0x0c0c0c0c;  x = x ^ t ^ (t << 2);
+  t = (x ^ (x >> 4)) & 0x00f000f0;  x = x ^ t ^ (t << 4);
+  t = (x ^ (x >> 8)) & 0x0000ff00;  x = x ^ t ^ (t << 8);
+  return x;
+}
+
+/* Convert ABCDabcd -> AaBbCcDd. */
+static inline uint32_t shuffle_in(uint32_t x)
+{
+  uint32_t t;
+  t = (x ^ (x >> 8)) & 0x0000ff00;  x = x ^ t ^ (t << 8);
+  t = (x ^ (x >> 4)) & 0x00f000f0;  x = x ^ t ^ (t << 4);
+  t = (x ^ (x >> 2)) & 0x0c0c0c0c;  x = x ^ t ^ (t << 2);
+  t = (x ^ (x >> 1)) & 0x22222222;  x = x ^ t ^ (t << 1);
+  return x;
+}
+
+static inline cf_sha3_bi read64_bi(const uint8_t data[8])
+{
+  uint32_t lo = read32_le(data + 0),
+           hi = read32_le(data + 4);
+
+  lo = shuffle_out(lo);
+  hi = shuffle_out(hi);
+
+  cf_sha3_bi out;
+  out.odd = (lo & 0x0000ffff) | (hi << 16);
+  out.evn = (lo >> 16) | (hi & 0xffff0000);
+  return out;
+}
+
+static inline void write64_bi(const cf_sha3_bi *bi, uint8_t data[8])
+{
+  uint32_t lo = (bi->odd & 0x0000ffff) | (bi->evn << 16),
+           hi = (bi->odd >> 16) | (bi->evn & 0xffff0000);
+
+  lo = shuffle_in(lo);
+  hi = shuffle_in(hi);
+
+  write32_le(lo, data + 0);
+  write32_le(hi, data + 4);
+}
+
+static inline cf_sha3_bi rotl_bi_1(const cf_sha3_bi *in)
+{
+  cf_sha3_bi r;
+  /* in bit-interleaved representation, a rotation of 1
+   * is a swap plus a single rotation of the odd word. */
+  r.odd = rotl32(in->evn, 1);
+  r.evn = in->odd;
+  return r;
+}
+
+static inline cf_sha3_bi rotl_bi_n(const cf_sha3_bi *in, uint8_t rot)
+{
+  cf_sha3_bi r;
+  uint8_t half = rot >> 1;
+
+  /* nb. rot is a constant, so this isn't a branch leak. */
+  if (rot & 1)
+  {
+    r.odd = rotl32(in->evn, half + 1);
+    r.evn = rotl32(in->odd, half);
+  } else {
+    r.evn = rotl32(in->evn, half);
+    r.odd = rotl32(in->odd, half);
+  }
+
+  return r;
+}
+
+/* --- */
 
 static void sha3_init(cf_sha3_context *ctx, uint16_t rate_bits, uint16_t capacity_bits)
 {
@@ -42,7 +133,9 @@ static void absorb(cf_sha3_context *ctx, const uint8_t *data, uint16_t sz)
 
   for (uint16_t x = 0, y = 0, i = 0; i < lanes; i++)
   {
-    ctx->A[x][y] ^= read64_le(data);
+    cf_sha3_bi bi = read64_bi(data);
+    ctx->A[x][y].odd ^= bi.odd;
+    ctx->A[x][y].evn ^= bi.evn;
     data += 8;
 
     x++;
@@ -54,9 +147,8 @@ static void absorb(cf_sha3_context *ctx, const uint8_t *data, uint16_t sz)
   }
 }
 
-#if defined(CORTEX_M0) || defined(CORTEX_M3) || defined(CORTEX_M4)
-/* Integers [-1,20] mod 5. To avoid a divmod where we don't
- * have a cache side channel. */
+/* Integers [-1,20] mod 5. To avoid a divmod.  Indices
+ * are constants; not data-dependant. */
 static const uint8_t mod5_table[] = {
   4,
   0,
@@ -65,37 +157,50 @@ static const uint8_t mod5_table[] = {
 };
 
 #define MOD5(x) (mod5_table[(x) + 1])
-#else
-#define MOD5(x) ((x) < 0 ? (5 + (x)) : ((x) % 5))
-#endif
 
 static void theta(cf_sha3_context *ctx)
 {
-  uint64_t C[5], D[5];
-
-  for (int x = 0; x < 5; x++)
-    C[x] = ctx->A[x][0] ^ ctx->A[x][1] ^ ctx->A[x][2] ^ ctx->A[x][3] ^ ctx->A[x][4];
+  cf_sha3_bi C[5], D[5];
 
   for (int x = 0; x < 5; x++)
   {
-    D[x] = C[MOD5(x - 1)] ^ rotl64(C[MOD5(x + 1)], 1);
+    C[x].odd = ctx->A[x][0].odd ^ ctx->A[x][1].odd ^ ctx->A[x][2].odd ^ ctx->A[x][3].odd ^ ctx->A[x][4].odd;
+    C[x].evn = ctx->A[x][0].evn ^ ctx->A[x][1].evn ^ ctx->A[x][2].evn ^ ctx->A[x][3].evn ^ ctx->A[x][4].evn;
+  }
+
+  for (int x = 0; x < 5; x++)
+  {
+    cf_sha3_bi r = rotl_bi_1(&C[MOD5(x + 1)]);
+    D[x].odd = C[MOD5(x - 1)].odd ^ r.odd;
+    D[x].evn = C[MOD5(x - 1)].evn ^ r.evn;
 
     for (int y = 0; y < 5; y++)
-      ctx->A[x][y] ^= D[x];
+    {
+      ctx->A[x][y].odd ^= D[x].odd;
+      ctx->A[x][y].evn ^= D[x].evn;
+    }
   }
 }
 
 static void rho_pi_chi(cf_sha3_context *ctx)
 {
-  uint64_t B[5][5] = { { 0 } };
+  cf_sha3_bi B[5][5] = { { { 0 } } };
 
   for (int x = 0; x < 5; x++)
     for (int y = 0; y < 5; y++)
-      B[y][MOD5(2 * x + 3 * y)] = rotl64(ctx->A[x][y], rotation_constants[y][x]);
+      B[y][MOD5(2 * x + 3 * y)] = rotl_bi_n(&ctx->A[x][y], rotation_constants[y][x]);
 
   for (int x = 0; x < 5; x++)
+  {
+    unsigned x1 = MOD5(x + 1);
+    unsigned x2 = MOD5(x + 2);
+
     for (int y = 0; y < 5; y++)
-      ctx->A[x][y] = B[x][y] ^ ((~ B[MOD5(x + 1)][y]) & B[MOD5(x + 2)][y]);
+    {
+      ctx->A[x][y].odd = B[x][y].odd ^ ((~ B[x1][y].odd) & B[x2][y].odd);
+      ctx->A[x][y].evn = B[x][y].evn ^ ((~ B[x1][y].evn) & B[x2][y].evn);
+    }
+  }
 }
 
 static void permute(cf_sha3_context *ctx)
@@ -106,7 +211,8 @@ static void permute(cf_sha3_context *ctx)
     rho_pi_chi(ctx);
 
     /* iota */
-    ctx->A[0][0] ^= round_constants[r];
+    ctx->A[0][0].odd ^= round_constants[r].odd;
+    ctx->A[0][0].evn ^= round_constants[r].evn;
   }
 }
 
@@ -118,12 +224,12 @@ static void extract(cf_sha3_context *ctx, uint8_t *out, size_t nbytes)
   {
     if (nbytes >= 8)
     {
-      write64_le(ctx->A[x][y], out);
+      write64_bi(&ctx->A[x][y], out);
       out += 8;
       nbytes -= 8;
     } else {
       uint8_t buf[8];
-      write64_le(ctx->A[x][y], buf);
+      write64_bi(&ctx->A[x][y], buf);
       memcpy(out, buf, nbytes);
       out += nbytes;
       nbytes = 0;
@@ -191,25 +297,19 @@ static void sha3_update(cf_sha3_context *ctx, const void *data, size_t nbytes)
 
 static void pad(cf_sha3_context *ctx, uint8_t domain, size_t npad)
 {
-  uint8_t byte;
+  uint8_t padding[CF_SHA3_224_BLOCKSZ];
 
   if (npad == 1)
   {
-    byte = domain | 0x80;
-    sha3_update(ctx, &byte, 1);
+    padding[0] = domain | 0x80;
+    sha3_update(ctx, padding, 1);
     return;
   }
 
-  byte = domain;
-  sha3_update(ctx, &byte, 1);
-  npad--;
-
-  byte = 0x00;
-  while (--npad)
-    sha3_update(ctx, &byte, 1);
-
-  byte = 0x80;
-  sha3_update(ctx, &byte, 1);
+  memset(padding, 0, npad);
+  padding[0] = domain;
+  padding[npad - 1] = 0x80;
+  sha3_update(ctx, padding, npad);
 }
 
 static void pad_and_squeeze(cf_sha3_context *ctx, uint8_t *out, size_t nout)
