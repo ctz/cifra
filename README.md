@@ -142,18 +142,18 @@ This test hashes the empty string (one sponge permutation).
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 148553 | 848B  | 2204B    
-Cortex-M3  | 114933 | 968B  | 2328B    
-Cortex-M4F | 113622 | 968B  | 2328B    
+Cortex-M0  | 86898  | 1024B | 2308B    
+Cortex-M3  | 77647  | 1008B | 2292B    
+Cortex-M4F | 73272  | 1008B | 2292B    
 
 ## SHA3-512
 This test hashes the empty string (one sponge permutation).
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 135136 | 880B  | 2204B    
-Cortex-M3  | 104328 | 1000B | 2328B    
-Cortex-M4F | 103154 | 1000B | 2328B    
+Cortex-M0  | 86259  | 1056B | 2308B    
+Cortex-M3  | 77236  | 1040B | 2292B    
+Cortex-M4F | 72865  | 1040B | 2292B    
 
 ## Curve25519 (tweetnacl)
 This test is one point multiplication.
