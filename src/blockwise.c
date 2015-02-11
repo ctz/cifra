@@ -27,7 +27,7 @@ void cf_blockwise_accumulate_final(uint8_t *partial, size_t *npartial, size_t nb
   assert(process && ctx);
 
   /* If we have partial data, copy in to buffer. */
-  if (*npartial)
+  if (*npartial && nbytes)
   {
     size_t space = nblock - *npartial;
     size_t taken = MIN(space, nbytes);
