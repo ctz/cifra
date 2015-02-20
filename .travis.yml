@@ -1,0 +1,5 @@
+language: c
+script: cd src && make clean && make test
+compiler:
+ - clang
+ - gcc
