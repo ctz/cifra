@@ -1,5 +1,8 @@
 language: c
-script: cd src && make clean && make test
+script: cd src && make clean && make test && make clean && make cover COVERAGE=1
 compiler:
  - clang
  - gcc
+env:
+ - CFLAGS=-m32
+ - CFLAGS=-m64
