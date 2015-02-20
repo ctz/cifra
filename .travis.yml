@@ -12,5 +12,5 @@ compiler:
  - clang
  - gcc
 env:
- - CFLAGS=-m32
- - CFLAGS=-m64
+ - CFLAGS=-m32 LDFLAGS=-m32
+ - CFLAGS=-m64 LDFLAGS=-m64
