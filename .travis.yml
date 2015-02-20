@@ -1,5 +1,13 @@
 language: c
-script: cd src && make clean && make test && make clean && make cover COVERAGE=1
+before_install:
+ - sudo apt-get update -qq
+ - sudo apt-get install -y libc6-dev-i386
+script:
+ - cd src
+ - make clean
+ - make test
+ - make clean
+ - make cover COVERAGE=1
 compiler:
  - clang
  - gcc
