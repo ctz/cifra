@@ -1,5 +1,5 @@
 CFLAGS += -g -O0 -std=gnu99 -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -Wno-missing-field-initializers
-CPPFLAGS += -I./ext -I../../bignum/out
+CPPFLAGS += -I./ext
 
 ifdef COVERAGE
 	LDFLAGS += -coverage
