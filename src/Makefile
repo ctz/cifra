@@ -1,9 +1,14 @@
 CFLAGS += -g -O0 -std=gnu99 -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -Wno-missing-field-initializers
 CPPFLAGS += -I./ext
 
-ifdef COVERAGE
+ifdef WITH_COVERAGE
 	LDFLAGS += -coverage
 	CFLAGS += -coverage
+endif
+
+ifdef WITH_VALGRIND
+	VALGRIND := valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes
+	TEST_OPT := --no-exec
 endif
 
 TARGETS = testaes testmodes testsha1 testsha2 testsha3 testsalsa20 testcurve25519
@@ -25,13 +30,10 @@ clean:
 	rm -f *.o *.pyc $(TARGETS) *.gcov *.gcda *.gcno
 
 test: $(TARGETS)
-	./testaes
-	./testmodes
-	./testsha1
-	./testsha2
-	./testsha3
-	./testsalsa20
-	./testcurve25519
+	for x in $(TARGETS) ; do \
+		echo "Running $$x" ; \
+		$(VALGRIND) ./$$x $(TEST_OPT) ; \
+	done
 
 cover: test
 	gcov *.c

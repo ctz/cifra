@@ -6,6 +6,7 @@ script:
  - cd src
  - make clean
  - make test
+ - make test WITH_VALGRIND=1
  - make clean
  - make cover COVERAGE=1
 compiler:
