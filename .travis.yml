@@ -1,7 +1,9 @@
 language: c
+
 before_install:
  - sudo apt-get update -qq
  - sudo apt-get install -y libc6-dev-i386 libc6-dbg:i386 libc6-dbg valgrind
+
 script:
  - cd src
  - make clean
@@ -9,9 +11,23 @@ script:
  - make test WITH_VALGRIND=1
  - make clean
  - make cover WITH_COVERAGE=1
+
 compiler:
  - clang
  - gcc
+
 env:
  - CFLAGS=-m32 LDFLAGS=-m32
  - CFLAGS=-m64 LDFLAGS=-m64
+  global:
+   - secure: "W9IUnUWNc03gIBGLPOxXCVJUOb3RY2fS4lgOo+wIsCSk0rsJAB6gruAZDoz1sMxCJyBhCv0dKV5WPkAxkZ0y55wiuUcCepgR0qis6S6rJxldPdEWc3RQaeU9LbVRKRBYUBqSsFlXr5pdOvl0CBDWmx8lhcRxAw8z+JVDrAGVsTQ="
+
+addons:
+  coverity_scan:
+    project:
+      name: "ctz/cifra"
+      description: "Cifra is a collection of cryptographic primitives targeted at embedded use."
+    notification_email: jpixton@gmail.com
+    build_command_prepend: "cd src ; make clean"
+    build_command: "make"
+    branch_pattern: master
