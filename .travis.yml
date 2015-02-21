@@ -8,7 +8,7 @@ script:
  - make test
  - make test WITH_VALGRIND=1
  - make clean
- - make cover COVERAGE=1
+ - make cover WITH_COVERAGE=1
 compiler:
  - clang
  - gcc
