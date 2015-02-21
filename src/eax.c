@@ -12,6 +12,8 @@ static void cmac_compute_n(cf_cmac_stream *ctx,
                            uint8_t out[CF_MAXBLOCK])
 {
   size_t blocksz = ctx->cmac.prp->blocksz;
+  assert(blocksz > 0);
+
   uint8_t firstblock[CF_MAXBLOCK];
   memset(firstblock, 0, blocksz);
   firstblock[blocksz - 1] = t;

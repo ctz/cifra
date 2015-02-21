@@ -299,6 +299,8 @@ static void pad(cf_sha3_context *ctx, uint8_t domain, size_t npad)
 {
   uint8_t padding[CF_SHA3_224_BLOCKSZ];
 
+  assert(npad >= 1);
+
   if (npad == 1)
   {
     padding[0] = domain | 0x80;
