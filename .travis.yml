@@ -17,8 +17,9 @@ compiler:
  - gcc
 
 env:
- - CFLAGS=-m32 LDFLAGS=-m32
- - CFLAGS=-m64 LDFLAGS=-m64
+  matrix:
+   - CFLAGS=-m32 LDFLAGS=-m32
+   - CFLAGS=-m64 LDFLAGS=-m64
   global:
    - secure: "W9IUnUWNc03gIBGLPOxXCVJUOb3RY2fS4lgOo+wIsCSk0rsJAB6gruAZDoz1sMxCJyBhCv0dKV5WPkAxkZ0y55wiuUcCepgR0qis6S6rJxldPdEWc3RQaeU9LbVRKRBYUBqSsFlXr5pdOvl0CBDWmx8lhcRxAw8z+JVDrAGVsTQ="
 
