@@ -27,6 +27,7 @@ clean:
 test: $(TARGETS)
 	./testaes
 	./testmodes
+	./testsha1
 	./testsha2
 	./testsha3
 	./testsalsa20

@@ -7,7 +7,7 @@ FUNCS = do_nothing stack_8w stack_64w \
 	aes128ccm_test \
 	salsa20_test chacha20_test \
 	curve25519_test
-TESTS = testcurve25519 testaes testmodes testsalsa20 testsha2 testsha3
+TESTS = testcurve25519 testaes testmodes testsalsa20 testsha1 testsha2 testsha3
 ARCHS = stm32f0 stm32f1 stm32f3 qemucm0
 
 all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
@@ -49,7 +49,7 @@ CFLAGS_testaes = -DCF_SIDE_CHANNEL_PROTECTION=0
 CFLAGS = -I./ext -I../ext -I.. -Os -ffunction-sections -g -Wall -Werror -std=gnu99 -mthumb
 LDFLAGS = -nostartfiles -nostdlib -Wl,-gc-sections
 SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
-       ../sha256.c ../sha512.c ../sha3.c ../blockwise.c ../chash.c \
+       ../sha1.c ../sha256.c ../sha512.c ../sha3.c ../blockwise.c ../chash.c \
        ../curve25519.c \
        ../aes.c ../eax.c ../gcm.c ../cbcmac.c ../ccm.c \
        ../modes.c ../cmac.c ../gf128.c \
@@ -64,6 +64,7 @@ $(patsubst %,testcurve25519.%.elf, $(ARCHS)): $(SRCS) ../testcurve25519.c
 $(patsubst %,testaes.%.elf, $(ARCHS)): $(SRCS) ../testaes.c
 $(patsubst %,testmodes.%.elf, $(ARCHS)): $(SRCS) ../testmodes.c
 $(patsubst %,testsalsa20.%.elf, $(ARCHS)): $(SRCS) ../testsalsa20.c
+$(patsubst %,testsha1.%.elf, $(ARCHS)): $(SRCS) ../testsha1.c
 $(patsubst %,testsha2.%.elf, $(ARCHS)): $(SRCS) ../testsha2.c
 $(patsubst %,testsha3.%.elf, $(ARCHS)): $(SRCS) ../testsha3.c
 
