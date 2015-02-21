@@ -7,7 +7,7 @@ ifdef WITH_COVERAGE
 endif
 
 ifdef WITH_VALGRIND
-	VALGRIND := valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes
+	VALGRIND := valgrind --leak-check=full --show-reachable=yes --track-origins=yes
 	TEST_OPT := --no-exec
 endif
 
