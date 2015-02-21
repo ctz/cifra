@@ -96,7 +96,7 @@ static uint32_t sub_word(uint32_t w, const uint8_t *sbox)
           b = byte(w, 1),
           c = byte(w, 2),
           d = byte(w, 3);
-#if CF_SIDE_CHANNEL_PROTECTION
+#if CF_CACHE_SIDE_CHANNEL_PROTECTION
   select_u8x4(&a, &b, &c, &d, sbox, 256);
 #else
   a = sbox[a];
