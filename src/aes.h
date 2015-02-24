@@ -1,6 +1,13 @@
 /**
- * The AES/Rijndael-128 block cipher
- * =================================
+ * The AES block cipher
+ * ====================
+ *
+ * This is a small, simple implementation of AES.  Key expansion is done
+ * first, filling in a :c:type:`cf_aes_context`.  Then encryption and
+ * decryption can be performed as desired.
+ *
+ * Usually you don't want to use AES directly; you should use it via
+ * a :doc:`block cipher mode <modes>`.
  */
 
 #ifndef AES_H
