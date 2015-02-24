@@ -11,7 +11,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   cf_config
    aes
+   modes
 
 
 Indices and tables
