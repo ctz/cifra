@@ -12,8 +12,8 @@
 #include "prp.h"
 
 /**
- * Cipher block chaining (CBC) mode
- * --------------------------------
+ * CBC mode
+ * --------
  * This implementation allows encryption or decryption of whole
  * blocks in CBC mode.  It does not offer a byte-wise incremental
  * interface, or do any padding.
