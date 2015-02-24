@@ -196,11 +196,15 @@ def process(header, rst):
     emit('Functions', functions)
     emit('Values', values)
 
-if __name__ == '__main__':
+def run():
     for fn in EXTERNAL:
+        print '** build', fn
         header = '../src/' + fn + '.h'
         rst = fn + '.rst'
         with open(header, 'r') as fh:
             with open(rst, 'w') as fr:
                 process(fh, fr)
                 break
+
+if __name__ == '__main__':
+    run()
