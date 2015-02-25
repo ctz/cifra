@@ -307,51 +307,48 @@ void cf_cmac_stream_final(cf_cmac_stream *ctx, uint8_t out[CF_MAXBLOCK]);
 /* .. c:function:: $DECL
  * EAX authenticated encryption.
  *
- *  - prp and prpctx describe the block cipher to use.
- *  - nplain bytes at plain is the message plaintext.
- *    nplain may be zero.
- *  - nheader bytes at header is the additionally
- *    authenticated data.  nheader may be zero.
- *  - nnonce bytes at nonce is the nonce (of any
- *    length).  This must not repeat for any given key.
- *  - nplain bytes of ciphertext is written at cipher.
- *    This must point to at least that much storage.
- *  - ntag bytes of authentication tag is written to tag.
- *    ntag must be non-zero and no greater than prp->blocksz.
+ * This function does not fail.
  *
- *  This function does not fail.
+ * :param prp/prpctx: describe the block cipher to use.
+ * :param plain: message plaintext.
+ * :param nplain: length of message.  May be zero.
+ * :param header: additionally authenticated data (AAD).
+ * :param nheader: length of AAD.  May be zero.
+ * :param nonce: nonce.  This must not repeat for a given key.
+ * :param nnonce: length of nonce.  The nonce can be any length.
+ * :param cipher: ciphertext output.  `nplain` bytes are written here.
+ * :param tag: authentication tag.  `ntag` bytes are written here.
+ * :param ntag: authentication tag length.  This must be non-zero and no greater than `prp->blocksz`.
  */
 void cf_eax_encrypt(const cf_prp *prp, void *prpctx,
                     const uint8_t *plain, size_t nplain,
                     const uint8_t *header, size_t nheader,
                     const uint8_t *nonce, size_t nnonce,
-                    uint8_t *cipher, /* the same size as nplain */
+                    uint8_t *cipher,
                     uint8_t *tag, size_t ntag);
 
 /* .. c:function:: $DECL
  * EAX authenticated decryption.
  *
- *  - prp and prpctx describe the block cipher to use.
- *  - ncipher bytes at cipher is the message ciphertext.
- *    ncipher may be zero.
- *  - nheader bytes at header is the additionally
- *    authenticated data.  nheader may be zero.
- *  - nnonce bytes at nonce is the nonce (of any
- *    length).
- *  - ntag bytes of authentication tag is read from tag.
- *    ntag must be non-zero and no greater than prp->blocksz.
- *  - ncipher bytes of plaintext is written at plain.
- *    This must point to at least that much storage.
+ * :return: 0 on success, non-zero on error.  Nothing is written to plain on error.
  *
- * Returns 0 on success; non-zero on error.  Nothing is written to
- * plain on error.
+ * :param prp/prpctx: describe the block cipher to use.
+ * :param cipher: message ciphertext.
+ * :param ncipher: message length.
+ * :param header: additionally authenticated data (AAD).
+ * :param nheader: length of AAD.
+ * :param nonce: nonce.
+ * :param nnonce: length of nonce.
+ * :param tag: authentication tag.  `ntag` bytes are read from here.
+ * :param ntag: authentication tag length.
+ * :param plain: plaintext output.  `ncipher` bytes are written here.
  */
 int cf_eax_decrypt(const cf_prp *prp, void *prpctx,
                    const uint8_t *cipher, size_t ncipher,
                    const uint8_t *header, size_t nheader,
                    const uint8_t *nonce, size_t nnonce,
                    const uint8_t *tag, size_t ntag,
-                   uint8_t *plain); /* the same size as ncipher */
+                   uint8_t *plain);
 
 /**
  * GCM
@@ -367,18 +364,18 @@ int cf_eax_decrypt(const cf_prp *prp, void *prpctx,
 /* .. c:function:: $DECL
  * GCM authenticated encryption.
  *
- *  - prp and prpctx describe the block cipher to use.
- *  - nplain bytes at plain is the message plaintext.
- *    nplain may be zero.
- *  - nheader bytes at header is the additionally
- *    authenticated data.  nheader may be zero.
- *  - nnonce bytes at nonce is the nonce (of any length,
- *    with 12 byte values being strongly recommended.)
- *    This must not repeat for any given key.
- *  - nplain bytes of ciphertext is written at cipher.
- *    This must point to at least that much storage.
- *  - ntag bytes of authentication tag is written to tag.
- *    ntag must be non-zero and no greater than prp->blocksz.
+ * This function does not fail.
+ *
+ * :param prp/prpctx: describe the block cipher to use.
+ * :param plain: message plaintext.
+ * :param nplain: length of message.  May be zero.
+ * :param header: additionally authenticated data (AAD).
+ * :param nheader: length of AAD.  May be zero.
+ * :param nonce: nonce.  This must not repeat for a given key.
+ * :param nnonce: length of nonce.  The nonce can be any length, but 12 bytes is strongly recommended.
+ * :param cipher: ciphertext output.  `nplain` bytes are written here.
+ * :param tag: authentication tag.  `ntag` bytes are written here.
+ * :param ntag: authentication tag length.  This must be non-zero and no greater than `prp->blocksz`.
  *
  *  This function does not fail.
  */
@@ -386,33 +383,32 @@ void cf_gcm_encrypt(const cf_prp *prp, void *prpctx,
                     const uint8_t *plain, size_t nplain,
                     const uint8_t *header, size_t nheader,
                     const uint8_t *nonce, size_t nnonce,
-                    uint8_t *cipher, /* the same size as nplain */
+                    uint8_t *cipher,
                     uint8_t *tag, size_t ntag);
 
 /* .. c:function:: $DECL
  * GCM authenticated decryption.
  *
- *  - prp and prpctx describe the block cipher to use.
- *  - ncipher bytes at cipher is the message ciphertext.
- *    ncipher may be zero.
- *  - nheader bytes at header is the additionally
- *    authenticated data.  nheader may be zero.
- *  - nnonce bytes at nonce is the nonce (of any
- *    length).
- *  - ntag bytes of authentication tag is read from tag.
- *    ntag must be non-zero and no greater than prp->blocksz.
- *  - ncipher bytes of plaintext is written at plain.
- *    This must point to at least that much storage.
+ * :return: 0 on success, non-zero on error.  Nothing is written to plain on error.
  *
- * Returns 0 on success; non-zero on error.  Nothing is written to
- * plain on error.
+ * :param prp: describe the block cipher to use.
+ * :param prpctx: describe the block cipher to use.
+ * :param cipher: message ciphertext.
+ * :param ncipher: message length.
+ * :param header: additionally authenticated data (AAD).
+ * :param nheader: length of AAD.
+ * :param nonce: nonce.
+ * :param nnonce: length of nonce.
+ * :param tag: authentication tag.  `ntag` bytes are read from here.
+ * :param ntag: authentication tag length.
+ * :param plain: plaintext output.  `ncipher` bytes are written here.
  */
 int cf_gcm_decrypt(const cf_prp *prp, void *prpctx,
                    const uint8_t *cipher, size_t ncipher,
                    const uint8_t *header, size_t nheader,
                    const uint8_t *nonce, size_t nnonce,
                    const uint8_t *tag, size_t ntag,
-                   uint8_t *plain); /* the same size as ncipher */
+                   uint8_t *plain);
 
 /**
  * CCM
@@ -433,22 +429,19 @@ int cf_gcm_decrypt(const cf_prp *prp, void *prpctx,
 /* .. c:function:: $DECL
  * CCM authenticated encryption.
  *
- *  - prp and prpctx describe the block cipher to use.
- *  - nplain bytes at plain is the message plaintext.
- *    nplain may be zero.  nplain must meet the constraints
- *    imposed on it by L.
- *  - L is the length of the message length encoding.  This must
- *    be in the interval [2, 8] and gives a maximum message
- *    size of 2 ** 8L bytes.
- *  - nheader bytes at header is the additionally
- *    authenticated data.  nheader may be zero.
- *  - nnonce bytes at nonce is the nonce (of exactly 15 - L
- *    octets for a 128-bit block cipher).
- *    This must not repeat for any given key.
- *  - ntag bytes of authentication tag is written to tag.
- *    ntag must be 4, 6, 8, 10, 12, 14 or 16.
- *  - nplain bytes of ciphertext is written at cipher.
- *    This must point to at least that much storage.
+ * This function does not fail.
+ *
+ * :param prp/prpctx: describe the block cipher to use.
+ * :param plain: message plaintext.
+ * :param nplain: length of message.  May be zero.  Must meet the constraints placed on it by `L`.
+ * :param L: length of the message length encoding.  This must be in the interval `[2,8]` and gives a maximum message size of 2\ :sup:`8L` bytes.
+ * :param header: additionally authenticated data (AAD).
+ * :param nheader: length of AAD.  May be zero.
+ * :param nonce: nonce.  This must not repeat for a given key.
+ * :param nnonce: length of nonce.  Must be exactly `15 - L` bytes for a 128-bit block cipher.
+ * :param cipher: ciphertext output.  `nplain` bytes are written here.
+ * :param tag: authentication tag.  `ntag` bytes are written here.
+ * :param ntag: authentication tag length.  This must be 4, 6, 8, 10, 12, 14 or 16.
  */
 void cf_ccm_encrypt(const cf_prp *prp, void *prpctx,
                     const uint8_t *plain, size_t nplain, size_t L,
@@ -460,23 +453,20 @@ void cf_ccm_encrypt(const cf_prp *prp, void *prpctx,
 /* .. c:function:: $DECL
  * CCM authenticated decryption.
  *
- *  - prp and prpctx describe the block cipher to use.
- *  - ncipher bytes at cipher is the message ciphertext.
- *  - L is the length of the message length encoding.  This must
- *    be in the interval [2, 8] and gives a maximum message
- *    size of 2 ** 8L bytes.
- *  - nheader bytes at header is the additionally
- *    authenticated data.  nheader may be zero.
- *  - nnonce bytes at nonce is the nonce (of exactly 15 - L
- *    octets for a 128-bit block cipher).
- *    This must not repeat for any given key.
- *  - ntag bytes of authentication tag is expected at tag.
- *    ntag must be 4, 6, 8, 10, 12, 14 or 16.
- *  - ncipher bytes of plaintext is written at plain.
- *    This must point to at least that much storage.
+ * :return: 0 on success, non-zero on error.  Plain is cleared on error.
  *
- * Returns 0 on success; non-zero on error.  Plain is cleared
- * on error.
+ * :param prp: describe the block cipher to use.
+ * :param prpctx: describe the block cipher to use.
+ * :param cipher: message ciphertext.
+ * :param ncipher: length of message.
+ * :param L: length of the message length encoding.  See :c:func:`cf_ccm_encrypt`.
+ * :param header: additionally authenticated data (AAD).
+ * :param nheader: length of AAD.
+ * :param nonce: nonce.
+ * :param nnonce: length of nonce.
+ * :param tag: authentication tag.  `ntag` bytes are read from here.
+ * :param ntag: authentication tag length.  This must be 4, 6, 8, 10, 12, 14 or 16.
+ * :param plain: plaintext output.  `ncipher` bytes are written here.
  */
 int cf_ccm_decrypt(const cf_prp *prp, void *prpctx,
                    const uint8_t *cipher, size_t ncipher, size_t L,
