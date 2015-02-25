@@ -221,7 +221,6 @@ void cf_sha384_digest_final(cf_sha512_context *ctx, uint8_t hash[CF_SHA384_HASHS
 
 const cf_chash cf_sha384 = {
   .hashsz = CF_SHA384_HASHSZ,
-  .ctxsz = sizeof(cf_sha512_context),
   .blocksz = CF_SHA384_BLOCKSZ,
   .init = (cf_chash_init) cf_sha384_init,
   .update = (cf_chash_update) cf_sha384_update,
@@ -230,7 +229,6 @@ const cf_chash cf_sha384 = {
 
 const cf_chash cf_sha512 = {
   .hashsz = CF_SHA512_HASHSZ,
-  .ctxsz = sizeof(cf_sha512_context),
   .blocksz = CF_SHA512_BLOCKSZ,
   .init = (cf_chash_init) cf_sha512_init,
   .update = (cf_chash_update) cf_sha512_update,

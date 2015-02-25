@@ -108,7 +108,7 @@ void cf_gcm_encrypt(const cf_prp *prp, void *prpctx,
   uint8_t Y0[16]; 
 
   /* H = E_K(0^128) */
-  prp->block(prpctx, cf_prp_encrypt, H, H);
+  prp->encrypt(prpctx, H, H);
 
   /* Produce CTR nonce, Y_0:
    *
@@ -172,7 +172,7 @@ int cf_gcm_decrypt(const cf_prp *prp, void *prpctx,
   uint8_t Y0[16]; 
 
   /* H = E_K(0^128) */
-  prp->block(prpctx, cf_prp_encrypt, H, H);
+  prp->encrypt(prpctx, H, H);
 
   /* Produce CTR nonce, Y_0:
    *

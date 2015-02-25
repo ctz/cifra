@@ -23,7 +23,7 @@ void cf_cbc_encrypt(cf_cbc *ctx, const uint8_t *input, uint8_t *output, size_t b
   while (blocks--)
   {
     xor_bb(buf, input, ctx->block, nblk);
-    ctx->prp->block(ctx->prpctx, cf_prp_encrypt, buf, ctx->block);
+    ctx->prp->encrypt(ctx->prpctx, buf, ctx->block);
     memcpy(output, ctx->block, nblk);
     input += nblk;
     output += nblk;
@@ -37,7 +37,7 @@ void cf_cbc_decrypt(cf_cbc *ctx, const uint8_t *input, uint8_t *output, size_t b
 
   while (blocks--)
   {
-    ctx->prp->block(ctx->prpctx, cf_prp_decrypt, input, buf);
+    ctx->prp->decrypt(ctx->prpctx, input, buf);
     xor_bb(output, buf, ctx->block, nblk);
     memcpy(ctx->block, input, nblk);
     input += nblk;
@@ -67,7 +67,7 @@ void cf_ctr_custom_counter(cf_ctr *ctx, size_t offset, size_t width)
 static void ctr_next_block(void *vctx, uint8_t *out)
 {
   cf_ctr *ctx = vctx;
-  ctx->prp->block(ctx->prpctx, cf_prp_encrypt, ctx->nonce, out);
+  ctx->prp->encrypt(ctx->prpctx, ctx->nonce, out);
   incr_be(ctx->nonce + ctx->counter_offset, ctx->counter_width);
 }
 

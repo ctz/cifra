@@ -13,7 +13,6 @@ static void vector(const cf_chash *H, const char *msg, const char *hashstr)
   assert(nexpecthash == H->hashsz);
 
   cf_chash_ctx ctx;
-  assert(sizeof(ctx) >= H->ctxsz);
   H->init(&ctx);
   H->update(&ctx, msg, nmsg);
   H->digest(&ctx, hash);

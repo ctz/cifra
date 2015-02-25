@@ -347,7 +347,6 @@ void cf_sha3_224_digest_final(cf_sha3_context *ctx, uint8_t hash[CF_SHA3_224_HAS
 
 const cf_chash cf_sha3_224 = {
   .hashsz = CF_SHA3_224_HASHSZ,
-  .ctxsz = sizeof(cf_sha3_context),
   .blocksz = CF_SHA3_224_BLOCKSZ,
   .init = (cf_chash_init) cf_sha3_224_init,
   .update = (cf_chash_update) cf_sha3_224_update,
@@ -378,7 +377,6 @@ void cf_sha3_256_digest_final(cf_sha3_context *ctx, uint8_t hash[CF_SHA3_256_HAS
 
 const cf_chash cf_sha3_256 = {
   .hashsz = CF_SHA3_256_HASHSZ,
-  .ctxsz = sizeof(cf_sha3_context),
   .blocksz = CF_SHA3_256_BLOCKSZ,
   .init = (cf_chash_init) cf_sha3_256_init,
   .update = (cf_chash_update) cf_sha3_256_update,
@@ -409,7 +407,6 @@ void cf_sha3_384_digest_final(cf_sha3_context *ctx, uint8_t hash[CF_SHA3_384_HAS
 
 const cf_chash cf_sha3_384 = {
   .hashsz = CF_SHA3_384_HASHSZ,
-  .ctxsz = sizeof(cf_sha3_context),
   .blocksz = CF_SHA3_384_BLOCKSZ,
   .init = (cf_chash_init) cf_sha3_384_init,
   .update = (cf_chash_update) cf_sha3_384_update,
@@ -440,7 +437,6 @@ void cf_sha3_512_digest_final(cf_sha3_context *ctx, uint8_t hash[CF_SHA3_512_HAS
 
 const cf_chash cf_sha3_512 = {
   .hashsz = CF_SHA3_512_HASHSZ,
-  .ctxsz = sizeof(cf_sha3_context),
   .blocksz = CF_SHA3_512_BLOCKSZ,
   .init = (cf_chash_init) cf_sha3_512_init,
   .update = (cf_chash_update) cf_sha3_512_update,

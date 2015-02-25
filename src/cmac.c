@@ -18,7 +18,7 @@ void cf_cmac_init(cf_cmac *ctx, const cf_prp *prp, void *prpctx)
 
   /* L = E_K(0^n) */
   mem_clean(L, prp->blocksz);
-  prp->block(prpctx, cf_prp_encrypt, L, L);
+  prp->encrypt(prpctx, L, L);
 
   /* B = 2L */
   cf_gf128 gf;

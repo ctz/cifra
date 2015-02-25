@@ -96,7 +96,7 @@ static uint32_t sub_word(uint32_t w, const uint8_t *sbox)
           b = byte(w, 1),
           c = byte(w, 2),
           d = byte(w, 3);
-#if CF_SIDE_CHANNEL_PROTECTION
+#if CF_CACHE_SIDE_CHANNEL_PROTECTION
   select_u8x4(&a, &b, &c, &d, sbox, 256);
 #else
   a = sbox[a];
@@ -413,16 +413,9 @@ void cf_aes_finish(cf_aes_context *ctx)
   mem_clean(ctx, sizeof *ctx);
 }
 
-static void encdec(void *ctx, cf_prp_encdec encdec, const uint8_t *in, uint8_t *out)
-{
-  if (encdec == cf_prp_encrypt)
-    cf_aes_encrypt(ctx, in, out);
-  else
-    cf_aes_decrypt(ctx, in, out);
-}
-
 const cf_prp cf_aes = {
   .blocksz = AES_BLOCKSZ,
-  .block = (cf_prp_block) encdec
+  .encrypt = (cf_prp_block) cf_aes_encrypt,
+  .decrypt = (cf_prp_block) cf_aes_decrypt
 };
 

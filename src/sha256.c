@@ -204,7 +204,6 @@ void cf_sha224_digest_final(cf_sha256_context *ctx, uint8_t hash[CF_SHA224_HASHS
 
 const cf_chash cf_sha224 = {
   .hashsz = CF_SHA224_HASHSZ,
-  .ctxsz = sizeof(cf_sha256_context),
   .blocksz = CF_SHA256_BLOCKSZ,
   .init = (cf_chash_init) cf_sha224_init,
   .update = (cf_chash_update) cf_sha224_update,
@@ -213,7 +212,6 @@ const cf_chash cf_sha224 = {
 
 const cf_chash cf_sha256 = {
   .hashsz = CF_SHA256_HASHSZ,
-  .ctxsz = sizeof(cf_sha256_context),
   .blocksz = CF_SHA256_BLOCKSZ,
   .init = (cf_chash_init) cf_sha256_init,
   .update = (cf_chash_update) cf_sha256_update,

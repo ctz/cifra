@@ -2,6 +2,9 @@
 Cifra is a collection of cryptographic primitives targeted at embedded use.
 
 [![Build Status](https://travis-ci.org/ctz/cifra.svg?branch=master)](https://travis-ci.org/ctz/cifra)
+
+[![Documentation](https://readthedocs.org/projects/pip/badge/)](https://cifra.readthedocs.org/en/latest/)
+
 [![Analysis Status](https://scan.coverity.com/projects/4324/badge.svg)](https://scan.coverity.com/projects/4324)
 
 ## Aims
@@ -19,11 +22,14 @@ In order of descending emphasis, cifra aims for:
 * **SHA224**, **SHA256**, **SHA384** and **SHA512** hash functions (including **HMAC** and **PBKDF2**).
 * **SHA3-224**, **SHA3-256**, **SHA3-384**, **SHA3-512** hash functions (FIPS 202 draft compatible).
 * **ChaCha20** and **Salsa20** stream ciphers.
-* 100% code coverage by line.
+* 100% code coverage by line, zero static analysis defects, valgrind-clean.
 
 Additionally cifra imports curve25519 from elsewhere (nacl, tweetnacl,
 Adam Langley's donna) for comparison between various implementations
 on embedded targets.
+
+## Documentation
+Available at [Read the Docs](https://cifra.readthedocs.org/en/latest/).
 
 ## Testing
 There is quite a lot of testing available:
