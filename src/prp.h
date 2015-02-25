@@ -4,10 +4,37 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* Block processing function. in and out may alias. */
+/**
+ * General block cipher description
+ * ================================
+ * This allows us to implement block cipher modes which can work
+ * with different block ciphers.
+ */
+
+/* .. c:type:: cf_prp_block
+ * Block processing function type.
+ *
+ * The `in` and `out` blocks may alias.
+ *
+ * :rtype: void
+ * :param ctx: block cipher-specific context object.
+ * :param in: input block.
+ * :param out: output block.
+ */
 typedef void (*cf_prp_block)(void *ctx, const uint8_t *in, uint8_t *out);
 
-/* Describes an PRP in a general way. */
+/* .. c:type:: cf_prp
+ * Describes an PRP in a general way.
+ *
+ * .. c:member:: cf_prp.blocksz
+ * Block size in bytes. Must be no more than :c:macro:`CF_MAXBLOCK`.
+ *
+ * .. c:member:: cf_prp.encrypt
+ * Block encryption function.
+ *
+ * .. c:member:: cf_prp.decrypt
+ * Block decryption function.
+ */
 typedef struct
 {
   size_t blocksz;
