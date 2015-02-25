@@ -13,14 +13,14 @@ Contents:
 
    cf_config
    prp
+   chash
    aes
    modes
+   hmac
+   pbkdf2
+   salsa20
 
-
-Indices and tables
-==================
-
+Index
+-----
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 

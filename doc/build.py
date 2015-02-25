@@ -51,7 +51,7 @@ EXTERNAL = """
 aes
 cf_config
 chash
-curve25519
+hmac
 modes
 pbkdf2
 prp
