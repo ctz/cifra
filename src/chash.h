@@ -1,60 +1,104 @@
-/**
- * @brief Cryptographic hash function abstraction.
- */
-
 #ifndef CHASH_H
 #define CHASH_H
 
 #include <stddef.h>
 #include <stdint.h>
 
-/** Initialises the context in preparation for hashing a message with
- *  _update. */
+/**
+ * General hash function description
+ * =================================
+ * This allows us to make use of hash functions without depending
+ * on a specific one.  This is useful in implementing, for example,
+ * :doc:`HMAC <hmac>`.
+ */
+
+/* .. c:type:: cf_chash_init
+ * Hashing initialisation function type.
+ *
+ * Functions of this type should initialise the context in preparation
+ * for hashing a message with `cf_chash_update` functions.
+ *
+ * :rtype: void
+ * :param ctx: hash function-specific context structure.
+ */
 typedef void (*cf_chash_init)(void *ctx);
 
-/** Hashes @p bytes data at @p data, updating the contents of @p ctx. */
-typedef void (*cf_chash_update)(void *ctx, const void *data, size_t bytes);
+/* .. c:type:: cf_chash_update
+ * Hashing data processing function type.
+ *
+ * Functions of this type hash `count` bytes of data at `data`,
+ * updating the contents of `ctx`.
+ *
+ * :rtype: void
+ * :param ctx: hash function-specific context structure.
+ * :param data: input data to hash.
+ * :param count: number of bytes to hash.
+ */
+typedef void (*cf_chash_update)(void *ctx, const void *data, size_t count);
 
-/** Completes the operation, writing @p cf_chash.hashsz bytes to @p hash.
+/* .. c:type:: cf_chash_digest
+ * Hashing completion function type.
  *
- *  This function does not change @p ctx -- any padding which needs doing
- *  must be done seperately (in a copy of @p ctx, say).
+ * Functions of this type complete a hashing operation,
+ * writing :c:member:`cf_chash.hashsz` bytes to `hash`.
  *
- *  This means you can interlave @p _update and @p _digest calls to
- *  learn @p H(a) and @p H(a||b) without hashing @p a twice. */
+ * This function does not change `ctx` -- any padding which needs doing
+ * must be done seperately (in a copy of `ctx`, say).
+ *
+ * This means you can interlave `_update` and `_digest` calls to
+ * learn `H(A)` and `H(A || B)` without hashing `A` twice.
+ *
+ * :rtype: void
+ * :param ctx: hash function-specific context structure.
+ * :param hash: location to write hash result.
+ */
 typedef void (*cf_chash_digest)(const void *ctx, uint8_t *hash);
 
-/** @p cf_chash describes an incremental hash function in an abstract way. */
+/* .. c:type:: cf_chash
+ * This type describes an incremental hash function in an abstract way.
+ *
+ * .. c:member:: cf_chash.hashsz
+ * The hash function's output, in bytes.
+ *
+ * .. c:member:: cf_chash.blocksz
+ * The hash function's internal block size, in bytes.
+ *
+ * .. c:member:: cf_chash.init
+ * Context initialisation function.
+ *
+ * .. c:member:: cf_chash:update
+ * Data processing function.
+ *
+ * .. c:member:: cf_chash:digest
+ * Completion function.
+ *
+ */
 typedef struct
 {
-  /** Output length (bytes). */
   size_t hashsz;
-
-  /** Internal block size (bytes). */
   size_t blocksz;
 
-  /** Context initialisation function. */
   cf_chash_init init;
-
-  /** Incremental hash function. */
   cf_chash_update update;
-
-  /** Hash completion operation. */
   cf_chash_digest digest;
 } cf_chash;
 
-/** The maximum size of a @ref cf_chash_ctx.  This allows
- *  use to put a structure in automatic storage that can
- *  store working data for any supported hash function. */
+/* .. c:macro:: CF_CHASH_MAXCTX
+ * The maximum size of a :c:type:`cf_chash_ctx`.  This allows
+ * use to put a structure in automatic storage that can
+ * store working data for any supported hash function. */
 #define CF_CHASH_MAXCTX 360
 
-/** Maximum hash function block size (bytes). */
+/* .. c:macro:: CF_CHASH_MAXBLK
+ * Maximum hash function block size (in bytes). */
 #define CF_CHASH_MAXBLK 128
 
-/** Maximum hash function output (bytes). */
+/* .. c:macro:: CF_MAXHASH
+ * Maximum hash function output (in bytes). */
 #define CF_MAXHASH 64
 
-/** A type usable with any chash as a context. */
+/* .. c:type:: cf_chash_ctx
+ * A type usable with any `cf_chash` as a context. */
 typedef union
 {
   uint8_t ctx[CF_CHASH_MAXCTX];
@@ -63,10 +107,17 @@ typedef union
   uint64_t u64;
 } cf_chash_ctx;
 
-/** One shot hashing: out = h(m).
+/* .. c:function:: $DECL
+ * One shot hashing: `out = h(m)`.
  *
- *  Using @p h, @p nm bytes at @p m are hashed and @p h->hashsz bytes
- *  of result is written to the buffer @p out. */
+ * Using the hash function `h`, `nm` bytes at `m` are hashed and `h->hashsz` bytes
+ * of result is written to the buffer `out`.
+ *
+ * :param h: hash function description.
+ * :param m: message buffer.
+ * :param nm: message length.
+ * :param out: hash result buffer (written).
+ */
 void cf_hash(const cf_chash *h, const void *m, size_t nm, uint8_t *out);
 
 #endif
