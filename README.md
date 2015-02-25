@@ -186,7 +186,9 @@ Cifra requires `memcpy`, `memset`, `abort` and `assert`.
 * Constant time curve25519 for Cortex-M3 (avoiding the variable-time multiplier).
 
 ## License
-Public domain.  Please attribute the author.
+[CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+
+Please attribute the author.  This is a request only, and not a license term.
 
 ## Author
 Joseph Birr-Pixton <jpixton@gmail.com>
