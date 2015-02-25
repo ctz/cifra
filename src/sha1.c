@@ -131,7 +131,6 @@ void cf_sha1_digest_final(cf_sha1_context *ctx, uint8_t hash[CF_SHA1_HASHSZ])
 
 const cf_chash cf_sha1 = {
   .hashsz = CF_SHA1_HASHSZ,
-  .ctxsz = sizeof(cf_sha1_context),
   .blocksz = CF_SHA1_BLOCKSZ,
   .init = (cf_chash_init) cf_sha1_init,
   .update = (cf_chash_update) cf_sha1_update,

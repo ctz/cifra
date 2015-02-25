@@ -33,10 +33,6 @@ typedef struct
   /** Internal block size (bytes). */
   size_t blocksz;
 
-  /** Size of the context structure (bytes).  This must
-   *  be <= @ref CF_CHASH_MAXCTX. */
-  size_t ctxsz;
-
   /** Context initialisation function. */
   cf_chash_init init;
 
