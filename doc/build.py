@@ -136,8 +136,8 @@ def replace_decl(comment, comment_match, header):
     decl_match = DECL_RE.match(header, start)
 
     if decl_match is None:
-        print 'Cause:', txt
-        print 'Trailer:', hh[start:start+60]
+        print 'Cause:', comment
+        print 'Trailer:', header[start:start+60]
         raise IOError('$DECL present but cannot find following DECL')
 
     decl = decl_match.group(1)
