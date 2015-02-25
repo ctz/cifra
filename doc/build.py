@@ -236,7 +236,7 @@ def process(header, rst):
             decomment(lines)
 
             # domain lines are unindented
-            while lines[0].startswith('.. '):
+            while lines and lines[0].startswith('.. '):
                 print >>outf, lines.pop(0)
             print >>outf
 

@@ -19,6 +19,9 @@ Contents:
    modes
    hmac
    pbkdf2
+   sha1
+   sha2
+   sha3
 
 Index
 -----
