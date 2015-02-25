@@ -2,6 +2,9 @@
 Cifra is a collection of cryptographic primitives targeted at embedded use.
 
 [![Build Status](https://travis-ci.org/ctz/cifra.svg?branch=master)](https://travis-ci.org/ctz/cifra)
+
+[![Documentation](https://readthedocs.org/projects/pip/badge/)](https://cifra.readthedocs.org/en/latest/)
+
 [![Analysis Status](https://scan.coverity.com/projects/4324/badge.svg)](https://scan.coverity.com/projects/4324)
 
 ## Aims
@@ -24,6 +27,9 @@ In order of descending emphasis, cifra aims for:
 Additionally cifra imports curve25519 from elsewhere (nacl, tweetnacl,
 Adam Langley's donna) for comparison between various implementations
 on embedded targets.
+
+## Documentation
+Available at [read the docs](https://cifra.readthedocs.org/en/latest/).
 
 ## Testing
 There is quite a lot of testing available:
