@@ -15,10 +15,10 @@ Contents:
    prp
    chash
    aes
+   salsa20
    modes
    hmac
    pbkdf2
-   salsa20
 
 Index
 -----

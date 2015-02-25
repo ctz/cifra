@@ -5,8 +5,8 @@
 #include <stddef.h>
 
 /**
- * Salsa20/Chacha20 stream ciphers
- * ===============================
+ * The Salsa20/Chacha20 stream ciphers
+ * ===================================
  */
 
 /* Salsa20 core transform. */

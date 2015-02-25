@@ -129,8 +129,8 @@ void cf_ctr_cipher(cf_ctr *ctx, const uint8_t *input, uint8_t *output, size_t by
 void cf_ctr_discard_block(cf_ctr *ctx);
 
 /**
- * CBCMAC
- * ------
+ * CBC-MAC
+ * -------
  * This is a incremental interface to computing a CBC-MAC tag over a message.
  *
  * It optionally pads the message with PKCS#5/PKCS#7 padding -- if you don't
@@ -141,7 +141,7 @@ void cf_ctr_discard_block(cf_ctr *ctx);
  */
 
 /* .. c:type:: cf_cbcmac_stream
- * Stream interface to CBCMAC signing.
+ * Stream interface to CBC-MAC signing.
  *
  * .. c:member:: cf_cbcmac.prp
  * How to encrypt or decrypt blocks.  This could be, for example, :c:data:`cf_aes`.
@@ -169,7 +169,7 @@ typedef struct
 } cf_cbcmac_stream;
 
 /* .. c:function:: $DECL
- * Initialise CBCMAC signing context using selected prp. */
+ * Initialise CBC-MAC signing context using selected prp. */
 void cf_cbcmac_stream_init(cf_cbcmac_stream *ctx, const cf_prp *prp, void *prpctx);
 
 /* .. c:function:: $DECL
@@ -193,8 +193,8 @@ void cf_cbcmac_stream_nopad_final(cf_cbcmac_stream *ctx, uint8_t out[CF_MAXBLOCK
 void cf_cbcmac_stream_pad_final(cf_cbcmac_stream *ctx, uint8_t out[CF_MAXBLOCK]);
 
 /**
- * CMAC/OMAC1
- * ----------
+ * CMAC
+ * ----
  * This is both a one-shot and incremental interface to
  * computing a CMAC tag over a message.
  *
