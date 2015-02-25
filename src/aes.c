@@ -413,16 +413,9 @@ void cf_aes_finish(cf_aes_context *ctx)
   mem_clean(ctx, sizeof *ctx);
 }
 
-static void encdec(void *ctx, cf_prp_encdec encdec, const uint8_t *in, uint8_t *out)
-{
-  if (encdec == cf_prp_encrypt)
-    cf_aes_encrypt(ctx, in, out);
-  else
-    cf_aes_decrypt(ctx, in, out);
-}
-
 const cf_prp cf_aes = {
   .blocksz = AES_BLOCKSZ,
-  .block = (cf_prp_block) encdec
+  .encrypt = (cf_prp_block) cf_aes_encrypt,
+  .decrypt = (cf_prp_block) cf_aes_decrypt
 };
 
