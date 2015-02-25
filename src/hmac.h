@@ -6,7 +6,28 @@
 
 #include "chash.h"
 
-/* Incremental interface context. */
+/**
+ * HMAC
+ * ====
+ * This is a one-shot and incremental interface to computing
+ * HMAC with any hash function.
+ *
+ * (Note: HMAC with SHA3 is possible, but is probably not a
+ * sensible thing to want.)
+ */
+
+/* .. c:type:: cf_hmac_ctx
+ * HMAC incremental interface context.
+ *
+ * .. c:member:: cf_hmac_ctx.hash
+ * Hash function description.
+ *
+ * .. c:member:: cf_hmac_ctx.inner
+ * Inner hash computation.
+ *
+ * .. c:member:: cf_hmac_ctx.outer
+ * Outer hash computation.
+ */
 typedef struct
 {
   const cf_chash *hash;
@@ -14,22 +35,26 @@ typedef struct
   cf_chash_ctx outer;
 } cf_hmac_ctx;
 
-/* Set up ctx for computing a HMAC using the given hash and key. */
+/* .. c:function:: $DECL
+ * Set up ctx for computing a HMAC using the given hash and key. */
 void cf_hmac_init(cf_hmac_ctx *ctx,
                   const cf_chash *hash,
                   const uint8_t *key, size_t nkey);
 
-/* Input data. */
+/* .. c:function:: $DECL
+ * Input data. */
 void cf_hmac_update(cf_hmac_ctx *ctx,
                     const void *data, size_t ndata);
 
-/* Finish and compute HMAC.
- * ctx->hash->hashsz bytes are written to out. */
+/* .. c:function:: $DECL
+ * Finish and compute HMAC.
+ * `ctx->hash->hashsz` bytes are written to `out`. */
 void cf_hmac_finish(cf_hmac_ctx *ctx, uint8_t *out);
 
-/* One shot interface: compute HMAC_hash(key, msg), writing the
- * answer (which is hash->hashsz long) to out. 
- * 
+/* .. c:function:: $DECL
+ * One shot interface: compute `HMAC_hash(key, msg)`, writing the
+ * answer (which is `hash->hashsz` long) to `out`.
+ *
  * This function does not fail. */
 void cf_hmac(const uint8_t *key, size_t nkey,
              const uint8_t *msg, size_t nmsg,
