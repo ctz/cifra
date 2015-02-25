@@ -447,8 +447,8 @@ void cf_ccm_encrypt(const cf_prp *prp, void *prpctx,
                     const uint8_t *plain, size_t nplain, size_t L,
                     const uint8_t *header, size_t nheader,
                     const uint8_t *nonce, size_t nnonce,
-                    uint8_t *tag, size_t ntag,
-                    uint8_t *cipher);
+                    uint8_t *cipher,
+                    uint8_t *tag, size_t ntag);
 
 /* .. c:function:: $DECL
  * CCM authenticated decryption.

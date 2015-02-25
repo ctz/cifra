@@ -156,8 +156,8 @@ static void aes128ccm_test(void)
                  msg, sizeof msg, 4,
                  aad, sizeof aad,
                  nonce, sizeof nonce,
-                 tag, sizeof tag,
-                 cipher);
+                 cipher,
+                 tag, sizeof tag);
 }
 
 static void salsa20_test(void)

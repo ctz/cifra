@@ -425,8 +425,8 @@ static void check_ccm(const void *key, size_t nkey,
                  plain, nplain, 15 - nnonce,
                  header, nheader,
                  nonce, nnonce,
-                 tag, ntag,
-                 cipher);
+                 cipher,
+                 tag, ntag);
 
   TEST_CHECK(memcmp(tag, expect_tag, ntag) == 0);
   TEST_CHECK(memcmp(cipher, expect_cipher, ncipher) == 0);
@@ -484,8 +484,8 @@ static void check_ccm_long(void)
                  plain, sizeof plain, 15 - sizeof nonce,
                  header, sizeof header,
                  nonce, sizeof nonce,
-                 tag, sizeof tag,
-                 cipher);
+                 cipher,
+                 tag, sizeof tag);
 
   TEST_CHECK(memcmp(expect_tag, tag, sizeof tag) == 0);
   TEST_CHECK(memcmp(expect_cipher, cipher, sizeof cipher) == 0);
