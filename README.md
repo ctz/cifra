@@ -52,7 +52,7 @@ All measurements performed at `-Os` (optimise for space), on the following MCUs:
 
 Core       | Part number   | Price (1s)   | Max clock  | Flash | SRAM
 ---------- | ------------- | ------------ | ---------- | ----- | -----
-Cortex-M0  | STM32F030F4P6 | 0.32EUR      | 48MHz      | 16KB  | 4KB
+Cortex-M0  | STM32F030F4P6 | 1.17EUR      | 48MHz      | 16KB  | 4KB
 Cortex-M3  | STM32F103C8T6 | 2.87EUR      | 72MHz      | 64KB  | 20KB
 Cortex-M4F | STM32F303K6T6 | 4.53EUR      | 72MHz      | 32KB  | 12KB
 
