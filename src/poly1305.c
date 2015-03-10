@@ -12,7 +12,7 @@ void cf_poly1305_init(cf_poly1305 *ctx,
                       const uint8_t s[static 16])
 {
   memset(ctx, 0, sizeof *ctx);
-    
+
   ctx->r[0]  = r[0];
   ctx->r[1]  = r[1];
   ctx->r[2]  = r[2];
@@ -86,7 +86,7 @@ static const uint32_t negative_1305[17] = {
 static void poly1305_full_reduce(uint32_t x[static 17])
 {
   uint32_t xsub[17];
-  
+
   for (size_t i = 0; i < 17; i++)
     xsub[i] = x[i];
 
@@ -121,7 +121,7 @@ static void poly1305_mul(uint32_t x[static 17],
   }
 
   poly1305_min_reduce(r);
-  
+
   for (size_t i = 0; i < 17; i++)
     x[i] = r[i];
 }
