@@ -1,3 +1,16 @@
+/*
+ * cifra - embedded cryptography library
+ * Written in 2014 by Joseph Birr-Pixton <jpixton@gmail.com>
+ *
+ * To the extent possible under law, the author(s) have dedicated all
+ * copyright and related and neighboring rights to this software to the
+ * public domain worldwide. This software is distributed without any
+ * warranty.
+ *
+ * You should have received a copy of the CC0 Public Domain Dedication
+ * along with this software. If not, see
+ * <http://creativecommons.org/publicdomain/zero/1.0/>.
+ */
 
 #include "handy.h"
 #include "prp.h"
@@ -12,6 +25,8 @@ static void cmac_compute_n(cf_cmac_stream *ctx,
                            uint8_t out[CF_MAXBLOCK])
 {
   size_t blocksz = ctx->cmac.prp->blocksz;
+  assert(blocksz > 0);
+
   uint8_t firstblock[CF_MAXBLOCK];
   memset(firstblock, 0, blocksz);
   firstblock[blocksz - 1] = t;

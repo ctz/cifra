@@ -1,3 +1,16 @@
+/*
+ * cifra - embedded cryptography library
+ * Written in 2014 by Joseph Birr-Pixton <jpixton@gmail.com>
+ *
+ * To the extent possible under law, the author(s) have dedicated all
+ * copyright and related and neighboring rights to this software to the
+ * public domain worldwide. This software is distributed without any
+ * warranty.
+ *
+ * You should have received a copy of the CC0 Public Domain Dedication
+ * along with this software. If not, see
+ * <http://creativecommons.org/publicdomain/zero/1.0/>.
+ */
 
 #include "handy.h"
 #include "prp.h"
@@ -77,8 +90,8 @@ void cf_ccm_encrypt(const cf_prp *prp, void *prpctx,
                     const uint8_t *plain, size_t nplain, size_t L,
                     const uint8_t *header, size_t nheader,
                     const uint8_t *nonce, size_t nnonce,
-                    uint8_t *tag, size_t ntag,
-                    uint8_t *cipher)
+                    uint8_t *cipher,
+                    uint8_t *tag, size_t ntag)
 {
   uint8_t block[CF_MAXBLOCK];
 

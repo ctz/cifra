@@ -1,3 +1,17 @@
+/*
+ * cifra - embedded cryptography library
+ * Written in 2014 by Joseph Birr-Pixton <jpixton@gmail.com>
+ *
+ * To the extent possible under law, the author(s) have dedicated all
+ * copyright and related and neighboring rights to this software to the
+ * public domain worldwide. This software is distributed without any
+ * warranty.
+ *
+ * You should have received a copy of the CC0 Public Domain Dedication
+ * along with this software. If not, see
+ * <http://creativecommons.org/publicdomain/zero/1.0/>.
+ */
+
 #include "aes.h"
 #include "modes.h"
 #include "bitops.h"
@@ -425,8 +439,8 @@ static void check_ccm(const void *key, size_t nkey,
                  plain, nplain, 15 - nnonce,
                  header, nheader,
                  nonce, nnonce,
-                 tag, ntag,
-                 cipher);
+                 cipher,
+                 tag, ntag);
 
   TEST_CHECK(memcmp(tag, expect_tag, ntag) == 0);
   TEST_CHECK(memcmp(cipher, expect_cipher, ncipher) == 0);
@@ -484,8 +498,8 @@ static void check_ccm_long(void)
                  plain, sizeof plain, 15 - sizeof nonce,
                  header, sizeof header,
                  nonce, sizeof nonce,
-                 tag, sizeof tag,
-                 cipher);
+                 cipher,
+                 tag, sizeof tag);
 
   TEST_CHECK(memcmp(expect_tag, tag, sizeof tag) == 0);
   TEST_CHECK(memcmp(expect_cipher, cipher, sizeof cipher) == 0);

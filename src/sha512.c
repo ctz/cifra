@@ -1,3 +1,17 @@
+/*
+ * cifra - embedded cryptography library
+ * Written in 2014 by Joseph Birr-Pixton <jpixton@gmail.com>
+ *
+ * To the extent possible under law, the author(s) have dedicated all
+ * copyright and related and neighboring rights to this software to the
+ * public domain worldwide. This software is distributed without any
+ * warranty.
+ *
+ * You should have received a copy of the CC0 Public Domain Dedication
+ * along with this software. If not, see
+ * <http://creativecommons.org/publicdomain/zero/1.0/>.
+ */
+
 #include <string.h>
 #include <assert.h>
 
@@ -221,7 +235,6 @@ void cf_sha384_digest_final(cf_sha512_context *ctx, uint8_t hash[CF_SHA384_HASHS
 
 const cf_chash cf_sha384 = {
   .hashsz = CF_SHA384_HASHSZ,
-  .ctxsz = sizeof(cf_sha512_context),
   .blocksz = CF_SHA384_BLOCKSZ,
   .init = (cf_chash_init) cf_sha384_init,
   .update = (cf_chash_update) cf_sha384_update,
@@ -230,7 +243,6 @@ const cf_chash cf_sha384 = {
 
 const cf_chash cf_sha512 = {
   .hashsz = CF_SHA512_HASHSZ,
-  .ctxsz = sizeof(cf_sha512_context),
   .blocksz = CF_SHA512_BLOCKSZ,
   .init = (cf_chash_init) cf_sha512_init,
   .update = (cf_chash_update) cf_sha512_update,

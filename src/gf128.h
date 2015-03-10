@@ -1,7 +1,15 @@
-/**
- * @brief Operations in GF(2^128).
+/*
+ * cifra - embedded cryptography library
+ * Written in 2014 by Joseph Birr-Pixton <jpixton@gmail.com>
  *
- * These implementations are constant time, but relatively slow.
+ * To the extent possible under law, the author(s) have dedicated all
+ * copyright and related and neighboring rights to this software to the
+ * public domain worldwide. This software is distributed without any
+ * warranty.
+ *
+ * You should have received a copy of the CC0 Public Domain Dedication
+ * along with this software. If not, see
+ * <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
 #ifndef GF128_H
@@ -9,6 +17,12 @@
 
 #include <stddef.h>
 #include <stdint.h>
+
+/**
+ * @brief Operations in GF(2^128).
+ *
+ * These implementations are constant time, but relatively slow.
+ */
 
 typedef uint32_t cf_gf128[4];
 

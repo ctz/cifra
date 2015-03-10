@@ -1,0 +1,24 @@
+language: c
+
+before_install:
+ - sudo apt-get update -qq
+ - sudo apt-get install -y libc6-dev-i386 libc6-dbg:i386 libc6-dbg valgrind
+
+script:
+ - cd src
+ - make clean
+ - make test
+ - make test WITH_VALGRIND=1
+ - make clean
+ - make cover WITH_COVERAGE=1
+
+compiler:
+ - clang
+ - gcc
+
+env:
+  matrix:
+   - CFLAGS=-m32 LDFLAGS=-m32
+   - CFLAGS=-m64 LDFLAGS=-m64
+
+# nb. see branch coverity-scan for alternate config for coverity

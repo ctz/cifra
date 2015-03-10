@@ -1,3 +1,17 @@
+/*
+ * cifra - embedded cryptography library
+ * Written in 2014 by Joseph Birr-Pixton <jpixton@gmail.com>
+ *
+ * To the extent possible under law, the author(s) have dedicated all
+ * copyright and related and neighboring rights to this software to the
+ * public domain worldwide. This software is distributed without any
+ * warranty.
+ *
+ * You should have received a copy of the CC0 Public Domain Dedication
+ * along with this software. If not, see
+ * <http://creativecommons.org/publicdomain/zero/1.0/>.
+ */
+
 #include <string.h>
 #include <assert.h>
 
@@ -299,6 +313,8 @@ static void pad(cf_sha3_context *ctx, uint8_t domain, size_t npad)
 {
   uint8_t padding[CF_SHA3_224_BLOCKSZ];
 
+  assert(npad >= 1);
+
   if (npad == 1)
   {
     padding[0] = domain | 0x80;
@@ -345,7 +361,6 @@ void cf_sha3_224_digest_final(cf_sha3_context *ctx, uint8_t hash[CF_SHA3_224_HAS
 
 const cf_chash cf_sha3_224 = {
   .hashsz = CF_SHA3_224_HASHSZ,
-  .ctxsz = sizeof(cf_sha3_context),
   .blocksz = CF_SHA3_224_BLOCKSZ,
   .init = (cf_chash_init) cf_sha3_224_init,
   .update = (cf_chash_update) cf_sha3_224_update,
@@ -376,7 +391,6 @@ void cf_sha3_256_digest_final(cf_sha3_context *ctx, uint8_t hash[CF_SHA3_256_HAS
 
 const cf_chash cf_sha3_256 = {
   .hashsz = CF_SHA3_256_HASHSZ,
-  .ctxsz = sizeof(cf_sha3_context),
   .blocksz = CF_SHA3_256_BLOCKSZ,
   .init = (cf_chash_init) cf_sha3_256_init,
   .update = (cf_chash_update) cf_sha3_256_update,
@@ -407,7 +421,6 @@ void cf_sha3_384_digest_final(cf_sha3_context *ctx, uint8_t hash[CF_SHA3_384_HAS
 
 const cf_chash cf_sha3_384 = {
   .hashsz = CF_SHA3_384_HASHSZ,
-  .ctxsz = sizeof(cf_sha3_context),
   .blocksz = CF_SHA3_384_BLOCKSZ,
   .init = (cf_chash_init) cf_sha3_384_init,
   .update = (cf_chash_update) cf_sha3_384_update,
@@ -438,7 +451,6 @@ void cf_sha3_512_digest_final(cf_sha3_context *ctx, uint8_t hash[CF_SHA3_512_HAS
 
 const cf_chash cf_sha3_512 = {
   .hashsz = CF_SHA3_512_HASHSZ,
-  .ctxsz = sizeof(cf_sha3_context),
   .blocksz = CF_SHA3_512_BLOCKSZ,
   .init = (cf_chash_init) cf_sha3_512_init,
   .update = (cf_chash_update) cf_sha3_512_update,
