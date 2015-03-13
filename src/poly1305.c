@@ -114,8 +114,18 @@ static void poly1305_mul(uint32_t x[static 17],
     for (int j = 0; j <= i; j++)
       accum += x[j] * y[i - j];
 
+    /* Add in carries.  These get shifted 130 bits
+     * to the right, with a combination of byte indexing
+     * and shifting (136 bits right, then 6 bits left).
+     *
+     * nb. 5 << 6 is made up of two parts:
+     *   5: reduction of 2 ** 130 leaves a multiple 5
+     *   shift 6 places left
+     *     17 * 8: byte indexing shift (136 bits)
+     *     130: desired shift
+     */
     for (int j = i + 1; j < 17; j++)
-      accum += 320 * x[j] * y[i + 17 - j];
+      accum += (5 << 6) * x[j] * y[i + 17 - j];
 
     r[i] = accum;
   }
