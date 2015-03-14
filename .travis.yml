@@ -9,7 +9,7 @@ script:
  - make WITH_COVERAGE=1 cover
 
 after_success:
- - coveralls --root src --exclude ext --gcov-options '\-lp'
+ - coveralls --exclude ext --gcov-options '\-lp'
 
 compiler:
  - gcc
