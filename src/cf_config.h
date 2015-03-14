@@ -1,10 +1,24 @@
-/**
- * Library configuration
- * =====================
+/*
+ * cifra - embedded cryptography library
+ * Written in 2014 by Joseph Birr-Pixton <jpixton@gmail.com>
+ *
+ * To the extent possible under law, the author(s) have dedicated all
+ * copyright and related and neighboring rights to this software to the
+ * public domain worldwide. This software is distributed without any
+ * warranty.
+ *
+ * You should have received a copy of the CC0 Public Domain Dedication
+ * along with this software. If not, see
+ * <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
 #ifndef CF_CONFIG_H
 #define CF_CONFIG_H
+
+/**
+ * Library configuration
+ * =====================
+ */
 
 /* .. c:macro:: CF_SIDE_CHANNEL_PROTECTION
  * Define this as 1 if you need all available side channel protections.

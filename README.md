@@ -7,6 +7,8 @@ Cifra is a collection of cryptographic primitives targeted at embedded use.
 
 [![Analysis Status](https://scan.coverity.com/projects/4324/badge.svg)](https://scan.coverity.com/projects/4324)
 
+[![Coverage Status](https://coveralls.io/repos/ctz/cifra/badge.svg?branch=coveralls-scan)](https://coveralls.io/r/ctz/cifra?branch=coveralls-scan)
+
 ## Aims
 In order of descending emphasis, cifra aims for:
 
@@ -52,7 +54,7 @@ All measurements performed at `-Os` (optimise for space), on the following MCUs:
 
 Core       | Part number   | Price (1s)   | Max clock  | Flash | SRAM
 ---------- | ------------- | ------------ | ---------- | ----- | -----
-Cortex-M0  | STM32F030F4P6 | 0.32EUR      | 48MHz      | 16KB  | 4KB
+Cortex-M0  | STM32F030F4P6 | 1.17EUR      | 48MHz      | 16KB  | 4KB
 Cortex-M3  | STM32F103C8T6 | 2.87EUR      | 72MHz      | 64KB  | 20KB
 Cortex-M4F | STM32F303K6T6 | 4.53EUR      | 72MHz      | 32KB  | 12KB
 
@@ -186,7 +188,9 @@ Cifra requires `memcpy`, `memset`, `abort` and `assert`.
 * Constant time curve25519 for Cortex-M3 (avoiding the variable-time multiplier).
 
 ## License
-Public domain.  Please attribute the author.
+[CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+
+Please attribute the author.  This is a request only, and not a license term.
 
 ## Author
 Joseph Birr-Pixton <jpixton@gmail.com>
