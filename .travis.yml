@@ -10,7 +10,7 @@ script:
  - popd
 
 after_success:
- - coveralls --exclude src/ext --gcov-options '\-lp'
+ - coveralls --build-root src --exclude src/ext --gcov-options '\-lp'
 
 compiler:
  - gcc
