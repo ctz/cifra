@@ -6,10 +6,10 @@ before_install:
 script:
  - cd src
  - make clean
- - make COVERAGE=1 cover
+ - make WITH_COVERAGE=1 cover
 
 after_success:
- - cd src && coveralls --gcov-options '\-lp'
+ - coveralls --gcov-options '\-lp'
 
 compiler:
  - gcc
