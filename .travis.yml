@@ -1,9 +1,15 @@
 language: c
 
+before_install:
+ - sudo pip install cpp-coveralls
+
 script:
  - cd src
  - make clean
  - make test
+
+after_success:
+ - coveralls --exclude src/ext --gcov-options '\-lp'
 
 compiler:
  - gcc
