@@ -4,12 +4,13 @@ before_install:
  - sudo pip install cpp-coveralls
 
 script:
- - cd src
+ - pushd src
  - make clean
  - make WITH_COVERAGE=1 cover
+ - popd
 
 after_success:
- - coveralls --exclude ext --gcov-options '\-lp'
+ - coveralls --exclude src/ext --gcov-options '\-lp'
 
 compiler:
  - gcc
