@@ -7,6 +7,8 @@ Cifra is a collection of cryptographic primitives targeted at embedded use.
 
 [![Analysis Status](https://scan.coverity.com/projects/4324/badge.svg)](https://scan.coverity.com/projects/4324)
 
+[![Coverage Status](https://coveralls.io/repos/ctz/cifra/badge.svg?branch=coveralls-scan)](https://coveralls.io/r/ctz/cifra?branch=coveralls-scan)
+
 ## Aims
 In order of descending emphasis, cifra aims for:
 
