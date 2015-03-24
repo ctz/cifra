@@ -136,24 +136,11 @@ static void poly1305_mul(uint32_t x[static 17],
     x[i] = r[i];
 }
 
-static void dump(const char *msg, const uint32_t *v, size_t nv)
-{
-#if 0
-  printf("%s = ", msg);
-  for (size_t i = 0; i < nv; i++)
-    printf("%08x ", v[i]);
-  printf("\n");
-#endif
-}
-
 static void poly1305_block(cf_poly1305 *ctx,
                            const uint32_t c[static 17])
 {
-  dump("c", c, 17);
   poly1305_add(ctx->h, c);
-  dump("after-add", ctx->h, 17);
   poly1305_mul(ctx->h, ctx->r);
-  dump("after-mul", ctx->h, 17);
 }
 
 static void poly1305_whole_block(void *vctx,
@@ -202,13 +189,8 @@ void cf_poly1305_finish(cf_poly1305 *ctx,
     s[i] = ctx->s[i];
   s[16] = 0;
 
-  dump("end-block", ctx->h, 17);
-
   poly1305_full_reduce(ctx->h);
-  dump("h", ctx->h, 17);
-
   poly1305_add(ctx->h, s);
-  dump("final", ctx->h, 17);
 
   for (size_t i = 0; i < 16; i++)
     out[i] = ctx->h[i];
