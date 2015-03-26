@@ -15,9 +15,9 @@
 #include "bitops.h"
 #include "salsa20.h"
 #include "blockwise.h"
+#include "tassert.h"
 
 #include <string.h>
-#include <assert.h>
 #include <stdlib.h>
 
 void cf_chacha20_core(const uint8_t key0[16],

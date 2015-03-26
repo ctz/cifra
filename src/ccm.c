@@ -15,9 +15,9 @@
 #include "handy.h"
 #include "prp.h"
 #include "modes.h"
+#include "tassert.h"
 
 #include <string.h>
-#include <assert.h>
 
 #define CCM_ADATA_PRESENT 0x40
 

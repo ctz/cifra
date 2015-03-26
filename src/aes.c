@@ -13,13 +13,13 @@
  */
 
 #include <string.h>
-#include <assert.h>
 #include <stdlib.h>
 
 #include "cf_config.h"
 #include "aes.h"
 #include "handy.h"
 #include "bitops.h"
+#include "tassert.h"
 
 #define AES128_ROUNDS 10
 #define AES192_ROUNDS 12

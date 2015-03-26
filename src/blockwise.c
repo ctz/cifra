@@ -15,8 +15,8 @@
 #include "blockwise.h"
 #include "bitops.h"
 #include "handy.h"
+#include "tassert.h"
 
-#include <assert.h>
 #include <string.h>
 
 void cf_blockwise_accumulate(uint8_t *partial, size_t *npartial, size_t nblock,
