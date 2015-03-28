@@ -24,18 +24,10 @@
 
 /** Circularly rotate right x by n bits.
  *  0 > n > 32. */
-#ifdef __arm__
-static CF_ALWAYS_INLINE uint32_t rotr32(uint32_t x, unsigned n)
-{
-  asm("ror %0, %0, %1" : "+r" (x) : "r" (n));
-  return x;
-}
-#else
 static inline uint32_t rotr32(uint32_t x, unsigned n)
 {
   return (x >> n) | (x << (32 - n));
 }
-#endif
 
 /** Circularly rotate left x by n bits.
  *  0 > n > 32. */
