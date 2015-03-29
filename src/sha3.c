@@ -13,12 +13,12 @@
  */
 
 #include <string.h>
-#include <assert.h>
 
 #include "sha3.h"
 #include "blockwise.h"
 #include "handy.h"
 #include "bitops.h"
+#include "tassert.h"
 
 /* The round constants, pre-interleaved.  See bitinter.py */
 static const cf_sha3_bi round_constants[24] = {

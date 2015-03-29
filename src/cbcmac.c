@@ -18,9 +18,9 @@
 #include "bitops.h"
 #include "blockwise.h"
 #include "gf128.h"
+#include "tassert.h"
 
 #include <string.h>
-#include <assert.h>
 
 void cf_cbcmac_stream_init(cf_cbcmac_stream *ctx, const cf_prp *prp, void *prpctx)
 {

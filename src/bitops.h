@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#define CF_ALWAYS_INLINE inline __attribute__((always_inline))
+
 /* Assorted bitwise and common operations used in ciphers. */
 
 /** Circularly rotate right x by n bits.
@@ -49,6 +51,16 @@ static inline uint64_t rotl64(uint64_t x, unsigned n)
 }
 
 /** Read 4 bytes from buf, as a 32-bit big endian quantity. */
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+# define read32_be(v) (*(uint32_t *)(v))
+#elif defined(__arm__)
+static CF_ALWAYS_INLINE uint32_t read32_be(const uint8_t buf[4])
+{
+  uint32_t x = *(const uint32_t *)buf;
+  asm("rev %0, %0" : "+r" (x));
+  return x;
+}
+#else
 static inline uint32_t read32_be(const uint8_t buf[4])
 {
   return (buf[0] << 24) |
@@ -56,8 +68,12 @@ static inline uint32_t read32_be(const uint8_t buf[4])
          (buf[2] << 8) |
          (buf[3]);
 }
+#endif
 
 /** Read 4 bytes from buf, as a 32-bit little endian quantity. */
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+# define read32_le(v) (*(uint32_t *)(v))
+#else
 static inline uint32_t read32_le(const uint8_t buf[4])
 {
   return (buf[3] << 24) |
@@ -65,6 +81,7 @@ static inline uint32_t read32_le(const uint8_t buf[4])
          (buf[1] << 8) |
          (buf[0]);
 }
+#endif
 
 /** Read 8 bytes from buf, as a 64-bit big endian quantity. */
 static inline uint64_t read64_be(const uint8_t buf[8])
@@ -85,6 +102,15 @@ static inline uint64_t read64_le(const uint8_t buf[8])
 }
 
 /** Encode v as a 32-bit big endian quantity into buf. */
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+# define write32_be(v, buf) *(uint32_t *)(buf) = (v)
+#elif defined(__arm__)
+static CF_ALWAYS_INLINE void write32_be(uint32_t v, uint8_t buf[4])
+{
+  asm("rev %0, %0" : "+r" (v));
+  *(uint32_t *)(buf) = v;
+}
+#else
 static inline void write32_be(uint32_t v, uint8_t buf[4])
 {
   *buf++ = (v >> 24) & 0xff;
@@ -92,8 +118,12 @@ static inline void write32_be(uint32_t v, uint8_t buf[4])
   *buf++ = (v >> 8) & 0xff;
   *buf   = v & 0xff;
 }
+#endif
 
 /** Encode v as a 32-bit little endian quantity into buf. */
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+# define write32_le(v, buf) *(uint32_t *)(buf) = (v)
+#else
 static inline void write32_le(uint32_t v, uint8_t buf[4])
 {
   *buf++ = v & 0xff;
@@ -101,6 +131,7 @@ static inline void write32_le(uint32_t v, uint8_t buf[4])
   *buf++ = (v >> 16) & 0xff;
   *buf   = (v >> 24) & 0xff;
 }
+#endif
 
 /** Encode v as a 64-bit big endian quantity into buf. */
 static inline void write64_be(uint64_t v, uint8_t buf[8])

@@ -16,8 +16,8 @@
 #include "chash.h"
 #include "bitops.h"
 #include "handy.h"
+#include "tassert.h"
 
-#include <assert.h>
 #include <string.h>
 
 void cf_hmac_init(cf_hmac_ctx *ctx,

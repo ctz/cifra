@@ -18,9 +18,9 @@
 #include "blockwise.h"
 #include "bitops.h"
 #include "gf128.h"
+#include "tassert.h"
 
 #include <string.h>
-#include <assert.h>
 
 /* Incremental GHASH computation. */
 typedef struct

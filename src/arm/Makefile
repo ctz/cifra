@@ -46,7 +46,8 @@ CFLAGS_aes256sched_test = $(AES_OPTIONS) $(AES256_OPTIONS)
 
 CFLAGS_testaes = -DCF_SIDE_CHANNEL_PROTECTION=0
 
-CFLAGS = -I./ext -I../ext -I.. -Os -ffunction-sections -g -Wall -Werror -std=gnu99 -mthumb
+CFLAGS = -I./ext -I../ext -I.. -Os -ffunction-sections -fno-strict-aliasing -g \
+	 -Wall -Werror -std=gnu99 -mthumb
 LDFLAGS = -nostartfiles -nostdlib -Wl,-gc-sections
 SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
        ../sha1.c ../sha256.c ../sha512.c ../sha3.c ../blockwise.c ../chash.c \
@@ -69,7 +70,8 @@ $(patsubst %,testsha2.%.elf, $(ARCHS)): $(SRCS) ../testsha2.c
 $(patsubst %,testsha3.%.elf, $(ARCHS)): $(SRCS) ../testsha3.c
 
 run.%.qemucm0: %.qemucm0.bin
-	qemu-system-gnuarmeclipse -verbose -verbose -M STM32F0-Discovery -kernel $^ -semihosting -nographic -monitor null -serial null 2> $@.log
+	arm-none-eabi-readelf -l $(patsubst %.bin,%.elf,$^) > $@.log
+	qemu-system-gnuarmeclipse -verbose -verbose -M STM32F0-Discovery -kernel $^ -semihosting -nographic -monitor null -serial null 2>> $@.log
 	cat $@.log
 
 run.%.stm32f0: %.stm32f0.elf

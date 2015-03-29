@@ -64,17 +64,16 @@ This test does a key schedule, then encrypts one block.
 ### 128-bit key
 Core       | Cycles (key schedule + block) | Cycles (key schedule) | Cycles (block) | Stack | Code size
 ---------- | ----------------------------- | --------------------- | -------------- | ----- | ---------
-Cortex-M0  | 7083                          | 2113                  | 4970           | 312B  | 1220B    
-Cortex-M3  | 4681                          | 1595                  | 3086           | 300B  | 1160B    
-Cortex-M4F | 4446                          | 1553                  | 2893           | 300B  | 1160B    
+Cortex-M0  | 6958                          | 2064                  | 4894           | 312B  | 944B     
+Cortex-M3  | 4582                          | 1541                  | 3041           | 300B  | 884B     
+Cortex-M4F | 4481                          | 1520                  | 2961           | 300B  | 884B     
 
 ### 256-bit key
 Core       | Cycles (key schedule + block) | Cycles (key schedule) | Cycles (block) | Stack | Code size
 ---------- | ----------------------------- | --------------------- | -------------- | ----- | ---------
-Cortex-M0  | 10480                         | 3558                  | 6922           | 396B  | 1292B    
-Cortex-M3  | 6684                          | 2414                  | 4270           | 380B  | 1252B    
-Cortex-M4F | 6382                          | 2381                  | 4001           | 380B  | 1252B    
-
+Cortex-M0  | 10314                         | 3468                  | 6846           | 396B  | 1016B    
+Cortex-M3  | 6576                          | 2351                  | 4225           | 380B  | 964B     
+Cortex-M4F | 6431                          | 2318                  | 4113           | 380B  | 964B     
 
 ## AES128-GCM
 This test encrypts and authenticates a 16 byte message,
@@ -83,9 +82,9 @@ the initial key schedule.
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 56997  | 820B  | 3468B    
-Cortex-M3  | 43202  | 836B  | 3520B    
-Cortex-M4F | 41017  | 836B  | 3520B    
+Cortex-M0  | 56129  | 828B  | 2460B    
+Cortex-M3  | 42644  | 836B  | 2516B    
+Cortex-M4F | 42759  | 836B  | 2516B    
 
 ## AES128-EAX
 This test encrypts and authenticates a 16 byte message,
@@ -94,9 +93,9 @@ the initial key schedule.
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 50111  | 936B  | 3332B    
-Cortex-M3  | 32789  | 924B  | 3292B    
-Cortex-M4F | 31161  | 924B  | 3292B    
+Cortex-M0  | 49017  | 928B  | 2416B    
+Cortex-M3  | 32116  | 924B  | 2396B    
+Cortex-M4F | 31445  | 924B  | 2396B    
 
 ## AES128-CCM
 This test encrypts and authenticates a 16 byte message,
@@ -105,18 +104,18 @@ the initial key schedule.
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 40252  | 816B  | 3168B    
-Cortex-M3  | 26626  | 796B  | 3096B    
-Cortex-M4F | 25353  | 796B  | 3096B    
+Cortex-M0  | 39593  | 808B  | 2212B    
+Cortex-M3  | 26267  | 796B  | 2160B    
+Cortex-M4F | 25718  | 796B  | 2160B    
 
 ## Chacha20
 This test encrypts a 64 byte message.
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 5630   | 568B  | 1612B    
-Cortex-M3  | 3448   | 568B  | 1632B    
-Cortex-M4F | 3323   | 568B  | 1632B    
+Cortex-M0  | 5153   | 568B  | 1076B    
+Cortex-M3  | 2982   | 560B  | 1056B    
+Cortex-M4F | 2952   | 560B  | 1056B    
 
 (For comparison with AES, add an AES256 key schedule plus 4 blocks.
 That's about 33K cycles.)
@@ -126,54 +125,54 @@ This test encrypts a 64 byte message.
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 5779   | 568B  | 1620B    
-Cortex-M3  | 3231   | 572B  | 1544B    
-Cortex-M4F | 3115   | 572B  | 1544B    
+Cortex-M0  | 5391   | 568B  | 1100B    
+Cortex-M3  | 2890   | 564B  | 1004B    
+Cortex-M4F | 2839   | 564B  | 1004B    
 
 ## SHA256
 This test hashes the empty string (one compression function invocation).
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 21866  | 460B  | 1776B    
-Cortex-M3  | 15476  | 456B  | 1804B    
-Cortex-M4F | 15204  | 456B  | 1804B    
+Cortex-M0  | 20950  | 460B  | 1396B    
+Cortex-M3  | 15020  | 452B  | 1448B    
+Cortex-M4F | 14776  | 452B  | 1448B    
 
 ## SHA512
 This test hashes the empty string (one compression function invocation).
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 55828  | 780B  | 2848B    
-Cortex-M3  | 43029  | 836B  | 2976B    
-Cortex-M4F | 42019  | 836B  | 2968B    
+Cortex-M0  | 56085  | 792B  | 2504B    
+Cortex-M3  | 42589  | 836B  | 2644B    
+Cortex-M4F | 42773  | 836B  | 2644B    
 
 ## SHA3-256
 This test hashes the empty string (one sponge permutation).
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 86898  | 1024B | 2308B    
-Cortex-M3  | 77647  | 1008B | 2292B    
-Cortex-M4F | 73272  | 1008B | 2292B    
+Cortex-M0  | 95509  | 1016B | 1920B    
+Cortex-M3  | 74454  | 1008B | 1892B    
+Cortex-M4F | 73568  | 1008B | 1892B    
 
 ## SHA3-512
 This test hashes the empty string (one sponge permutation).
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 86259  | 1056B | 2308B    
-Cortex-M3  | 77236  | 1040B | 2292B    
-Cortex-M4F | 72865  | 1040B | 2292B    
+Cortex-M0  | 94942  | 1048B | 1920B    
+Cortex-M3  | 74116  | 1040B | 1892B    
+Cortex-M4F | 73238  | 1040B | 1892B    
 
 ## Curve25519 (tweetnacl)
 This test is one point multiplication.
 
 Core       | Cycles   | Stack | Code size
 ---------- | -------- | ----- | ---------
-Cortex-M0  | 73304448 | 1740B | 1584B    
-Cortex-M3  | 30659678 | 1684B | 1552B    
-Cortex-M4F | 27143485 | 1684B | 1560B    
+Cortex-M0  | 88696559 | 1720B | 1600B    
+Cortex-M3  | 30659678 | 1684B | 1556B    
+Cortex-M4F | 27143515 | 1684B | 1556B    
 
 See [curve25519-shootout](curve25519-shootout.md) for comparison
 between the included curve25519 implementations.

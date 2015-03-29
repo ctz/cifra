@@ -18,7 +18,7 @@
 #include "blockwise.h"
 
 #include <string.h>
-#include <assert.h>
+#include "tassert.h"
 
 /* CBC */
 void cf_cbc_init(cf_cbc *ctx, const cf_prp *prp, void *prpctx, const uint8_t iv[CF_MAXBLOCK])
