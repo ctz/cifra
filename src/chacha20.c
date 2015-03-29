@@ -15,7 +15,6 @@
 #include "bitops.h"
 #include "salsa20.h"
 #include "blockwise.h"
-#include "tassert.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -117,7 +116,6 @@ void cf_chacha20_init(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey, uin
       ctx->constant = chacha20_sigma;
       break;
     default:
-      assert(nkey == 16 || nkey == 32);
       abort();
   }
 
