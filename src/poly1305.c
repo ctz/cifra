@@ -4,7 +4,6 @@
 #include "blockwise.h"
 
 #include <string.h>
-#include <assert.h>
 #include <stdio.h>
 
 void cf_poly1305_init(cf_poly1305 *ctx,

@@ -16,8 +16,8 @@
 #include "hmac.h"
 #include "bitops.h"
 #include "handy.h"
+#include "tassert.h"
 
-#include <assert.h>
 #include <string.h>
 
 static void F(const cf_hmac_ctx *startctx,

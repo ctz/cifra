@@ -15,9 +15,9 @@
 #include "handy.h"
 #include "prp.h"
 #include "modes.h"
+#include "tassert.h"
 
 #include <string.h>
-#include <assert.h>
 
 static void cmac_compute_n(cf_cmac_stream *ctx,
                            uint8_t t,
