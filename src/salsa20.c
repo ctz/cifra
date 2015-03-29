@@ -15,7 +15,6 @@
 #include "salsa20.h"
 #include "bitops.h"
 #include "blockwise.h"
-#include "tassert.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -136,7 +135,6 @@ void cf_salsa20_init(cf_salsa20_ctx *ctx, const uint8_t *key, size_t nkey, uint8
       ctx->constant = salsa20_sigma;
       break;
     default:
-      assert(nkey == 16 || nkey == 32);
       abort();
   }
 
