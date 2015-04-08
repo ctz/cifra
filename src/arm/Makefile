@@ -6,8 +6,10 @@ FUNCS = do_nothing stack_8w stack_64w \
 	aes128gcm_test aes128eax_test \
 	aes128ccm_test \
 	salsa20_test chacha20_test \
+	poly1305_test hmacsha256_test \
 	curve25519_test
-TESTS = testcurve25519 testaes testmodes testsalsa20 testsha1 testsha2 testsha3
+TESTS = testcurve25519 testaes testmodes testsalsa20 testsha1 testsha2 \
+	testsha3 testpoly1305
 ARCHS = stm32f0 stm32f1 stm32f3 qemucm0
 
 all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
@@ -40,6 +42,7 @@ CFLAGS_aes128sched_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128gcm_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128eax_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128ccm_test = $(AES_OPTIONS) $(AES128_OPTIONS)
+CFLAGS_poly1305_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 
 CFLAGS_aes256block_test = $(AES_OPTIONS) $(AES256_OPTIONS)
 CFLAGS_aes256sched_test = $(AES_OPTIONS) $(AES256_OPTIONS)
@@ -51,7 +54,7 @@ CFLAGS = -I./ext -I../ext -I.. -Os -ffunction-sections -g \
 LDFLAGS = -nostartfiles -nostdlib -Wl,-gc-sections
 SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
        ../sha1.c ../sha256.c ../sha512.c ../sha3.c ../blockwise.c ../chash.c \
-       ../curve25519.c \
+       ../curve25519.c ../poly1305.c \
        ../aes.c ../eax.c ../gcm.c ../cbcmac.c ../ccm.c \
        ../modes.c ../cmac.c ../gf128.c \
        ../hmac.c ../pbkdf2.c ../salsa20.c ../chacha20.c
@@ -68,6 +71,7 @@ $(patsubst %,testsalsa20.%.elf, $(ARCHS)): $(SRCS) ../testsalsa20.c
 $(patsubst %,testsha1.%.elf, $(ARCHS)): $(SRCS) ../testsha1.c
 $(patsubst %,testsha2.%.elf, $(ARCHS)): $(SRCS) ../testsha2.c
 $(patsubst %,testsha3.%.elf, $(ARCHS)): $(SRCS) ../testsha3.c
+$(patsubst %,testpoly1305.%.elf, $(ARCHS)): $(SRCS) ../testpoly1305.c
 
 run.%.qemucm0: %.qemucm0.bin
 	arm-none-eabi-readelf -l $(patsubst %.bin,%.elf,$^) > $@.log

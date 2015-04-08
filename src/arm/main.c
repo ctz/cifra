@@ -4,11 +4,13 @@
 
 #include "semihost.h"
 #include "aes.h"
+#include "hmac.h"
 #include "sha2.h"
 #include "sha3.h"
 #include "modes.h"
 #include "salsa20.h"
 #include "curve25519.h"
+#include "poly1305.h"
 
 #include <stdio.h>
 
@@ -191,6 +193,37 @@ static void curve25519_test(void)
   cf_curve25519_mul_base(pubkey, secret);
 }
 
+static const uint8_t *mac_message = (const uint8_t *) "hello world";
+static const size_t mac_message_len = 11;
+
+static void poly1305_test(void)
+{
+  uint8_t key[32] = { 0 },
+          nonce[16] = { 0 },
+          encnonce[16],
+          mac[16];
+
+  cf_aes_context aes;
+  cf_aes_init(&aes, key, 16);
+  cf_aes_encrypt(&aes, nonce, encnonce);
+
+  cf_poly1305 poly;
+  cf_poly1305_init(&poly, key + 16, encnonce);
+  cf_poly1305_update(&poly, mac_message, mac_message_len);
+  cf_poly1305_finish(&poly, mac);
+}
+
+static void hmacsha256_test(void)
+{
+  uint8_t key[32] = { 0 },
+          mac[32] = { 0 };
+
+  cf_hmac_ctx ctx;
+  cf_hmac_init(&ctx, &cf_sha256, key, sizeof key);
+  cf_hmac_update(&ctx, mac_message, mac_message_len);
+  cf_hmac_finish(&ctx, mac);
+}
+
 /* Provided by linkscript */
 extern uint32_t __HeapLimit;
 
@@ -260,4 +293,6 @@ int main(void)
   (void) salsa20_test;
   (void) chacha20_test;
   (void) curve25519_test;
+  (void) poly1305_test;
+  (void) hmacsha256_test;
 }
