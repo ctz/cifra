@@ -46,7 +46,7 @@ CFLAGS_aes256sched_test = $(AES_OPTIONS) $(AES256_OPTIONS)
 
 CFLAGS_testaes = -DCF_SIDE_CHANNEL_PROTECTION=0
 
-CFLAGS = -I./ext -I../ext -I.. -Os -ffunction-sections -fno-strict-aliasing -g \
+CFLAGS = -I./ext -I../ext -I.. -Os -ffunction-sections -g \
 	 -Wall -Werror -std=gnu99 -mthumb
 LDFLAGS = -nostartfiles -nostdlib -Wl,-gc-sections
 SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
