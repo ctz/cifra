@@ -13,6 +13,7 @@ ARCHS = stm32f0 stm32f1 stm32f3 qemucm0
 all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
 	$(patsubst %,%.stm32f1.bin,$(FUNCS) $(TESTS)) \
 	$(patsubst %,%.stm32f3.bin,$(FUNCS) $(TESTS)) \
+	$(patsubst %,%.stm32f4.bin,$(FUNCS) $(TESTS)) \
 	$(patsubst %,%.qemucm0.bin,$(FUNCS) $(TESTS))
 
 %.stm32f0.elf:
@@ -22,6 +23,9 @@ all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f1.ld -mcpu=cortex-m3 -DCORTEX_M3 -o $@ $^ -DTEST=$* -lgcc
 
 %.stm32f3.elf:
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m4 -DCORTEX_M4 -o $@ $^ -DTEST=$* -lgcc
+
+%.stm32f4.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m4 -DCORTEX_M4 -o $@ $^ -DTEST=$* -lgcc
 
 %.qemucm0.elf:
@@ -60,6 +64,10 @@ $(patsubst %,%.stm32f0.elf, $(FUNCS)): $(SRCS) main.c
 $(patsubst %,%.stm32f1.elf, $(FUNCS)): $(SRCS) main.c
 $(patsubst %,%.stm32f3.elf, $(FUNCS)): $(SRCS) main.c
 $(patsubst %,%.qemucm0.elf, $(FUNCS)): $(SRCS) main.c
+
+STM32F4SRC=$(filter-out ../aes.c,$(SRCS)) ../aes-stm32f4.c
+aes128block_test.stm32f4.elf: $(STM32F4SRC) main.c
+testaes.stm32f4.elf: $(STM32F4SRC) ../testaes.c
 
 $(patsubst %,testcurve25519.%.elf, $(ARCHS)): $(SRCS) ../testcurve25519.c
 $(patsubst %,testaes.%.elf, $(ARCHS)): $(SRCS) ../testaes.c
@@ -106,6 +114,20 @@ run.%.stm32f3: %.stm32f3.elf
 	arm-none-eabi-readelf -l $^ > $@.log
 	echo '-----' >> $@.log
 	openocd -f openocd.stm32f3.cfg >> $@.log &
+	arm-none-eabi-gdb --quiet --batch-silent \
+		$^ \
+		-ex 'target remote :3333' \
+		-ex 'monitor reset halt' \
+		-ex 'load' \
+		-ex 'monitor arm semihosting enable' \
+		-ex 'monitor reset run' \
+		-ex 'monitor wait_halt 240000' \
+		-ex 'monitor shutdown'
+
+run.%.stm32f4: %.stm32f4.elf
+	arm-none-eabi-readelf -l $^ > $@.log
+	echo '-----' >> $@.log
+	openocd -f openocd.stm32f4.cfg >> $@.log &
 	arm-none-eabi-gdb --quiet --batch-silent \
 		$^ \
 		-ex 'target remote :3333' \

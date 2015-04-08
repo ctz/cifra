@@ -76,6 +76,9 @@ static void aes128block_test(void)
   cf_aes_context ctx;
   cf_aes_init(&ctx, key, sizeof key);
   cf_aes_encrypt(&ctx, block, block);
+  emit("result = ");
+  emit_hex(block, sizeof block);
+  emit("\n");
 }
 
 static void aes128sched_test(void)
