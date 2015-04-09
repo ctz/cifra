@@ -1,5 +1,5 @@
 CFLAGS += -g -O0 -std=gnu99 -fPIC -Wall -Wextra -Werror \
-	  -fno-strict-aliasing -Wno-unused-parameter -Wno-missing-field-initializers
+	  -Wno-unused-parameter -Wno-missing-field-initializers
 CPPFLAGS += -I./ext
 
 ifdef WITH_COVERAGE

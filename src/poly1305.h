@@ -1,31 +1,88 @@
+/*
+ * cifra - embedded cryptography library
+ * Written in 2014 by Joseph Birr-Pixton <jpixton@gmail.com>
+ *
+ * To the extent possible under law, the author(s) have dedicated all
+ * copyright and related and neighboring rights to this software to the
+ * public domain worldwide. This software is distributed without any
+ * warranty.
+ *
+ * You should have received a copy of the CC0 Public Domain Dedication
+ * along with this software. If not, see
+ * <http://creativecommons.org/publicdomain/zero/1.0/>.
+ */
+
 #ifndef POLY1305_H
 #define POLY1305_H
 
 #include <stddef.h>
 #include <stdint.h>
 
+/**
+ * Poly1305
+ * ========
+ * This is an incremental interface to computing the poly1305
+ * single shot MAC.
+ *
+ * Note: Poly1305-AES with this by taking a 16 byte nonce
+ * and encrypting it, and then using the result as an input
+ * to this function.
+ */
+
+/* .. c:type:: cf_poly1305
+ * Poly1305 incremental interface context.
+ *
+ * .. c:member:: cf_poly1305.h
+ * Current accumulator.
+ *
+ * .. c:member:: cf_poly1305.r
+ * Block multiplier.
+ *
+ * .. c:member:: cf_poly1305.s
+ * Final XOR offset.
+ *
+ * .. c:member:: cf_poly1305.partial
+ * Unprocessed input.
+ *
+ * .. c:member:: cf_poly1305.npartial
+ * Number of bytes of unprocessed input.
+ *
+ */
 typedef struct
 {
-  uint32_t h[17];       /* current accumulator */
-  uint32_t r[17];       /* multiplier */
-  uint8_t s[16];        /* final offset */
-  uint8_t partial[16];  /* partial block buffer */
-  size_t npartial;      /* block buffer usage */
+  uint32_t h[17];
+  uint32_t r[17];
+  uint8_t s[16];
+  uint8_t partial[16];
+  size_t npartial;
 } cf_poly1305;
 
-/* Initialise context.
- * r is the block multiplier.
- * s is the final offset. */
+/* .. c:function:: $DECL
+ * Sets up `ctx` ready to compute a new MAC.
+ *
+ * :param ctx: context (written)
+ * :param r: MAC key (in Poly1305-AES, this is the second half of the
+ *           32-byte key).
+ * :param s: preprocessed nonce (in Poly1305-AES, this is the nonce
+ *           encrypted under the first half of the key).
+ */
 void cf_poly1305_init(cf_poly1305 *ctx,
                       const uint8_t r[static 16],
                       const uint8_t s[static 16]);
 
-/* Process data at buf. */
+/* .. c:function:: $DECL
+ * Processes `nbytes` at `data`.  Copies the data if there isn't enough to make
+ * a full block.
+ */
 void cf_poly1305_update(cf_poly1305 *ctx,
-                        const uint8_t *buf,
+                        const uint8_t *data,
                         size_t nbytes);
 
-/* Finish: write MAC to out, trash ctx. */
+/* .. c:function:: $DECL
+ * Finishes the operation, writing 16 bytes to `out`.
+ *
+ * This destroys `ctx`.
+ */
 void cf_poly1305_finish(cf_poly1305 *ctx,
                         uint8_t out[static 16]);
 
