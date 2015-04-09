@@ -13,6 +13,8 @@ aes128eax_test
 aes128ccm_test
 salsa20_test
 chacha20_test
+poly1305_test
+hmacsha256_test
 curve25519_test
 do_nothing
 """.split()
@@ -177,5 +179,7 @@ do_table('SHA256', 'hashtest_sha256')
 do_table('SHA512', 'hashtest_sha512')
 do_table('SHA3-256', 'hashtest_sha3_256')
 do_table('SHA3-512', 'hashtest_sha3_512')
+do_table('HMAC-SHA256', 'hmacsha256_test')
+do_table('Poly1305-AES', 'poly1305_test')
 do_table('Curve25519', 'curve25519_test')
 

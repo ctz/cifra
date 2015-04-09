@@ -18,6 +18,7 @@ Contents:
    salsa20
    modes
    hmac
+   poly1305
    pbkdf2
    sha1
    sha2
