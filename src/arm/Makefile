@@ -52,6 +52,7 @@ CFLAGS_testaes = -DCF_SIDE_CHANNEL_PROTECTION=0
 CFLAGS = -I./ext -I../ext -I.. -Os -ffunction-sections -g \
 	 -Wall -Werror -std=gnu99 -mthumb
 LDFLAGS = -nostartfiles -nostdlib -Wl,-gc-sections
+CURVESRCS = unacl/cortex_m0_mpy121666.s unacl/cortex_m0_reduce25519.s unacl/mul.s unacl/sqr.s
 SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
        ../sha1.c ../sha256.c ../sha512.c ../sha3.c ../blockwise.c ../chash.c \
        ../curve25519.c ../poly1305.c \
@@ -59,12 +60,12 @@ SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
        ../modes.c ../cmac.c ../gf128.c \
        ../hmac.c ../pbkdf2.c ../salsa20.c ../chacha20.c
 
-$(patsubst %,%.stm32f0.elf, $(FUNCS)): $(SRCS) main.c
-$(patsubst %,%.stm32f1.elf, $(FUNCS)): $(SRCS) main.c
-$(patsubst %,%.stm32f3.elf, $(FUNCS)): $(SRCS) main.c
+$(patsubst %,%.stm32f0.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
+$(patsubst %,%.stm32f1.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
+$(patsubst %,%.stm32f3.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.qemucm0.elf, $(FUNCS)): $(SRCS) main.c
 
-$(patsubst %,testcurve25519.%.elf, $(ARCHS)): $(SRCS) ../testcurve25519.c
+$(patsubst %,testcurve25519.%.elf, $(ARCHS)): $(SRCS) $(CURVESRCS) ../testcurve25519.c
 $(patsubst %,testaes.%.elf, $(ARCHS)): $(SRCS) ../testaes.c
 $(patsubst %,testmodes.%.elf, $(ARCHS)): $(SRCS) ../testmodes.c
 $(patsubst %,testsalsa20.%.elf, $(ARCHS)): $(SRCS) ../testsalsa20.c

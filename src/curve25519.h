@@ -24,7 +24,8 @@
  * This is `curve25519 <http://cr.yp.to/ecdh.html>`_ with switchable
  * implementations underneath.
  *
- * By default tweetnacl is used.
+ * By default tweetnacl is used on hosts, and the implementation
+ * from μNaCl for Cortex-M0, M3 and M4.
  */
 
 /* .. c:function:: $DECL
