@@ -191,7 +191,7 @@ Cortex-M4F | 11209  | 712B  | 1900B
 This test is one point multiplication.
 
 This uses the implementation from [&mu;NaCl](http://munacl.cryptojedi.org/curve25519-cortexm0.shtml)
-by Düll, Haase, Hinterwälder, Hutter, Paar, Sánchez and Schabe.
+by Düll, Haase, Hinterwälder, Hutter, Paar, Sánchez and Schwabe.
 
 Core       | Cycles  | Stack | Code size
 ---------- | ------- | ----- | ---------

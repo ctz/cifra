@@ -157,11 +157,12 @@ def tabulate(mktab):
         table = mktab(arch, table)
     print_table(table)
 
-print '##', 'AES (128-bit key)'
+# screwed if we need other block ciphers
+print '###', '128-bit key'
 tabulate(lambda arch, table: tabulate_aes(arch, results[arch]['aes128block_test'], results[arch]['aes128sched_test'], table))
 print
 
-print '##', 'AES (256-bit key)'
+print '###', '256-bit key'
 tabulate(lambda arch, table: tabulate_aes(arch, results[arch]['aes256block_test'], results[arch]['aes256sched_test'], table))
 print
 
