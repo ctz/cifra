@@ -12,4 +12,18 @@
  * <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
+#if defined(CORTEX_M0) || defined(CORTEX_M3) || defined(CORTEX_M4)
+#include "arm/unacl/scalarmult.c"
+
+void cf_curve25519_mul(uint8_t out[32], const uint8_t scalar[32], const uint8_t point[32])
+{
+  crypto_scalarmult_curve25519(out, scalar, point);
+}
+
+void cf_curve25519_mul_base(uint8_t out[32], const uint8_t scalar[32])
+{
+  crypto_scalarmult_curve25519_base(out, scalar);
+}
+#else
 #include "curve25519.tweetnacl.c"
+#endif
