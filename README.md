@@ -21,6 +21,7 @@ In order of descending emphasis, cifra aims for:
 
 ## Features
 * **AES** in the **GCM**, **CCM** and **EAX** authenticated encryption modes.
+* **NORX** authenticated encryption system.
 * **SHA224**, **SHA256**, **SHA384** and **SHA512** hash functions (including **HMAC** and **PBKDF2**).
 * **SHA3-224**, **SHA3-256**, **SHA3-384**, **SHA3-512** hash functions (FIPS 202 draft compatible).
 * **ChaCha20** and **Salsa20** stream ciphers.

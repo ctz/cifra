@@ -15,6 +15,7 @@ Contents:
    prp
    chash
    aes
+   norx
    salsa20
    modes
    hmac
