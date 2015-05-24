@@ -11,6 +11,7 @@
 #include "salsa20.h"
 #include "curve25519.h"
 #include "poly1305.h"
+#include "norx.h"
 
 #include <stdio.h>
 
@@ -224,6 +225,24 @@ static void hmacsha256_test(void)
   cf_hmac_finish(&ctx, mac);
 }
 
+static void norx_test(void)
+{
+  uint8_t key[16] = { 0 };
+  uint8_t msg[16] = { 0 };
+  uint8_t aad[16] = { 0 };
+  uint8_t nonce[8] = { 0 };
+  uint8_t cipher[16] = { 0 };
+  uint8_t tag[16] = { 0 };
+
+  cf_norx32_encrypt(key,
+                    nonce,
+                    aad, sizeof aad,
+                    msg, sizeof msg,
+                    NULL, 0,
+                    cipher,
+                    tag);
+}
+
 /* Provided by linkscript */
 extern uint32_t __HeapLimit;
 
@@ -295,4 +314,5 @@ int main(void)
   (void) curve25519_test;
   (void) poly1305_test;
   (void) hmacsha256_test;
+  (void) norx_test;
 }

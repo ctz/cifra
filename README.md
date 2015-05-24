@@ -109,6 +109,16 @@ Cortex-M0  | 40364  | 808B  | 2284B
 Cortex-M3  | 26674  | 796B  | 2236B
 Cortex-M4F | 26120  | 796B  | 2236B
 
+## NORX32
+This test encrypts and authenticates a 16 byte message,
+with 16 bytes additionally authenticated data.
+
+Core       | Cycles | Stack | Code size
+---------- | ------ | ----- | ---------
+Cortex-M0  | 11373  | 464B  | 1776B
+Cortex-M3  | 6673   | 464B  | 1840B
+Cortex-M4F | 6573   | 464B  | 1840B
+
 ## ChaCha20
 This test encrypts a 64 byte message.
 

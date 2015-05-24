@@ -7,9 +7,10 @@ FUNCS = do_nothing stack_8w stack_64w \
 	aes128ccm_test \
 	salsa20_test chacha20_test \
 	poly1305_test hmacsha256_test \
-	curve25519_test
+	curve25519_test \
+	norx_test
 TESTS = testcurve25519 testaes testmodes testsalsa20 testsha1 testsha2 \
-	testsha3 testpoly1305
+	testsha3 testpoly1305 testnorx
 ARCHS = stm32f0 stm32f1 stm32f3 qemucm0
 
 all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
@@ -58,7 +59,8 @@ SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
        ../curve25519.c ../poly1305.c \
        ../aes.c ../eax.c ../gcm.c ../cbcmac.c ../ccm.c \
        ../modes.c ../cmac.c ../gf128.c \
-       ../hmac.c ../pbkdf2.c ../salsa20.c ../chacha20.c
+       ../hmac.c ../pbkdf2.c ../salsa20.c ../chacha20.c \
+       ../norx.c
 
 $(patsubst %,%.stm32f0.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.stm32f1.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
@@ -73,6 +75,7 @@ $(patsubst %,testsha1.%.elf, $(ARCHS)): $(SRCS) ../testsha1.c
 $(patsubst %,testsha2.%.elf, $(ARCHS)): $(SRCS) ../testsha2.c
 $(patsubst %,testsha3.%.elf, $(ARCHS)): $(SRCS) ../testsha3.c
 $(patsubst %,testpoly1305.%.elf, $(ARCHS)): $(SRCS) ../testpoly1305.c
+$(patsubst %,testnorx.%.elf, $(ARCHS)): $(SRCS) ../testnorx.c
 
 run.%.qemucm0: %.qemucm0.bin
 	arm-none-eabi-readelf -l $(patsubst %.bin,%.elf,$^) > $@.log
