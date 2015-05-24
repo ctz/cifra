@@ -214,7 +214,7 @@ See [curve25519-shootout](curve25519-shootout.md) for comparitive measurements
 for other curve25519 implementations.
 
 ## C library requirements
-Cifra requires `memcpy`, `memset`, `abort` and `assert`.
+Cifra requires `memcpy`, `memset`, and `abort`.
 
 ## Future
 * ~~Keccak hash function (aka SHA3)~~.
