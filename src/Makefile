@@ -13,12 +13,13 @@ ifdef WITH_VALGRIND
 endif
 
 TARGETS = testaes testmodes testsha1 testsha2 testsha3 testsalsa20 \
-	  testcurve25519 testpoly1305
+	  testcurve25519 testpoly1305 testnorx
 all: $(TARGETS)
 
 SOURCES = aes.o sha256.o sha512.o chash.o hmac.o pbkdf2.o modes.o eax.o \
 	  gf128.o blockwise.o cmac.o salsa20.o chacha20.o curve25519.o \
-	  gcm.o cbcmac.o ccm.o sha3.o sha1.o poly1305.o
+	  gcm.o cbcmac.o ccm.o sha3.o sha1.o poly1305.o \
+	  norx.o
 
 testaes: $(SOURCES) testaes.o
 testmodes: $(SOURCES) testmodes.o
@@ -28,6 +29,7 @@ testsha3: $(SOURCES) testsha3.o
 testsalsa20: $(SOURCES) testsalsa20.o
 testcurve25519: $(SOURCES) testcurve25519.o
 testpoly1305: $(SOURCES) testpoly1305.o
+testnorx: $(SOURCES) testnorx.o
 
 clean:
 	rm -f *.o *.pyc $(TARGETS) *.gcov *.gcda *.gcno
