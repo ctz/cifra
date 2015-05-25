@@ -120,7 +120,7 @@ void cf_salsa20_core(const uint8_t key0[16],
 static const uint8_t *salsa20_tau = (const uint8_t *) "expand 16-byte k";
 static const uint8_t *salsa20_sigma = (const uint8_t *) "expand 32-byte k";
 
-void cf_salsa20_init(cf_salsa20_ctx *ctx, const uint8_t *key, size_t nkey, uint8_t nonce[8])
+void cf_salsa20_init(cf_salsa20_ctx *ctx, const uint8_t *key, size_t nkey, const uint8_t nonce[8])
 {
   switch (nkey)
   {

@@ -81,7 +81,7 @@ typedef struct
  * :param nkey: length of key in bytes, either 16 or 32.
  * :param nonce: per-message nonce.
  */
-void cf_salsa20_init(cf_salsa20_ctx *ctx, const uint8_t *key, size_t nkey, uint8_t nonce[8]);
+void cf_salsa20_init(cf_salsa20_ctx *ctx, const uint8_t *key, size_t nkey, const uint8_t nonce[8]);
 
 /* .. c:function:: $DECL
  * Chacha20 initialisation function.
@@ -91,7 +91,7 @@ void cf_salsa20_init(cf_salsa20_ctx *ctx, const uint8_t *key, size_t nkey, uint8
  * :param nkey: length of key in bytes, either 16 or 32.
  * :param nonce: per-message nonce.
  */
-void cf_chacha20_init(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey, uint8_t nonce[8]);
+void cf_chacha20_init(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey, const uint8_t nonce[8]);
 
 /* .. c:function:: $DECL
  * Salsa20 encryption/decryption function.
