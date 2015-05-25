@@ -21,6 +21,17 @@
 /**
  * The Salsa20/Chacha20 stream ciphers
  * ===================================
+ *
+ * These are similar stream ciphers by djb.
+ *
+ * A reduced round variant of Salsa20 (Salsa20/12)
+ * was selected as a finalist of the eSTREAM stream
+ * cipher competition.  This implementation does
+ * the full 20 rounds.
+ *
+ * ChaCha20 is fundamentally like Salsa20, but
+ * has a tweaked round function to improve security
+ * margin without damaging performance.
  */
 
 /* Salsa20 core transform. */

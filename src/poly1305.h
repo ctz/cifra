@@ -60,11 +60,13 @@ typedef struct
 /* .. c:function:: $DECL
  * Sets up `ctx` ready to compute a new MAC.
  *
+ * In Poly1305-AES, `r` is the second half of the 32-byte key.
+ * `s` is a nonce encrypted under the first half of the key.
+ *
  * :param ctx: context (written)
- * :param r: MAC key (in Poly1305-AES, this is the second half of the
- *           32-byte key).
- * :param s: preprocessed nonce (in Poly1305-AES, this is the nonce
- *           encrypted under the first half of the key).
+ * :param r: MAC key.
+ * :param s: preprocessed nonce.
+ *
  */
 void cf_poly1305_init(cf_poly1305 *ctx,
                       const uint8_t r[static 16],
