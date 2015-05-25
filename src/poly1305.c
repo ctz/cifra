@@ -208,6 +208,6 @@ void cf_poly1305_finish(cf_poly1305 *ctx,
   for (size_t i = 0; i < 16; i++)
     out[i] = ctx->h[i];
 
-  memset(ctx, 0, sizeof *ctx);
+  mem_clean(ctx, sizeof *ctx);
 }
 
