@@ -23,8 +23,8 @@
  * =======================================
  * This is a composition of the ChaCha20 stream cipher and
  * the Poly1305 polynomial MAC to form an AEAD.
- * It's defined for use in TLS in the form of
- * RFC7539.
+ * It's proposed for use in TLS in the form of
+ * draft-agl-tls-chacha20poly1305-04.
  *
  * It uses a 256-bit key and a 64-bit nonce.
  *
