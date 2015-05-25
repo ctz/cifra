@@ -20,6 +20,7 @@ Contents:
    modes
    hmac
    poly1305
+   chacha20poly1305
    pbkdf2
    sha1
    sha2
