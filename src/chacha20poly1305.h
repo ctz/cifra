@@ -23,10 +23,9 @@
  * =======================================
  * This is a composition of the ChaCha20 stream cipher and
  * the Poly1305 polynomial MAC to form an AEAD.
- * It's proposed for use in TLS in the form of
- * draft-agl-tls-chacha20poly1305-04.
+ * It's specified for use in TLS in the form of RFC7539.
  *
- * It uses a 256-bit key and a 64-bit nonce.
+ * It uses a 256-bit key and a 96-bit nonce.
  *
  * This is a one-shot interface.
  */
@@ -44,7 +43,7 @@
  * :param tag: authentication tag output buffer.
  */
 void cf_chacha20poly1305_encrypt(const uint8_t key[static 32],
-                                 const uint8_t nonce[static 8],
+                                 const uint8_t nonce[static 12],
                                  const uint8_t *header, size_t nheader,
                                  const uint8_t *plaintext, size_t nbytes,
                                  uint8_t *ciphertext,
@@ -65,7 +64,7 @@ void cf_chacha20poly1305_encrypt(const uint8_t key[static 32],
  * :param tag: authentication tag output buffer.
  */
 int cf_chacha20poly1305_decrypt(const uint8_t key[static 32],
-                                const uint8_t nonce[static 8],
+                                const uint8_t nonce[static 12],
                                 const uint8_t *header, size_t nheader,
                                 const uint8_t *ciphertext, size_t nbytes,
                                 const uint8_t tag[static 16],
