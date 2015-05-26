@@ -2,6 +2,11 @@ CFLAGS += -g -O0 -std=gnu99 -fPIC -Wall -Wextra -Werror \
 	  -Wno-unused-parameter -Wno-missing-field-initializers
 CPPFLAGS += -I./ext
 
+ifdef WITH_ASAN
+	LDFLAGS += -fsanitize=address
+	CFLAGS += -fsanitize=address
+endif
+
 ifdef WITH_COVERAGE
 	LDFLAGS += -coverage
 	CFLAGS += -coverage
