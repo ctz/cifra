@@ -17,6 +17,11 @@ chacha20_test
 poly1305_test
 hmacsha256_test
 curve25519_test
+aeadperf_norx
+aeadperf_aes128gcm
+aeadperf_aes128eax
+aeadperf_aes128ccm
+aeadperf_chacha20poly1305
 do_nothing
 """.split()
 
@@ -190,3 +195,8 @@ do_table('HMAC-SHA256', 'hmacsha256_test')
 do_table('Poly1305-AES', 'poly1305_test')
 do_table('Curve25519', 'curve25519_test')
 
+do_table('AEAD-Shootout: NORX', 'aeadperf_norx')
+do_table('AEAD-Shootout: AES-128-GCM', 'aeadperf_aes128gcm')
+do_table('AEAD-Shootout: AES-128-EAX', 'aeadperf_aes128eax')
+do_table('AEAD-Shootout: AES-128-CCM', 'aeadperf_aes128ccm')
+do_table('AEAD-Shootout: ChaCha20-Poly1305', 'aeadperf_chacha20poly1305')

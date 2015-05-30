@@ -8,7 +8,12 @@ FUNCS = do_nothing stack_8w stack_64w \
 	salsa20_test chacha20_test \
 	poly1305_test hmacsha256_test \
 	curve25519_test \
-	norx_test
+	norx_test \
+	aeadperf_aes128gcm \
+	aeadperf_aes128ccm \
+	aeadperf_aes128eax \
+	aeadperf_norx \
+	aeadperf_chacha20poly1305
 TESTS = testcurve25519 testaes testmodes testsalsa20 testsha1 testsha2 \
 	testsha3 testpoly1305 testnorx testchacha20poly1305
 ARCHS = stm32f0 stm32f1 stm32f3 qemucm0
@@ -44,6 +49,9 @@ CFLAGS_aes128gcm_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128eax_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128ccm_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_poly1305_test = $(AES_OPTIONS) $(AES128_OPTIONS)
+CFLAGS_aeadperf_aes128gcm = $(AES_OPTIONS) $(AES128_OPTIONS)
+CFLAGS_aeadperf_aes128eax = $(AES_OPTIONS) $(AES128_OPTIONS)
+CFLAGS_aeadperf_aes128ccm = $(AES_OPTIONS) $(AES128_OPTIONS)
 
 CFLAGS_aes256block_test = $(AES_OPTIONS) $(AES256_OPTIONS)
 CFLAGS_aes256sched_test = $(AES_OPTIONS) $(AES256_OPTIONS)
@@ -127,6 +135,9 @@ run.%.stm32f3: %.stm32f3.elf
 
 test: $(patsubst %,run.%.qemucm0,$(FUNCS) $(TESTS))
 .PHONY: test
+
+perf.stm32f0: $(patsubst %,run.%.stm32f0,$(FUNCS))
+.PHONY: perf.stm32f0
 
 test.stm32f0: $(patsubst %,run.%.stm32f0,$(FUNCS) $(TESTS))
 .PHONY: test.stm32f0

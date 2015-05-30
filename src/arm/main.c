@@ -244,6 +244,71 @@ static void norx_test(void)
                     tag);
 }
 
+#define AEADPERF_LEN 256
+static uint8_t aead_msg[AEADPERF_LEN] = { 0 };
+static uint8_t aead_cipher[AEADPERF_LEN] = { 0 };
+static uint8_t aead_aad[16] = { 0 };
+static uint8_t aead_key[32] = { 0 };
+static uint8_t aead_nonce[16] = { 0 };
+static uint8_t aead_tag[16] = { 0 };
+
+static void aeadperf_norx(void)
+{
+  cf_norx32_encrypt(aead_key, aead_nonce,
+                    aead_aad, sizeof aead_aad,
+                    aead_msg, sizeof aead_msg,
+                    NULL, 0,
+                    aead_cipher, aead_tag);
+}
+
+static void aeadperf_chacha20poly1305(void)
+{
+  cf_chacha20poly1305_encrypt(aead_key, aead_nonce,
+                              aead_aad, sizeof aead_aad,
+                              aead_msg, sizeof aead_msg,
+                              aead_cipher, aead_tag);
+}
+
+static void aeadperf_aes128gcm(void)
+{
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, aead_key, 16);
+
+  cf_gcm_encrypt(&cf_aes, &ctx,
+                 aead_msg, sizeof aead_msg,
+                 aead_aad, sizeof aead_aad,
+                 aead_nonce, 12,
+                 aead_cipher,
+                 aead_tag, 16);
+}
+
+static void aeadperf_aes128ccm(void)
+{
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, aead_key, 16);
+
+  cf_ccm_encrypt(&cf_aes, &ctx,
+                 aead_msg, sizeof aead_msg,
+                 4,
+                 aead_aad, sizeof aead_aad,
+                 aead_nonce, 11,
+                 aead_cipher,
+                 aead_tag, 16);
+}
+
+static void aeadperf_aes128eax(void)
+{
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, aead_key, 16);
+
+  cf_eax_encrypt(&cf_aes, &ctx,
+                 aead_msg, sizeof aead_msg,
+                 aead_aad, sizeof aead_aad,
+                 aead_nonce, 12,
+                 aead_cipher,
+                 aead_tag, 16);
+}
+
 /* Provided by linkscript */
 extern uint32_t __HeapLimit;
 
@@ -316,4 +381,9 @@ int main(void)
   (void) poly1305_test;
   (void) hmacsha256_test;
   (void) norx_test;
+  (void) aeadperf_norx;
+  (void) aeadperf_chacha20poly1305;
+  (void) aeadperf_aes128gcm;
+  (void) aeadperf_aes128ccm;
+  (void) aeadperf_aes128eax;
 }
