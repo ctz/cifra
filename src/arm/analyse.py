@@ -198,5 +198,10 @@ p.add_call_hint('cf_sha384_update', 'cf_blockwise_accumulate', 'cf_blockwise_acc
 p.add_call_hint('cf_sha512_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'sha512_update_block')
 p.add_call_hint('cf_norx32_encrypt', 'input', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'input_block')
 p.add_call_hint('cf_norx32_decrypt', 'input', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'input_block')
+p.add_call_hint('cf_cbcmac_stream_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'cbcmac_process')
+p.add_call_hint('cf_cmac_stream_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'cmac_process_final_pad')
+p.add_call_hint('cf_cmac_stream_update', 'cf_blockwise_accumulate_final', 'cmac_process')
+p.add_call_hint('cf_cmac_stream_update', 'cf_blockwise_accumulate_final', 'cmac_process_final_nopad')
+
 
 print 'stack', fn, '=', p.measure_stack(fn)
