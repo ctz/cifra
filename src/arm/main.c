@@ -12,6 +12,7 @@
 #include "curve25519.h"
 #include "poly1305.h"
 #include "norx.h"
+#include "chacha20poly1305.h"
 
 #include <stdio.h>
 

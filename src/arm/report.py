@@ -31,7 +31,8 @@ base_test = 'do_nothing'
 def extract(arch, test):
     fn = 'run.%s.%s.log' % (test, arch)
 
-    code_size = None
+    code_size = 0
+    data_size = 0
     cycle_count = None
     stack_usage = None
 
@@ -46,7 +47,9 @@ def extract(arch, test):
             assert len(parts) >= 8
             assert 'LOAD' == parts[0]
             if parts[6] == 'RWE':
-                code_size = long(parts[5], 16)
+                code_size += long(parts[5], 16)
+            if parts[6] == 'RW':
+                data_size += long(parts[5], 16)
         
         if l.startswith('cycles = '):
             cycle_count = long(l.split(' = ')[1].strip(), 16)
@@ -56,6 +59,7 @@ def extract(arch, test):
 
     return dict(
             code_size = code_size,
+            data_size = data_size,
             cycle_count = cycle_count,
             stack_usage = stack_usage
             )
