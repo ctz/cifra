@@ -9,9 +9,9 @@ FUNCS = do_nothing stack_8w stack_64w \
 	poly1305_test hmacsha256_test \
 	curve25519_test \
 	norx_test \
-	aeadperf_aes128gcm \
-	aeadperf_aes128ccm \
-	aeadperf_aes128eax \
+	aeadperf_aes256gcm \
+	aeadperf_aes256ccm \
+	aeadperf_aes256eax \
 	aeadperf_norx \
 	aeadperf_chacha20poly1305
 TESTS = testcurve25519 testaes testmodes testsalsa20 testsha1 testsha2 \
@@ -43,15 +43,20 @@ AES_OPTIONS = -DCF_AES_ENCRYPT_ONLY=1 -DCF_SIDE_CHANNEL_PROTECTION=0
 AES128_OPTIONS = -DCF_AES_MAXROUNDS=AES128_ROUNDS
 AES256_OPTIONS = -DCF_AES_MAXROUNDS=AES256_ROUNDS
 
+AEADPERF_BRACKET = -DBRACKET_MODE=1 -DBRACKET_START=0 -DBRACKET_END=256 -DBRACKET_STEP=4
+
 CFLAGS_aes128block_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128sched_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128gcm_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128eax_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128ccm_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_poly1305_test = $(AES_OPTIONS) $(AES128_OPTIONS)
-CFLAGS_aeadperf_aes128gcm = $(AES_OPTIONS) $(AES128_OPTIONS)
-CFLAGS_aeadperf_aes128eax = $(AES_OPTIONS) $(AES128_OPTIONS)
-CFLAGS_aeadperf_aes128ccm = $(AES_OPTIONS) $(AES128_OPTIONS)
+
+CFLAGS_aeadperf_aes256gcm = $(AES_OPTIONS) $(AES256_OPTIONS) $(AEADPERF_BRACKET)
+CFLAGS_aeadperf_aes256eax = $(AES_OPTIONS) $(AES256_OPTIONS) $(AEADPERF_BRACKET)
+CFLAGS_aeadperf_aes256ccm = $(AES_OPTIONS) $(AES256_OPTIONS) $(AEADPERF_BRACKET)
+CFLAGS_aeadperf_norx = $(AEADPERF_BRACKET)
+CFLAGS_aeadperf_chacha20poly1305 = $(AEADPERF_BRACKET)
 
 CFLAGS_aes256block_test = $(AES_OPTIONS) $(AES256_OPTIONS)
 CFLAGS_aes256sched_test = $(AES_OPTIONS) $(AES256_OPTIONS)
