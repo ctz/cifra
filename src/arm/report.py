@@ -1,3 +1,10 @@
+"""
+Interprets logs from test runs.  Outputs ASCII
+tables containing results, json data, etc.
+"""
+
+import json
+
 archs = 'stm32f0 stm32f1 stm32f3'.split()
 tests = """
 aes128block_test
@@ -18,9 +25,9 @@ poly1305_test
 hmacsha256_test
 curve25519_test
 aeadperf_norx
-aeadperf_aes128gcm
-aeadperf_aes128eax
-aeadperf_aes128ccm
+aeadperf_aes256gcm
+aeadperf_aes256eax
+aeadperf_aes256ccm
 aeadperf_chacha20poly1305
 do_nothing
 """.split()
@@ -40,6 +47,8 @@ def extract(arch, test):
     data_size = 0
     cycle_count = None
     stack_usage = None
+    brackets = None
+    current_bracket = None
 
     try:
         lines = open(fn).readlines()
@@ -55,18 +64,30 @@ def extract(arch, test):
                 code_size += long(parts[5], 16)
             if parts[6] == 'RW':
                 data_size += long(parts[5], 16)
-        
+
+        if l.startswith('bracket = '):
+            bracket = long(l.split(' = ')[1].strip(), 16)
+            current_bracket = bracket
+            if brackets is None:
+                brackets = {}
+            brackets[current_bracket] = dict()
+
         if l.startswith('cycles = '):
             cycle_count = long(l.split(' = ')[1].strip(), 16)
-        
+            if current_bracket is not None:
+                brackets[current_bracket]['cycle_count'] = cycle_count
+
         if l.startswith('stack = '):
             stack_usage = long(l.split(' = ')[1].strip(), 16)
+            if current_bracket is not None:
+                brackets[current_bracket]['stack_usage'] = stack_usage
 
     return dict(
             code_size = code_size,
             data_size = data_size,
             cycle_count = cycle_count,
-            stack_usage = stack_usage
+            stack_usage = stack_usage,
+            brackets = brackets
             )
 
 def print_table(rows):
@@ -104,15 +125,6 @@ for arch in results.keys():
             continue
 
         results[arch][test]['code_size'] -= base_result['code_size']
-
-def print_aes(label, block_test, sched_test):
-    print '* **%s**:' % label
-    print '    * **Cycles (key schedule + block)**: %d' % block_test['cycle_count']
-    print '    * **Cycles (key schedule)**: %d' % sched_test['cycle_count']
-    print '    * **Cycles (block)**: %d' % (block_test['cycle_count'] - sched_test['cycle_count'])
-    print '    * **Stack**: %dB' % block_test['stack_usage']
-    print '    * **Code size**: %dB' % block_test['code_size']
-    print
 
 def tabulate_aes(arch, block_result, sched_result, table = None):
     if table is None:
@@ -167,6 +179,38 @@ def tabulate(mktab):
         table = mktab(arch, table)
     print_table(table)
 
+def convert_brackets(metric, tests):
+    for arch in archs:
+        arch_result = {}
+
+        # collect results for each test
+        for t in tests:
+            if arch not in results or t not in results[arch]:
+                print 'missing', arch, t
+                continue
+            data = results[arch][t]['brackets']
+            arch_result[t] = [[b, data[b][metric]] for b in sorted(data.keys())]
+
+        # convert into list of [bracket, test-1, test-2, ...] lists
+        out = []
+        if len(arch_result) == 0:
+            continue
+        first_row = arch_result.values()[0]
+
+        for i in range(len(first_row)):
+            row = [ first_row[i][0] ]
+
+            for k in sorted(arch_result.keys()):
+                rr = arch_result[k][i]
+                row.append(rr[1])
+
+            out.append(row)
+
+        print json.dumps(out)
+
+convert_brackets('cycle_count', ['aeadperf_norx', 'aeadperf_aes256gcm', 'aeadperf_aes256eax', 'aeadperf_aes256ccm', 'aeadperf_chacha20poly1305'])
+convert_brackets('stack_usage', ['aeadperf_norx', 'aeadperf_aes256gcm', 'aeadperf_aes256eax', 'aeadperf_aes256ccm', 'aeadperf_chacha20poly1305'])
+
 # screwed if we need other block ciphers
 print '###', '128-bit key'
 tabulate(lambda arch, table: tabulate_aes(arch, results[arch]['aes128block_test'], results[arch]['aes128sched_test'], table))
@@ -196,7 +240,7 @@ do_table('Poly1305-AES', 'poly1305_test')
 do_table('Curve25519', 'curve25519_test')
 
 do_table('AEAD-Shootout: NORX', 'aeadperf_norx')
-do_table('AEAD-Shootout: AES-128-GCM', 'aeadperf_aes128gcm')
-do_table('AEAD-Shootout: AES-128-EAX', 'aeadperf_aes128eax')
-do_table('AEAD-Shootout: AES-128-CCM', 'aeadperf_aes128ccm')
+do_table('AEAD-Shootout: AES-128-GCM', 'aeadperf_aes256gcm')
+do_table('AEAD-Shootout: AES-128-EAX', 'aeadperf_aes256eax')
+do_table('AEAD-Shootout: AES-128-CCM', 'aeadperf_aes256ccm')
 do_table('AEAD-Shootout: ChaCha20-Poly1305', 'aeadperf_chacha20poly1305')

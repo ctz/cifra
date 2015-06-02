@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 typedef void (*measure_fn)(void);
+static uint32_t bracket; /* bracket mode parameter */
 
 static void do_nothing(void)
 {
@@ -244,7 +245,12 @@ static void norx_test(void)
                     tag);
 }
 
-#define AEADPERF_LEN 256
+#ifndef BRACKET_MODE
+# define AEADPERF_LEN 1
+#else
+# define AEADPERF_LEN BRACKET_END
+#endif
+
 static uint8_t aead_msg[AEADPERF_LEN] = { 0 };
 static uint8_t aead_cipher[AEADPERF_LEN] = { 0 };
 static uint8_t aead_aad[16] = { 0 };
@@ -256,7 +262,7 @@ static void aeadperf_norx(void)
 {
   cf_norx32_encrypt(aead_key, aead_nonce,
                     aead_aad, sizeof aead_aad,
-                    aead_msg, sizeof aead_msg,
+                    aead_msg, bracket,
                     NULL, 0,
                     aead_cipher, aead_tag);
 }
@@ -265,30 +271,30 @@ static void aeadperf_chacha20poly1305(void)
 {
   cf_chacha20poly1305_encrypt(aead_key, aead_nonce,
                               aead_aad, sizeof aead_aad,
-                              aead_msg, sizeof aead_msg,
+                              aead_msg, bracket,
                               aead_cipher, aead_tag);
 }
 
-static void aeadperf_aes128gcm(void)
+static void aeadperf_aes256gcm(void)
 {
   cf_aes_context ctx;
-  cf_aes_init(&ctx, aead_key, 16);
+  cf_aes_init(&ctx, aead_key, 32);
 
   cf_gcm_encrypt(&cf_aes, &ctx,
-                 aead_msg, sizeof aead_msg,
+                 aead_msg, bracket,
                  aead_aad, sizeof aead_aad,
                  aead_nonce, 12,
                  aead_cipher,
                  aead_tag, 16);
 }
 
-static void aeadperf_aes128ccm(void)
+static void aeadperf_aes256ccm(void)
 {
   cf_aes_context ctx;
-  cf_aes_init(&ctx, aead_key, 16);
+  cf_aes_init(&ctx, aead_key, 32);
 
   cf_ccm_encrypt(&cf_aes, &ctx,
-                 aead_msg, sizeof aead_msg,
+                 aead_msg, bracket,
                  4,
                  aead_aad, sizeof aead_aad,
                  aead_nonce, 11,
@@ -296,13 +302,13 @@ static void aeadperf_aes128ccm(void)
                  aead_tag, 16);
 }
 
-static void aeadperf_aes128eax(void)
+static void aeadperf_aes256eax(void)
 {
   cf_aes_context ctx;
-  cf_aes_init(&ctx, aead_key, 16);
+  cf_aes_init(&ctx, aead_key, 32);
 
   cf_eax_encrypt(&cf_aes, &ctx,
-                 aead_msg, sizeof aead_msg,
+                 aead_msg, bracket,
                  aead_aad, sizeof aead_aad,
                  aead_nonce, 12,
                  aead_cipher,
@@ -312,18 +318,18 @@ static void aeadperf_aes128eax(void)
 /* Provided by linkscript */
 extern uint32_t __HeapLimit;
 
-#define STACK_MAGIC 0x57ac57ac
+#define STACK_MAGIC 0x57ac34df
 
-static inline void clear_stack(void)
+static __attribute__((noinline)) void clear_stack(void)
 {
   uint32_t *stack_start = &__HeapLimit;
-  uint32_t ss, *stack_stop = &ss;
+  uint32_t ss = 0, *stack_stop = &ss;
   size_t words = stack_stop - stack_start;
   for (size_t i = 0; i < words; i++)
     stack_start[i] = STACK_MAGIC;
 }
 
-static inline uint32_t measure_stack(void)
+static __attribute__((noinline)) uint32_t measure_stack(void)
 {
   uint32_t *stack_start = &__HeapLimit;
   uint32_t ss, *stack_stop = &ss;
@@ -349,7 +355,6 @@ static void measure(measure_fn fn)
   emit("stack = ");
   emit_uint32(stack_words << 2);
   emit("\n");
-
 }
 
 #define STRING_(x) #x
@@ -358,9 +363,20 @@ static void measure(measure_fn fn)
 int main(void)
 {
   emit(STRING(TEST) "\n");
+#ifdef BRACKET_MODE
+  for (bracket = BRACKET_START; bracket <= BRACKET_END; bracket += BRACKET_STEP)
+  {
+    emit("bracket = ");
+    emit_uint32(bracket);
+    emit("\n");
+    measure(TEST);
+  }
+#else
   measure(TEST);
+#endif
   quit_success();
 
+  (void) bracket;
   (void) do_nothing;
   (void) stack_8w;
   (void) stack_64w;
@@ -383,7 +399,7 @@ int main(void)
   (void) norx_test;
   (void) aeadperf_norx;
   (void) aeadperf_chacha20poly1305;
-  (void) aeadperf_aes128gcm;
-  (void) aeadperf_aes128ccm;
-  (void) aeadperf_aes128eax;
+  (void) aeadperf_aes256gcm;
+  (void) aeadperf_aes256ccm;
+  (void) aeadperf_aes256eax;
 }
