@@ -25,6 +25,9 @@ poly1305_test
 hmacsha256_test
 curve25519_test
 aeadperf_norx
+aeadperf_aes128gcm
+aeadperf_aes128eax
+aeadperf_aes128ccm
 aeadperf_aes256gcm
 aeadperf_aes256eax
 aeadperf_aes256ccm
@@ -208,8 +211,28 @@ def convert_brackets(metric, tests):
 
         print json.dumps(out)
 
-convert_brackets('cycle_count', ['aeadperf_norx', 'aeadperf_aes256gcm', 'aeadperf_aes256eax', 'aeadperf_aes256ccm', 'aeadperf_chacha20poly1305'])
-convert_brackets('stack_usage', ['aeadperf_norx', 'aeadperf_aes256gcm', 'aeadperf_aes256eax', 'aeadperf_aes256ccm', 'aeadperf_chacha20poly1305'])
+convert_brackets('cycle_count',
+        [
+            'aeadperf_norx',
+            'aeadperf_aes128gcm',
+            'aeadperf_aes128eax',
+            'aeadperf_aes128ccm',
+            'aeadperf_aes256gcm',
+            'aeadperf_aes256eax',
+            'aeadperf_aes256ccm',
+            'aeadperf_chacha20poly1305'
+        ])
+convert_brackets('stack_usage',
+        [
+            'aeadperf_norx',
+            'aeadperf_aes128gcm',
+            'aeadperf_aes128eax',
+            'aeadperf_aes128ccm',
+            'aeadperf_aes256gcm',
+            'aeadperf_aes256eax',
+            'aeadperf_aes256ccm',
+            'aeadperf_chacha20poly1305'
+        ])
 
 # screwed if we need other block ciphers
 print '###', '128-bit key'
@@ -240,7 +263,10 @@ do_table('Poly1305-AES', 'poly1305_test')
 do_table('Curve25519', 'curve25519_test')
 
 do_table('AEAD-Shootout: NORX', 'aeadperf_norx')
-do_table('AEAD-Shootout: AES-128-GCM', 'aeadperf_aes256gcm')
-do_table('AEAD-Shootout: AES-128-EAX', 'aeadperf_aes256eax')
-do_table('AEAD-Shootout: AES-128-CCM', 'aeadperf_aes256ccm')
+do_table('AEAD-Shootout: AES-128-GCM', 'aeadperf_aes128gcm')
+do_table('AEAD-Shootout: AES-128-EAX', 'aeadperf_aes128eax')
+do_table('AEAD-Shootout: AES-128-CCM', 'aeadperf_aes128ccm')
+do_table('AEAD-Shootout: AES-256-GCM', 'aeadperf_aes256gcm')
+do_table('AEAD-Shootout: AES-256-EAX', 'aeadperf_aes256eax')
+do_table('AEAD-Shootout: AES-256-CCM', 'aeadperf_aes256ccm')
 do_table('AEAD-Shootout: ChaCha20-Poly1305', 'aeadperf_chacha20poly1305')

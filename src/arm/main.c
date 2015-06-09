@@ -274,6 +274,45 @@ static void aeadperf_chacha20poly1305(void)
                               aead_msg, bracket,
                               aead_cipher, aead_tag);
 }
+static void aeadperf_aes128gcm(void)
+{
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, aead_key, 16);
+
+  cf_gcm_encrypt(&cf_aes, &ctx,
+                 aead_msg, bracket,
+                 aead_aad, sizeof aead_aad,
+                 aead_nonce, 12,
+                 aead_cipher,
+                 aead_tag, 16);
+}
+
+static void aeadperf_aes128ccm(void)
+{
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, aead_key, 16);
+
+  cf_ccm_encrypt(&cf_aes, &ctx,
+                 aead_msg, bracket,
+                 4,
+                 aead_aad, sizeof aead_aad,
+                 aead_nonce, 11,
+                 aead_cipher,
+                 aead_tag, 16);
+}
+
+static void aeadperf_aes128eax(void)
+{
+  cf_aes_context ctx;
+  cf_aes_init(&ctx, aead_key, 16);
+
+  cf_eax_encrypt(&cf_aes, &ctx,
+                 aead_msg, bracket,
+                 aead_aad, sizeof aead_aad,
+                 aead_nonce, 12,
+                 aead_cipher,
+                 aead_tag, 16);
+}
 
 static void aeadperf_aes256gcm(void)
 {
@@ -399,6 +438,9 @@ int main(void)
   (void) norx_test;
   (void) aeadperf_norx;
   (void) aeadperf_chacha20poly1305;
+  (void) aeadperf_aes128gcm;
+  (void) aeadperf_aes128ccm;
+  (void) aeadperf_aes128eax;
   (void) aeadperf_aes256gcm;
   (void) aeadperf_aes256ccm;
   (void) aeadperf_aes256eax;

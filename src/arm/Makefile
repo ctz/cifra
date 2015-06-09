@@ -9,6 +9,9 @@ FUNCS = do_nothing stack_8w stack_64w \
 	poly1305_test hmacsha256_test \
 	curve25519_test \
 	norx_test \
+	aeadperf_aes128gcm \
+	aeadperf_aes128ccm \
+	aeadperf_aes128eax \
 	aeadperf_aes256gcm \
 	aeadperf_aes256ccm \
 	aeadperf_aes256eax \
@@ -52,6 +55,9 @@ CFLAGS_aes128eax_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_aes128ccm_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 CFLAGS_poly1305_test = $(AES_OPTIONS) $(AES128_OPTIONS)
 
+CFLAGS_aeadperf_aes128gcm = $(AES_OPTIONS) $(AES128_OPTIONS) $(AEADPERF_BRACKET)
+CFLAGS_aeadperf_aes128eax = $(AES_OPTIONS) $(AES128_OPTIONS) $(AEADPERF_BRACKET)
+CFLAGS_aeadperf_aes128ccm = $(AES_OPTIONS) $(AES128_OPTIONS) $(AEADPERF_BRACKET)
 CFLAGS_aeadperf_aes256gcm = $(AES_OPTIONS) $(AES256_OPTIONS) $(AEADPERF_BRACKET)
 CFLAGS_aeadperf_aes256eax = $(AES_OPTIONS) $(AES256_OPTIONS) $(AEADPERF_BRACKET)
 CFLAGS_aeadperf_aes256ccm = $(AES_OPTIONS) $(AES256_OPTIONS) $(AEADPERF_BRACKET)
