@@ -19,11 +19,12 @@ FUNCS = do_nothing stack_8w stack_64w \
 	aeadperf_chacha20poly1305
 TESTS = testcurve25519 testaes testmodes testsalsa20 testsha1 testsha2 \
 	testsha3 testpoly1305 testnorx testchacha20poly1305
-ARCHS = stm32f0 stm32f1 stm32f3 qemucm0
+ARCHS = stm32f0 stm32f1 stm32f3 efm32 qemucm0
 
 all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
 	$(patsubst %,%.stm32f1.bin,$(FUNCS) $(TESTS)) \
 	$(patsubst %,%.stm32f3.bin,$(FUNCS) $(TESTS)) \
+	$(patsubst %,%.efm32.bin,$(FUNCS) $(TESTS)) \1
 	$(patsubst %,%.qemucm0.bin,$(FUNCS) $(TESTS))
 
 %.stm32f0.elf:
@@ -34,6 +35,9 @@ all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
 
 %.stm32f3.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m4 -DCORTEX_M4 -o $@ $^ -DTEST=$* -lgcc
+
+%.efm32.elf:
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.efm32.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* -lgcc
 
 %.qemucm0.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.qemucm0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* -lgcc
@@ -84,6 +88,7 @@ SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
 $(patsubst %,%.stm32f0.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.stm32f1.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.stm32f3.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
+$(patsubst %,%.efm32.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.qemucm0.elf, $(FUNCS)): $(SRCS) main.c
 
 $(patsubst %,testcurve25519.%.elf, $(ARCHS)): $(SRCS) $(CURVESRCS) ../testcurve25519.c
@@ -101,6 +106,20 @@ run.%.qemucm0: %.qemucm0.bin
 	arm-none-eabi-readelf -l $(patsubst %.bin,%.elf,$^) > $@.log
 	qemu-system-gnuarmeclipse -verbose -verbose -M STM32F0-Discovery -kernel $^ -semihosting -nographic -monitor null -serial null 2>> $@.log
 	cat $@.log
+
+run.%.efm32: %.efm32.elf
+	arm-none-eabi-readelf -l $^ > $@.log
+	echo '-----' >> $@.log
+	openocd -f openocd.efm32.cfg >> $@.log &
+	arm-none-eabi-gdb --quiet --batch-silent \
+		$^ \
+		-ex 'target remote :3333' \
+		-ex 'monitor reset halt' \
+		-ex 'load' \
+		-ex 'monitor arm semihosting enable' \
+		-ex 'monitor reset run' \
+		-ex 'monitor wait_halt 240000' \
+		-ex 'monitor shutdown'
 
 run.%.stm32f0: %.stm32f0.elf
 	arm-none-eabi-readelf -l $^ > $@.log
