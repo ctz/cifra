@@ -60,6 +60,9 @@ Cortex-M0  | STM32F030F4P6 | 1.17EUR      | 48MHz      | 16KB  | 4KB
 Cortex-M3  | STM32F103C8T6 | 2.87EUR      | 72MHz      | 64KB  | 20KB
 Cortex-M4F | STM32F303K6T6 | 4.53EUR      | 72MHz      | 32KB  | 12KB
 
+More measurements are available for AEAD modes on my blog post:
+[Benchmarking Modern Authenticated Encryption on €1 devices](http://jbp.io/2015/06/01/modern-authenticated-encryption-for-1-euro/).
+
 ## AES
 This test does a key schedule, then encrypts one block.
 
