@@ -24,7 +24,7 @@
 typedef struct
 {
   uint32_t s[16];
-} cf_norx32_ctx;
+} norx32_ctx;
 
 /* Domain separation constants */
 #define DOMAIN_HEADER   0x01
@@ -40,7 +40,7 @@ typedef struct
 #define RATE_BYTES 40
 #define RATE_WORDS 10
 
-static void permute(cf_norx32_ctx *ctx)
+static void permute(norx32_ctx *ctx)
 {
 #define G(a, b, c, d) \
   (a) = ((a) ^ (b)) ^ (((a) & (b)) << 1); \
@@ -68,7 +68,7 @@ static void permute(cf_norx32_ctx *ctx)
   }
 }
 
-static void init(cf_norx32_ctx *ctx,
+static void init(norx32_ctx *ctx,
                  const uint8_t key[static 16],
                  const uint8_t nonce[static 8])
 {
@@ -105,7 +105,7 @@ static void init(cf_norx32_ctx *ctx,
 
 /* Input domain separation constant for next step, and final permutation of
  * preceeding step. */
-static void switch_domain(cf_norx32_ctx *ctx, uint32_t constant)
+static void switch_domain(norx32_ctx *ctx, uint32_t constant)
 {
   ctx->s[15] ^= constant;
   permute(ctx);
@@ -113,14 +113,14 @@ static void switch_domain(cf_norx32_ctx *ctx, uint32_t constant)
 
 typedef struct
 {
-  cf_norx32_ctx *ctx;
+  norx32_ctx *ctx;
   uint32_t type;
 } blockctx;
 
 static void input_block_final(void *vctx, const uint8_t *data)
 {
   blockctx *bctx = vctx;
-  cf_norx32_ctx *ctx = bctx->ctx;
+  norx32_ctx *ctx = bctx->ctx;
 
   /* just xor-in data. */
   for (int i = 0; i < RATE_WORDS; i++)
@@ -138,7 +138,7 @@ static void input_block(void *vctx, const uint8_t *data)
   switch_domain(bctx->ctx, bctx->type);
 }
 
-static void input(cf_norx32_ctx *ctx, uint32_t type,
+static void input(norx32_ctx *ctx, uint32_t type,
                   const uint8_t *buf, size_t nbuf)
 {
   uint8_t partial[RATE_BYTES];
@@ -159,7 +159,7 @@ static void input(cf_norx32_ctx *ctx, uint32_t type,
   input_block_final(&bctx, partial);
 }
 
-static void do_header(cf_norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
+static void do_header(norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
 {
   if (nbuf)
   {
@@ -168,7 +168,7 @@ static void do_header(cf_norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
   }
 }
 
-static void do_trailer(cf_norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
+static void do_trailer(norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
 {
   if (nbuf)
   {
@@ -177,7 +177,7 @@ static void do_trailer(cf_norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
   }
 }
 
-static void body_block_encrypt(cf_norx32_ctx *ctx,
+static void body_block_encrypt(norx32_ctx *ctx,
                                const uint8_t plain[static RATE_BYTES],
                                uint8_t cipher[static RATE_BYTES])
 {
@@ -190,7 +190,7 @@ static void body_block_encrypt(cf_norx32_ctx *ctx,
   }
 }
 
-static void encrypt_body(cf_norx32_ctx *ctx,
+static void encrypt_body(norx32_ctx *ctx,
                          const uint8_t *plain, uint8_t *cipher, size_t nbytes)
 {
   if (nbytes == 0)
@@ -219,7 +219,7 @@ static void encrypt_body(cf_norx32_ctx *ctx,
   memcpy(cipher, partial, nbytes);
 }
 
-static void body_block_decrypt(cf_norx32_ctx *ctx,
+static void body_block_decrypt(norx32_ctx *ctx,
                                const uint8_t cipher[static RATE_BYTES],
                                uint8_t plain[static RATE_BYTES],
                                size_t start, size_t end)
@@ -234,14 +234,14 @@ static void body_block_decrypt(cf_norx32_ctx *ctx,
   }
 }
 
-static void undo_padding(cf_norx32_ctx *ctx, size_t bytes)
+static void undo_padding(norx32_ctx *ctx, size_t bytes)
 {
   assert(bytes < RATE_BYTES);
   ctx->s[bytes / WORD_BYTES] ^= 0x01 << ((bytes % WORD_BYTES) * 8);
   ctx->s[RATE_WORDS - 1] ^= 0x80000000;
 }
 
-static void decrypt_body(cf_norx32_ctx *ctx,
+static void decrypt_body(norx32_ctx *ctx,
                          const uint8_t *cipher, uint8_t *plain, size_t nbytes)
 {
   if (nbytes == 0)
@@ -287,7 +287,7 @@ static void decrypt_body(cf_norx32_ctx *ctx,
   ctx->s[offset] = read32_le(tmp);
 }
 
-static void get_tag(cf_norx32_ctx *ctx, uint8_t tag[static 16])
+static void get_tag(norx32_ctx *ctx, uint8_t tag[static 16])
 {
   switch_domain(ctx, DOMAIN_TAG);
   permute(ctx);
@@ -305,7 +305,7 @@ void cf_norx32_encrypt(const uint8_t key[static 16],
                        uint8_t *ciphertext,
                        uint8_t tag[static 16])
 {
-  cf_norx32_ctx ctx;
+  norx32_ctx ctx;
 
   init(&ctx, key, nonce);
   do_header(&ctx, header, nheader);
@@ -324,7 +324,7 @@ int cf_norx32_decrypt(const uint8_t key[static 16],
                       const uint8_t tag[static 16],
                       uint8_t *plaintext)
 {
-  cf_norx32_ctx ctx;
+  norx32_ctx ctx;
   uint8_t ourtag[16];
 
   init(&ctx, key, nonce);
