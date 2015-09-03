@@ -31,20 +31,11 @@ static void test_vector(void)
     A[i] = M[i] = Z[i] = i;
   }
 
-  dump("K", K, sizeof K);
-  dump("N", N, sizeof N);
-  dump("A", A, sizeof A);
-  dump("M", M, sizeof M);
-  dump("Z", Z, sizeof Z);
-
   cf_norx32_encrypt(K, N,
                     A, sizeof A,
                     M, sizeof M,
                     Z, sizeof Z,
                     C, T);
-
-  dump("T", T, sizeof T);
-  dump("C", C, sizeof C);
 
   uint8_t expect_C[128], expect_T[16];
 
