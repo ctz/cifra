@@ -23,7 +23,7 @@ In order of descending emphasis, cifra aims for:
 * **AES** in the **GCM**, **CCM** and **EAX** authenticated encryption modes.
 * **NORX** authenticated encryption system.
 * **SHA224**, **SHA256**, **SHA384** and **SHA512** hash functions (including **HMAC** and **PBKDF2**).
-* **SHA3-224**, **SHA3-256**, **SHA3-384**, **SHA3-512** hash functions (FIPS 202 draft compatible).
+* **SHA3-224**, **SHA3-256**, **SHA3-384**, **SHA3-512** hash functions (FIPS 202 compatible).
 * **ChaCha20** and **Salsa20** stream ciphers.
 * **Poly1305** one time MAC.
 * 100% code coverage by line, zero static analysis defects, valgrind-clean.
@@ -59,6 +59,9 @@ Core       | Part number   | Price (1s)   | Max clock  | Flash | SRAM
 Cortex-M0  | STM32F030F4P6 | 1.17EUR      | 48MHz      | 16KB  | 4KB
 Cortex-M3  | STM32F103C8T6 | 2.87EUR      | 72MHz      | 64KB  | 20KB
 Cortex-M4F | STM32F303K6T6 | 4.53EUR      | 72MHz      | 32KB  | 12KB
+
+More measurements are available for AEAD modes on my blog post:
+[Benchmarking Modern Authenticated Encryption on €1 devices](http://jbp.io/2015/06/01/modern-authenticated-encryption-for-1-euro/).
 
 ## AES
 This test does a key schedule, then encrypts one block.
