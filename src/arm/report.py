@@ -4,6 +4,7 @@ tables containing results, json data, etc.
 """
 
 import json
+import sys
 
 archs = 'stm32f0 stm32f1 stm32f3'.split()
 tests = """
@@ -204,6 +205,8 @@ def convert_brackets(metric, tests):
             row = [ first_row[i][0] ]
 
             for k in sorted(arch_result.keys()):
+                if len(arch_result[k]) != len(first_row):
+                    print 'warn:', 'test', k, 'did not complete?'
                 rr = arch_result[k][i]
                 row.append(rr[1])
 
@@ -251,7 +254,7 @@ def do_table(title, test):
 do_table('AES128-GCM', 'aes128gcm_test')
 do_table('AES128-EAX', 'aes128eax_test')
 do_table('AES128-CCM', 'aes128ccm_test')
-do_table('NORX', 'norx_test')
+do_table('NORX32', 'norx_test')
 do_table('ChaCha20', 'chacha20_test')
 do_table('Salsa20', 'salsa20_test')
 do_table('SHA256', 'hashtest_sha256')
@@ -262,11 +265,12 @@ do_table('HMAC-SHA256', 'hmacsha256_test')
 do_table('Poly1305-AES', 'poly1305_test')
 do_table('Curve25519', 'curve25519_test')
 
-do_table('AEAD-Shootout: NORX', 'aeadperf_norx')
-do_table('AEAD-Shootout: AES-128-GCM', 'aeadperf_aes128gcm')
-do_table('AEAD-Shootout: AES-128-EAX', 'aeadperf_aes128eax')
-do_table('AEAD-Shootout: AES-128-CCM', 'aeadperf_aes128ccm')
-do_table('AEAD-Shootout: AES-256-GCM', 'aeadperf_aes256gcm')
-do_table('AEAD-Shootout: AES-256-EAX', 'aeadperf_aes256eax')
-do_table('AEAD-Shootout: AES-256-CCM', 'aeadperf_aes256ccm')
-do_table('AEAD-Shootout: ChaCha20-Poly1305', 'aeadperf_chacha20poly1305')
+if '--aead' in sys.argv:
+    do_table('AEAD-Shootout: NORX', 'aeadperf_norx')
+    do_table('AEAD-Shootout: AES-128-GCM', 'aeadperf_aes128gcm')
+    do_table('AEAD-Shootout: AES-128-EAX', 'aeadperf_aes128eax')
+    do_table('AEAD-Shootout: AES-128-CCM', 'aeadperf_aes128ccm')
+    do_table('AEAD-Shootout: AES-256-GCM', 'aeadperf_aes256gcm')
+    do_table('AEAD-Shootout: AES-256-EAX', 'aeadperf_aes256eax')
+    do_table('AEAD-Shootout: AES-256-CCM', 'aeadperf_aes256ccm')
+    do_table('AEAD-Shootout: ChaCha20-Poly1305', 'aeadperf_chacha20poly1305')
