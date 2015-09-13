@@ -8,8 +8,9 @@ FUNCS = do_nothing stack_8w stack_64w \
 	salsa20_test chacha20_test \
 	poly1305_test hmacsha256_test \
 	curve25519_test \
-	norx_test \
-	aeadperf_aes128gcm \
+	norx_test
+
+AEADS = aeadperf_aes128gcm \
 	aeadperf_aes128ccm \
 	aeadperf_aes128eax \
 	aeadperf_aes256gcm \
@@ -21,11 +22,11 @@ TESTS = testcurve25519 testaes testmodes testsalsa20 testsha1 testsha2 \
 	testsha3 testpoly1305 testnorx testchacha20poly1305
 ARCHS = stm32f0 stm32f1 stm32f3 efm32 qemucm0
 
-all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(TESTS)) \
-	$(patsubst %,%.stm32f1.bin,$(FUNCS) $(TESTS)) \
-	$(patsubst %,%.stm32f3.bin,$(FUNCS) $(TESTS)) \
-	$(patsubst %,%.efm32.bin,$(FUNCS) $(TESTS)) \1
-	$(patsubst %,%.qemucm0.bin,$(FUNCS) $(TESTS))
+all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(AEADS) $(TESTS)) \
+	$(patsubst %,%.stm32f1.bin,$(FUNCS) $(AEADS) $(TESTS)) \
+	$(patsubst %,%.stm32f3.bin,$(FUNCS) $(AEADS) $(TESTS)) \
+	$(patsubst %,%.efm32.bin,$(FUNCS) $(AEADS) $(TESTS)) \
+	$(patsubst %,%.qemucm0.bin,$(FUNCS) $(AEADS) $(TESTS))
 
 %.stm32f0.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* -lgcc
@@ -85,11 +86,11 @@ SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
        ../hmac.c ../pbkdf2.c ../salsa20.c ../chacha20.c \
        ../norx.c ../chacha20poly1305.c
 
-$(patsubst %,%.stm32f0.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
-$(patsubst %,%.stm32f1.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
-$(patsubst %,%.stm32f3.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
-$(patsubst %,%.efm32.elf, $(FUNCS)): $(SRCS) main.c $(CURVESRCS)
-$(patsubst %,%.qemucm0.elf, $(FUNCS)): $(SRCS) main.c
+$(patsubst %,%.stm32f0.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
+$(patsubst %,%.stm32f1.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
+$(patsubst %,%.stm32f3.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
+$(patsubst %,%.efm32.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
+$(patsubst %,%.qemucm0.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c
 
 $(patsubst %,testcurve25519.%.elf, $(ARCHS)): $(SRCS) $(CURVESRCS) ../testcurve25519.c
 $(patsubst %,testaes.%.elf, $(ARCHS)): $(SRCS) ../testaes.c
@@ -118,7 +119,7 @@ run.%.efm32: %.efm32.elf
 		-ex 'load' \
 		-ex 'monitor arm semihosting enable' \
 		-ex 'monitor reset run' \
-		-ex 'monitor wait_halt 240000' \
+		-ex 'monitor wait_halt 720000' \
 		-ex 'monitor shutdown'
 
 run.%.stm32f0: %.stm32f0.elf
@@ -132,7 +133,7 @@ run.%.stm32f0: %.stm32f0.elf
 		-ex 'load' \
 		-ex 'monitor arm semihosting enable' \
 		-ex 'monitor reset run' \
-		-ex 'monitor wait_halt 240000' \
+		-ex 'monitor wait_halt 720000' \
 		-ex 'monitor shutdown'
 
 run.%.stm32f1: %.stm32f1.elf
@@ -146,7 +147,7 @@ run.%.stm32f1: %.stm32f1.elf
 		-ex 'load' \
 		-ex 'monitor arm semihosting enable' \
 		-ex 'monitor reset run' \
-		-ex 'monitor wait_halt 240000' \
+		-ex 'monitor wait_halt 720000' \
 		-ex 'monitor shutdown'
 
 run.%.stm32f3: %.stm32f3.elf
@@ -160,7 +161,7 @@ run.%.stm32f3: %.stm32f3.elf
 		-ex 'load' \
 		-ex 'monitor arm semihosting enable' \
 		-ex 'monitor reset run' \
-		-ex 'monitor wait_halt 240000' \
+		-ex 'monitor wait_halt 720000' \
 		-ex 'monitor shutdown'
 
 test: $(patsubst %,run.%.qemucm0,$(FUNCS) $(TESTS))
