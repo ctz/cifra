@@ -40,32 +40,91 @@ typedef struct
 #define RATE_BYTES 48
 #define RATE_WORDS 12
 
-static void permute(norx32_ctx *ctx)
+static void permute(norx32_ctx *restrict ctx)
 {
-#define G(a, b, c, d) \
-  (a) = ((a) ^ (b)) ^ (((a) & (b)) << 1); \
-  (d) = rotr32((a) ^ (d), 8); \
-  (c) = ((c) ^ (d)) ^ (((c) & (d)) << 1); \
-  (b) = rotr32((b) ^ (c), 11); \
-  (a) = ((a) ^ (b)) ^ (((a) & (b)) << 1); \
-  (d) = rotr32((a) ^ (d), 16); \
-  (c) = ((c) ^ (d)) ^ (((c) & (d)) << 1); \
-  (b) = rotr32((b) ^ (c), 31);
+#ifdef CORTEX_M0
+  /* Register usage: A-D r2, r3, r4, r5.
+   * Temps: r6 */
+
+#define in(xx) "%[" #xx "]"
+
+  /* Load numbered slots of S into r2-r5 */
+#define LOAD(u, v, w, x)           \
+  "  ldr r2, [%[S], " in(u) "]\n"  \
+  "  ldr r3, [%[S], " in(v) "]\n"  \
+  "  ldr r4, [%[S], " in(w) "]\n"  \
+  "  ldr r5, [%[S], " in(x) "]\n"
+
+  /* Store r2-r5 into numbered slots of S */
+#define STORE(u, v, w, x)          \
+  "  str r2, [%[S], " in(u) "]\n"  \
+  "  str r3, [%[S], " in(v) "]\n"  \
+  "  str r4, [%[S], " in(w) "]\n"  \
+  "  str r5, [%[S], " in(x) "]\n"
+
+  /* This is H() plus the xor and rotate in one step of G.
+   * rx is the register containing x (read/write)
+   * ry is the register containing y (read)
+   * rw is the register containing d (read/write)
+   * rot is the rotation constant r_n */
+#define P(rx, ry, rw, rot)      \
+  "  mov r6, " #rx "\n"         \
+  "  and " #rx ", " #ry "\n"    \
+  "  lsl " #rx ", #1\n"         \
+  "  eor " #rx ", r6\n"         \
+  "  eor " #rx ", " #ry "\n"    \
+  "  mov r6, #" #rot "\n"       \
+  "  eor " #rw ", " #rx "\n"    \
+  "  ror " #rw ", r6\n"
+
+  /* The function G.  s is the state array, a-d are indices
+   * into it. */
+#define G(s, a, b, c, d)      \
+  __asm__ (                   \
+            LOAD(A, B, C, D)  \
+            P(r2, r3, r5, 8)  \
+            P(r4, r5, r3, 11) \
+            P(r2, r3, r5, 16) \
+            P(r4, r5, r3, 31) \
+            STORE(A, B, C, D) \
+          :                   \
+          : [S] "r" (s),      \
+            [A] "i" (a << 2), \
+            [B] "i" (b << 2), \
+            [C] "i" (c << 2), \
+            [D] "i" (d << 2)  \
+          : "memory", "cc", "r2", "r3", "r4", "r5", "r6");
+#else
+
+  /* This is one quarter of G; the function H plus xor/rotate. */
+#define P(u, v, w, rr) \
+  (u) = ((u) ^ (v)) ^ (((u) & (v)) << 1); \
+  (w) = rotr32((u) ^ (w), rr);
+
+#define G(s, a, b, c, d) \
+  P(s[a], s[b], s[d], 8) \
+  P(s[c], s[d], s[b], 11) \
+  P(s[a], s[b], s[d], 16) \
+  P(s[c], s[d], s[b], 31)
+#endif
 
   for (int i = 0; i < ROUNDS; i++)
   {
     /* columns */
-    G(ctx->s[0], ctx->s[4], ctx->s[8], ctx->s[12]);
-    G(ctx->s[1], ctx->s[5], ctx->s[9], ctx->s[13]);
-    G(ctx->s[2], ctx->s[6], ctx->s[10], ctx->s[14]);
-    G(ctx->s[3], ctx->s[7], ctx->s[11], ctx->s[15]);
+    G(ctx->s, 0, 4, 8, 12);
+    G(ctx->s, 1, 5, 9, 13);
+    G(ctx->s, 2, 6, 10, 14);
+    G(ctx->s, 3, 7, 11, 15);
 
     /* diagonals */
-    G(ctx->s[0], ctx->s[5], ctx->s[10], ctx->s[15]);
-    G(ctx->s[1], ctx->s[6], ctx->s[11], ctx->s[12]);
-    G(ctx->s[2], ctx->s[7], ctx->s[8], ctx->s[13]);
-    G(ctx->s[3], ctx->s[4], ctx->s[9], ctx->s[14]);
+    G(ctx->s, 0, 5, 10, 15);
+    G(ctx->s, 1, 6, 11, 12);
+    G(ctx->s, 2, 7, 8, 13);
+    G(ctx->s, 3, 4, 9, 14);
   }
+
+#undef G
+#undef P
 }
 
 static void init(norx32_ctx *ctx,
