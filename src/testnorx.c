@@ -65,7 +65,6 @@ static void test_vector(void)
                                M2));
 }
 
-#if 0
 #include "testnorx.katdata.inc"
 
 static void test_kat(void)
@@ -110,13 +109,10 @@ static void test_kat(void)
     TEST_CHECK(0 == memcmp(M, W, i));
   }
 }
-#endif
 
 TEST_LIST = {
   { "vector", test_vector },
-#if 0
   { "kat", test_kat },
-#endif
   { 0 }
 };
 
