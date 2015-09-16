@@ -126,3 +126,70 @@ void cf_blockwise_xor(uint8_t *partial, size_t *npartial, size_t nblock,
     inb += taken;
   }
 }
+
+void cf_blockwise_acc_byte(uint8_t *partial, size_t *npartial,
+                           size_t nblock,
+                           uint8_t byte, size_t nbytes,
+                           cf_blockwise_in_fn process,
+                           void *ctx)
+{
+  /* only memset the whole of the block once */
+  int filled = 0;
+
+  while (nbytes)
+  {
+    size_t start = *npartial;
+    size_t count = MIN(nbytes, nblock - start);
+
+    if (!filled)
+      memset(partial + start, byte, count);
+
+    if (start == 0 && count == nblock)
+      filled = 1;
+
+    if (start + count == nblock)
+    {
+      process(ctx, partial);
+      *npartial = 0;
+    } else {
+      *npartial += count;
+    }
+
+    nbytes -= count;
+  }
+}
+
+void cf_blockwise_acc_pad(uint8_t *partial, size_t *npartial,
+                          size_t nblock,
+                          uint8_t fbyte, uint8_t mbyte, uint8_t lbyte,
+                          size_t nbytes,
+                          cf_blockwise_in_fn process,
+                          void *ctx)
+{
+
+  switch (nbytes)
+  {
+    case 0: break;
+    case 1: fbyte ^= lbyte;
+            cf_blockwise_accumulate(partial, npartial, nblock, &fbyte, 1, process, ctx);
+            break;
+    case 2:
+            cf_blockwise_accumulate(partial, npartial, nblock, &fbyte, 1, process, ctx);
+            cf_blockwise_accumulate(partial, npartial, nblock, &lbyte, 1, process, ctx);
+            break;
+    default:
+            cf_blockwise_accumulate(partial, npartial, nblock, &fbyte, 1, process, ctx);
+
+            /* If the middle and last bytes differ, then process the last byte separately.
+             * Otherwise, just extend the middle block size. */
+            if (lbyte != mbyte)
+            {
+              cf_blockwise_acc_byte(partial, npartial, nblock, mbyte, nbytes - 2, process, ctx);
+              cf_blockwise_accumulate(partial, npartial, nblock, &lbyte, 1, process, ctx);
+            } else {
+              cf_blockwise_acc_byte(partial, npartial, nblock, mbyte, nbytes - 1, process, ctx);
+            }
+
+            break;
+  }
+}

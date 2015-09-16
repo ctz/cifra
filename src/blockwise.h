@@ -92,4 +92,56 @@ void cf_blockwise_xor(uint8_t *partial, size_t *npartial,
                       cf_blockwise_out_fn newblock,
                       void *ctx);
 
+/* This function processes a single byte a number of times. It's useful
+ * for padding, and more efficient than calling cf_blockwise_accumulate
+ * a bunch of times.
+ *
+ * partial is the buffer (maintained by the caller)
+ * on entry, npartial is the currently valid count of used bytes on
+ *   the front of partial.
+ * on exit, npartial is updated to reflect the status of partial.
+ * nblock is the blocksize to accumulate -- partial must be at least
+ *   this long!
+ * process is the processing function, passed ctx and a pointer
+ *   to the data to process (always exactly nblock bytes long!)
+ *   which may not neccessarily be the same as partial.
+ * byte is the byte to process, nbytes times.
+ */
+void cf_blockwise_acc_byte(uint8_t *partial, size_t *npartial,
+                           size_t nblock,
+                           uint8_t byte, size_t nbytes,
+                           cf_blockwise_in_fn process,
+                           void *ctx);
+
+/* This function attempts to process patterns of bytes common in
+ * block cipher padding.
+ *
+ * This takes three bytes:
+ * - a first byte, fbyte,
+ * - a middle byte, mbyte,
+ * - a last byte, lbyte.
+ *
+ * If nbytes is zero, nothing happens.
+ * If nbytes is one, the byte fbyte ^ lbyte is processed.
+ * If nbytes is two, the fbyte then lbyte are processed.
+ * If nbytes is three or more, fbyte, then one or more mbytes, then fbyte
+ *   is processed.
+ *
+ * partial is the buffer (maintained by the caller)
+ * on entry, npartial is the currently valid count of used bytes on
+ *   the front of partial.
+ * on exit, npartial is updated to reflect the status of partial.
+ * nblock is the blocksize to accumulate -- partial must be at least
+ *   this long!
+ * process is the processing function, passed ctx and a pointer
+ *   to the data to process (always exactly nblock bytes long!)
+ *   which may not neccessarily be the same as partial.
+ */
+void cf_blockwise_acc_pad(uint8_t *partial, size_t *npartial,
+                          size_t nblock,
+                          uint8_t fbyte, uint8_t mbyte, uint8_t lbyte,
+                          size_t nbytes,
+                          cf_blockwise_in_fn process,
+                          void *ctx);
+
 #endif

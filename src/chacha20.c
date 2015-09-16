@@ -15,6 +15,7 @@
 #include "bitops.h"
 #include "salsa20.h"
 #include "blockwise.h"
+#include "tassert.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -101,7 +102,7 @@ void cf_chacha20_core(const uint8_t key0[16],
 static const uint8_t *chacha20_tau = (const uint8_t *) "expand 16-byte k";
 static const uint8_t *chacha20_sigma = (const uint8_t *) "expand 32-byte k";
 
-void cf_chacha20_init(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey, uint8_t nonce[8])
+static void set_key(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey)
 {
   switch (nkey)
   {
@@ -118,21 +119,36 @@ void cf_chacha20_init(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey, uin
     default:
       abort();
   }
+}
 
+void cf_chacha20_init(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey, const uint8_t nonce[8])
+{
+  set_key(ctx, key, nkey);
   memset(ctx->nonce, 0, sizeof ctx->nonce);
   memcpy(ctx->nonce + 8, nonce, 8);
   ctx->nblock = 0;
+  ctx->ncounter = 8;
+}
+
+void cf_chacha20_init_custom(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey,
+                             const uint8_t nonce[16], size_t ncounter)
+{
+  assert(ncounter > 0);
+  set_key(ctx, key, nkey);
+  memcpy(ctx->nonce, nonce, sizeof ctx->nonce);
+  ctx->nblock = 0;
+  ctx->ncounter = ncounter;
 }
 
 static void cf_chacha20_next_block(void *vctx, uint8_t *out)
 {
   cf_chacha20_ctx *ctx = vctx;
   cf_chacha20_core(ctx->key0,
-                  ctx->key1,
-                  ctx->nonce,
-                  ctx->constant,
-                  out);
-  incr_le(ctx->nonce, 8);
+                   ctx->key1,
+                   ctx->nonce,
+                   ctx->constant,
+                   out);
+  incr_le(ctx->nonce, ctx->ncounter);
 }
 
 void cf_chacha20_cipher(cf_chacha20_ctx *ctx, const uint8_t *input, uint8_t *output, size_t bytes)

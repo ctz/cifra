@@ -36,13 +36,15 @@ void cf_hmac_init(cf_hmac_ctx *ctx,
   /* Shorten long keys. */
   if (nkey > hash->blocksz)
   {
+    /* Standard doesn't cover case where blocksz < hashsz.
+     * FIPS186-1 seems to want to append a negative number of zero bytes.
+     * In any case, we only have a k buffer of CF_CHASH_MAXBLK! */
+    assert(hash->hashsz <= hash->blocksz);
+
     cf_hash(hash, key, nkey, k);
     key = k;
     nkey = hash->hashsz;
   }
-
-  /* Standard doesn't cover case where blocksz < hashsz. */
-  assert(nkey <= hash->blocksz);
 
   /* Right zero-pad short keys. */
   if (k != key)

@@ -24,7 +24,7 @@
 typedef struct
 {
   uint32_t s[16];
-} cf_norx32_ctx;
+} norx32_ctx;
 
 /* Domain separation constants */
 #define DOMAIN_HEADER   0x01
@@ -37,75 +37,138 @@ typedef struct
 #define ROUNDS 4
 #define DEGREE 1
 #define TAG_BITS 128
-#define RATE_BYTES 40
-#define RATE_WORDS 10
+#define RATE_BYTES 48
+#define RATE_WORDS 12
 
-static void permute(cf_norx32_ctx *ctx)
+static void permute(norx32_ctx *restrict ctx)
 {
-#define G(a, b, c, d) \
-  (a) = ((a) ^ (b)) ^ (((a) & (b)) << 1); \
-  (d) = rotr32((a) ^ (d), 8); \
-  (c) = ((c) ^ (d)) ^ (((c) & (d)) << 1); \
-  (b) = rotr32((b) ^ (c), 11); \
-  (a) = ((a) ^ (b)) ^ (((a) & (b)) << 1); \
-  (d) = rotr32((a) ^ (d), 16); \
-  (c) = ((c) ^ (d)) ^ (((c) & (d)) << 1); \
-  (b) = rotr32((b) ^ (c), 31);
+#ifdef CORTEX_M0
+  /* Register usage: A-D r2, r3, r4, r5.
+   * Temps: r6 */
+
+#define in(xx) "%[" #xx "]"
+
+  /* Load numbered slots of S into r2-r5 */
+#define LOAD(u, v, w, x)           \
+  "  ldr r2, [%[S], " in(u) "]\n"  \
+  "  ldr r3, [%[S], " in(v) "]\n"  \
+  "  ldr r4, [%[S], " in(w) "]\n"  \
+  "  ldr r5, [%[S], " in(x) "]\n"
+
+  /* Store r2-r5 into numbered slots of S */
+#define STORE(u, v, w, x)          \
+  "  str r2, [%[S], " in(u) "]\n"  \
+  "  str r3, [%[S], " in(v) "]\n"  \
+  "  str r4, [%[S], " in(w) "]\n"  \
+  "  str r5, [%[S], " in(x) "]\n"
+
+  /* This is H() plus the xor and rotate in one step of G.
+   * rx is the register containing x (read/write)
+   * ry is the register containing y (read)
+   * rw is the register containing d (read/write)
+   * rot is the rotation constant r_n */
+#define P(rx, ry, rw, rot)      \
+  "  mov r6, " #rx "\n"         \
+  "  and " #rx ", " #ry "\n"    \
+  "  lsl " #rx ", #1\n"         \
+  "  eor " #rx ", r6\n"         \
+  "  eor " #rx ", " #ry "\n"    \
+  "  mov r6, #" #rot "\n"       \
+  "  eor " #rw ", " #rx "\n"    \
+  "  ror " #rw ", r6\n"
+
+  /* The function G.  s is the state array, a-d are indices
+   * into it. */
+#define G(s, a, b, c, d)      \
+  __asm__ (                   \
+            LOAD(A, B, C, D)  \
+            P(r2, r3, r5, 8)  \
+            P(r4, r5, r3, 11) \
+            P(r2, r3, r5, 16) \
+            P(r4, r5, r3, 31) \
+            STORE(A, B, C, D) \
+          :                   \
+          : [S] "r" (s),      \
+            [A] "i" (a << 2), \
+            [B] "i" (b << 2), \
+            [C] "i" (c << 2), \
+            [D] "i" (d << 2)  \
+          : "memory", "cc", "r2", "r3", "r4", "r5", "r6");
+#else
+
+  /* This is one quarter of G; the function H plus xor/rotate. */
+#define P(u, v, w, rr) \
+  (u) = ((u) ^ (v)) ^ (((u) & (v)) << 1); \
+  (w) = rotr32((u) ^ (w), rr);
+
+#define G(s, a, b, c, d) \
+  P(s[a], s[b], s[d], 8) \
+  P(s[c], s[d], s[b], 11) \
+  P(s[a], s[b], s[d], 16) \
+  P(s[c], s[d], s[b], 31)
+#endif
 
   for (int i = 0; i < ROUNDS; i++)
   {
     /* columns */
-    G(ctx->s[0], ctx->s[4], ctx->s[8], ctx->s[12]);
-    G(ctx->s[1], ctx->s[5], ctx->s[9], ctx->s[13]);
-    G(ctx->s[2], ctx->s[6], ctx->s[10], ctx->s[14]);
-    G(ctx->s[3], ctx->s[7], ctx->s[11], ctx->s[15]);
+    G(ctx->s, 0, 4, 8, 12);
+    G(ctx->s, 1, 5, 9, 13);
+    G(ctx->s, 2, 6, 10, 14);
+    G(ctx->s, 3, 7, 11, 15);
 
     /* diagonals */
-    G(ctx->s[0], ctx->s[5], ctx->s[10], ctx->s[15]);
-    G(ctx->s[1], ctx->s[6], ctx->s[11], ctx->s[12]);
-    G(ctx->s[2], ctx->s[7], ctx->s[8], ctx->s[13]);
-    G(ctx->s[3], ctx->s[4], ctx->s[9], ctx->s[14]);
+    G(ctx->s, 0, 5, 10, 15);
+    G(ctx->s, 1, 6, 11, 12);
+    G(ctx->s, 2, 7, 8, 13);
+    G(ctx->s, 3, 4, 9, 14);
   }
+
+#undef G
+#undef P
 }
 
-static void init(cf_norx32_ctx *ctx,
+static void init(norx32_ctx *ctx,
                  const uint8_t key[static 16],
                  const uint8_t nonce[static 8])
 {
   /* 1. Basic setup */
-  ctx->s[0] = 0x243f6a88;
-  ctx->s[1] = read32_le(nonce + 0);
-  ctx->s[2] = read32_le(nonce + 4);
-  ctx->s[3] = 0x85a308d3;
+  ctx->s[0] = read32_le(nonce + 0);
+  ctx->s[1] = read32_le(nonce + 4);
+  ctx->s[2] = 0xb707322f;
+  ctx->s[3] = 0xa0c7c90d;
 
   ctx->s[4] = read32_le(key + 0);
   ctx->s[5] = read32_le(key + 4);
   ctx->s[6] = read32_le(key + 8);
   ctx->s[7] = read32_le(key + 12);
 
-  ctx->s[8]  = 0x13198a2e;
-  ctx->s[9]  = 0x03707344;
-  ctx->s[10] = 0x254f537a;
-  ctx->s[11] = 0x38531d48;
+  ctx->s[8] = 0xa3d8d930;
+  ctx->s[9] = 0x3fa8b72c;
+  ctx->s[10] = 0xed84eb49;
+  ctx->s[11] = 0xedca4787;
 
-  ctx->s[12] = 0x839c6e83;
-  ctx->s[13] = 0xf97a3ae5;
-  ctx->s[14] = 0x8c91d88c;
-  ctx->s[15] = 0x11eafB59;
+  ctx->s[12] = 0x335463eb;
+  ctx->s[13] = 0xf994220b;
+  ctx->s[14] = 0xbe0bf5c9;
+  ctx->s[15] = 0xd7c49104;
 
   /* 2. Parameter integration
-   * R = 4
-   * D = 1
-   * W = 32
-   * |A| = 128
+   * w = 32
+   * l = 4
+   * p = 1
+   * t = 128
    */
-  ctx->s[14] ^= (ROUNDS << 26) ^ (DEGREE << 18) ^ (WORD_BITS << 10) ^ TAG_BITS;
+  ctx->s[12] ^= WORD_BITS;
+  ctx->s[13] ^= ROUNDS;
+  ctx->s[14] ^= DEGREE;
+  ctx->s[15] ^= TAG_BITS;
+
   permute(ctx);
 }
 
 /* Input domain separation constant for next step, and final permutation of
  * preceeding step. */
-static void switch_domain(cf_norx32_ctx *ctx, uint32_t constant)
+static void switch_domain(norx32_ctx *ctx, uint32_t constant)
 {
   ctx->s[15] ^= constant;
   permute(ctx);
@@ -113,14 +176,14 @@ static void switch_domain(cf_norx32_ctx *ctx, uint32_t constant)
 
 typedef struct
 {
-  cf_norx32_ctx *ctx;
+  norx32_ctx *ctx;
   uint32_t type;
 } blockctx;
 
 static void input_block_final(void *vctx, const uint8_t *data)
 {
   blockctx *bctx = vctx;
-  cf_norx32_ctx *ctx = bctx->ctx;
+  norx32_ctx *ctx = bctx->ctx;
 
   /* just xor-in data. */
   for (int i = 0; i < RATE_WORDS; i++)
@@ -138,7 +201,7 @@ static void input_block(void *vctx, const uint8_t *data)
   switch_domain(bctx->ctx, bctx->type);
 }
 
-static void input(cf_norx32_ctx *ctx, uint32_t type,
+static void input(norx32_ctx *ctx, uint32_t type,
                   const uint8_t *buf, size_t nbuf)
 {
   uint8_t partial[RATE_BYTES];
@@ -159,7 +222,7 @@ static void input(cf_norx32_ctx *ctx, uint32_t type,
   input_block_final(&bctx, partial);
 }
 
-static void do_header(cf_norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
+static void do_header(norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
 {
   if (nbuf)
   {
@@ -168,7 +231,7 @@ static void do_header(cf_norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
   }
 }
 
-static void do_trailer(cf_norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
+static void do_trailer(norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
 {
   if (nbuf)
   {
@@ -177,7 +240,7 @@ static void do_trailer(cf_norx32_ctx *ctx, const uint8_t *buf, size_t nbuf)
   }
 }
 
-static void body_block_encrypt(cf_norx32_ctx *ctx,
+static void body_block_encrypt(norx32_ctx *ctx,
                                const uint8_t plain[static RATE_BYTES],
                                uint8_t cipher[static RATE_BYTES])
 {
@@ -190,7 +253,7 @@ static void body_block_encrypt(cf_norx32_ctx *ctx,
   }
 }
 
-static void encrypt_body(cf_norx32_ctx *ctx,
+static void encrypt_body(norx32_ctx *ctx,
                          const uint8_t *plain, uint8_t *cipher, size_t nbytes)
 {
   if (nbytes == 0)
@@ -219,7 +282,7 @@ static void encrypt_body(cf_norx32_ctx *ctx,
   memcpy(cipher, partial, nbytes);
 }
 
-static void body_block_decrypt(cf_norx32_ctx *ctx,
+static void body_block_decrypt(norx32_ctx *ctx,
                                const uint8_t cipher[static RATE_BYTES],
                                uint8_t plain[static RATE_BYTES],
                                size_t start, size_t end)
@@ -234,14 +297,14 @@ static void body_block_decrypt(cf_norx32_ctx *ctx,
   }
 }
 
-static void undo_padding(cf_norx32_ctx *ctx, size_t bytes)
+static void undo_padding(norx32_ctx *ctx, size_t bytes)
 {
   assert(bytes < RATE_BYTES);
   ctx->s[bytes / WORD_BYTES] ^= 0x01 << ((bytes % WORD_BYTES) * 8);
   ctx->s[RATE_WORDS - 1] ^= 0x80000000;
 }
 
-static void decrypt_body(cf_norx32_ctx *ctx,
+static void decrypt_body(norx32_ctx *ctx,
                          const uint8_t *cipher, uint8_t *plain, size_t nbytes)
 {
   if (nbytes == 0)
@@ -287,7 +350,7 @@ static void decrypt_body(cf_norx32_ctx *ctx,
   ctx->s[offset] = read32_le(tmp);
 }
 
-static void get_tag(cf_norx32_ctx *ctx, uint8_t tag[static 16])
+static void get_tag(norx32_ctx *ctx, uint8_t tag[static 16])
 {
   switch_domain(ctx, DOMAIN_TAG);
   permute(ctx);
@@ -305,7 +368,7 @@ void cf_norx32_encrypt(const uint8_t key[static 16],
                        uint8_t *ciphertext,
                        uint8_t tag[static 16])
 {
-  cf_norx32_ctx ctx;
+  norx32_ctx ctx;
 
   init(&ctx, key, nonce);
   do_header(&ctx, header, nheader);
@@ -324,7 +387,7 @@ int cf_norx32_decrypt(const uint8_t key[static 16],
                       const uint8_t tag[static 16],
                       uint8_t *plaintext)
 {
-  cf_norx32_ctx ctx;
+  norx32_ctx ctx;
   uint8_t ourtag[16];
 
   init(&ctx, key, nonce);

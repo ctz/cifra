@@ -21,6 +21,17 @@
 /**
  * The Salsa20/Chacha20 stream ciphers
  * ===================================
+ *
+ * These are similar stream ciphers by djb.
+ *
+ * A reduced round variant of Salsa20 (Salsa20/12)
+ * was selected as a finalist of the eSTREAM stream
+ * cipher competition.  This implementation does
+ * the full 20 rounds.
+ *
+ * ChaCha20 is fundamentally like Salsa20, but
+ * has a tweaked round function to improve security
+ * margin without damaging performance.
  */
 
 /* Salsa20 core transform. */
@@ -66,6 +77,7 @@ typedef struct
   const uint8_t *constant;
   uint8_t block[64];
   size_t nblock;
+  size_t ncounter;
 } cf_salsa20_ctx, cf_chacha20_ctx;
 
 /* .. c:type:: cf_chacha20_ctx
@@ -81,17 +93,31 @@ typedef struct
  * :param nkey: length of key in bytes, either 16 or 32.
  * :param nonce: per-message nonce.
  */
-void cf_salsa20_init(cf_salsa20_ctx *ctx, const uint8_t *key, size_t nkey, uint8_t nonce[8]);
+void cf_salsa20_init(cf_salsa20_ctx *ctx, const uint8_t *key, size_t nkey, const uint8_t nonce[8]);
 
 /* .. c:function:: $DECL
  * Chacha20 initialisation function.
  *
- * :param ctx: chacha20 context.
+ * :param ctx: chacha20 context (written).
  * :param key: key material.
  * :param nkey: length of key in bytes, either 16 or 32.
  * :param nonce: per-message nonce.
  */
-void cf_chacha20_init(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey, uint8_t nonce[8]);
+void cf_chacha20_init(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey, const uint8_t nonce[8]);
+
+/* .. c:function:: $DECL
+ * Chacha20 initialisation function.  This version gives full control over the whole
+ * initial nonce value, and the size of the counter.  The counter is always at the front
+ * of the nonce.
+ *
+ * :param ctx: chacha20 context (written).
+ * :param key: key material.
+ * :param nkey: length of key in bytes, either 16 or 32.
+ * :param nonce: per-message nonce.  `ncounter` bytes at the start are the block counter.
+ * :param ncounter: length, in bytes, of the counter portion of the nonce.
+ */
+void cf_chacha20_init_custom(cf_chacha20_ctx *ctx, const uint8_t *key, size_t nkey,
+                             const uint8_t nonce[16], size_t ncounter);
 
 /* .. c:function:: $DECL
  * Salsa20 encryption/decryption function.

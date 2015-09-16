@@ -59,7 +59,9 @@ salsa20
 sha1
 sha2
 sha3
+norx
 poly1305
+chacha20poly1305
 """.split()
 
 # Basic idea of a C identifier

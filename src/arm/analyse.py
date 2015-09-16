@@ -100,7 +100,7 @@ class Function:
         if self.stack_guess is None:
             self.stack_guess = 0
 
-    def stack_usage(self, hints, prog, depth = 0):
+    def stack_usage(self, hints, warns, prog, depth = 0):
         hinted_calls = []
         if self.stack_guess:
             print '    ' * depth, 'stack:', self.name, self.stack_guess, 'bytes'
@@ -109,9 +109,12 @@ class Function:
         if our_hints:
             hints = [h[1:] for h in our_hints]
             hinted_calls = [prog.function_by_name(h[0]) for h in hints if h]
+        else:
+            if self.name in warns:
+                print '    WARN: no calls hints for fn-ptr caller', self.name
 
         if self.calls + hinted_calls:
-            call_usage = max([f.stack_usage(hints, prog, depth + 1) for f in self.calls + hinted_calls])
+            call_usage = max([f.stack_usage(hints, warns, prog, depth + 1) for f in self.calls + hinted_calls])
         else:
             call_usage = 0
         return self.stack_guess + call_usage
@@ -123,6 +126,9 @@ class Program:
         # sequence of tuples naming a call sequence known to occur
         # this allows working out calls through pointers
         self.call_hints = []
+
+        # function names to warn on if we don't have callees
+        self.call_warns = set()
 
     def read_elf(self, elf):
         current_fn = None
@@ -164,24 +170,38 @@ class Program:
     def add_call_hint(self, *seq):
         self.call_hints.append(seq)
 
+    def add_call_warn(self, fn):
+        self.call_warns.add(fn)
+
     def measure_stack(self, name):
         fn = self.function_by_name(name)
         if fn is None:
             return 0
 
-        return fn.stack_usage(self.call_hints, self)
+        return fn.stack_usage(self.call_hints, self.call_warns, self)
+
+_, exe, fn = sys.argv
 
 p = Program()
-p.read_elf(sys.argv[-1])
+p.read_elf(exe)
 
 p.analyse()
+
+# calls which indirect through fn ptrs
+p.add_call_warn('cf_blockwise_accumulate')
+p.add_call_warn('cf_blockwise_accumulate_final')
+
+# hints to resolve those
 p.add_call_hint('cf_sha224_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'sha256_update_block')
 p.add_call_hint('cf_sha256_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'sha256_update_block')
 p.add_call_hint('cf_sha384_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'sha512_update_block')
 p.add_call_hint('cf_sha512_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'sha512_update_block')
+p.add_call_hint('cf_norx32_encrypt', 'input', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'input_block')
+p.add_call_hint('cf_norx32_decrypt', 'input', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'input_block')
+p.add_call_hint('cf_cbcmac_stream_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'cbcmac_process')
+p.add_call_hint('cf_cmac_stream_update', 'cf_blockwise_accumulate', 'cf_blockwise_accumulate_final', 'cmac_process_final_pad')
+p.add_call_hint('cf_cmac_stream_update', 'cf_blockwise_accumulate_final', 'cmac_process')
+p.add_call_hint('cf_cmac_stream_update', 'cf_blockwise_accumulate_final', 'cmac_process_final_nopad')
 
-print 'stack', 'hashtest_sha256', '=', p.measure_stack('hashtest_sha256')
-print 'stack', 'hashtest_sha512', '=', p.measure_stack('hashtest_sha512')
-print 'stack', 'stack_8w', '=', p.measure_stack('stack_8w')
-print 'stack', 'stack_64w', '=', p.measure_stack('stack_64w')
-print 'stack', 'curve25519_test', '=', p.measure_stack('curve25519_test')
+
+print 'stack', fn, '=', p.measure_stack(fn)

@@ -195,6 +195,11 @@ void cf_cbcmac_stream_reset(cf_cbcmac_stream *ctx);
 void cf_cbcmac_stream_update(cf_cbcmac_stream *ctx, const uint8_t *data, size_t ndata);
 
 /* .. c:function:: $DECL
+ * Finish the current block of data by adding zeroes.  Does nothing if there
+ * are no bytes awaiting processing. */
+void cf_cbcmac_stream_finish_block_zero(cf_cbcmac_stream *ctx);
+
+/* .. c:function:: $DECL
  * Output the MAC to ctx->prp->blocksz bytes at out.
  * ctx->used must be zero: the inputed message must be an exact number of
  * blocks. */

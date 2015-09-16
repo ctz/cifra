@@ -132,10 +132,9 @@ void cf_cmac_stream_update(cf_cmac_stream *ctx, const uint8_t *data, size_t len,
   /* Input padding */
   if (needpad)
   {
-    uint8_t pad_block[CF_MAXBLOCK] = { 0x80 };
-    cf_blockwise_accumulate(ctx->buffer, &ctx->used, blocksz,
-                            pad_block, blocksz - ctx->used,
-                            cmac_process_final_pad, ctx);
+    cf_blockwise_acc_pad(ctx->buffer, &ctx->used, blocksz,
+                         0x80, 0x00, 0x00, blocksz - ctx->used,
+                         cmac_process_final_pad, ctx);
   }
 }
 

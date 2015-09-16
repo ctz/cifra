@@ -78,7 +78,7 @@ static inline uint32_t shuffle_in(uint32_t x)
   return x;
 }
 
-static inline cf_sha3_bi read64_bi(const uint8_t data[8])
+static inline void read64_bi(cf_sha3_bi *out, const uint8_t data[8])
 {
   uint32_t lo = read32_le(data + 0),
            hi = read32_le(data + 4);
@@ -86,10 +86,8 @@ static inline cf_sha3_bi read64_bi(const uint8_t data[8])
   lo = shuffle_out(lo);
   hi = shuffle_out(hi);
 
-  cf_sha3_bi out;
-  out.odd = (lo & 0x0000ffff) | (hi << 16);
-  out.evn = (lo >> 16) | (hi & 0xffff0000);
-  return out;
+  out->odd = (lo & 0x0000ffff) | (hi << 16);
+  out->evn = (lo >> 16) | (hi & 0xffff0000);
 }
 
 static inline void write64_bi(const cf_sha3_bi *bi, uint8_t data[8])
@@ -104,32 +102,27 @@ static inline void write64_bi(const cf_sha3_bi *bi, uint8_t data[8])
   write32_le(hi, data + 4);
 }
 
-static inline cf_sha3_bi rotl_bi_1(const cf_sha3_bi *in)
+static inline void rotl_bi_1(cf_sha3_bi *out, const cf_sha3_bi *in)
 {
-  cf_sha3_bi r;
   /* in bit-interleaved representation, a rotation of 1
    * is a swap plus a single rotation of the odd word. */
-  r.odd = rotl32(in->evn, 1);
-  r.evn = in->odd;
-  return r;
+  out->odd = rotl32(in->evn, 1);
+  out->evn = in->odd;
 }
 
-static inline cf_sha3_bi rotl_bi_n(const cf_sha3_bi *in, uint8_t rot)
+static inline void rotl_bi_n(cf_sha3_bi *out, const cf_sha3_bi *in, uint8_t rot)
 {
-  cf_sha3_bi r;
   uint8_t half = rot >> 1;
 
   /* nb. rot is a constant, so this isn't a branch leak. */
   if (rot & 1)
   {
-    r.odd = rotl32(in->evn, half + 1);
-    r.evn = rotl32(in->odd, half);
+    out->odd = rotl32(in->evn, half + 1);
+    out->evn = rotl32(in->odd, half);
   } else {
-    r.evn = rotl32(in->evn, half);
-    r.odd = rotl32(in->odd, half);
+    out->evn = rotl32(in->evn, half);
+    out->odd = rotl32(in->odd, half);
   }
-
-  return r;
 }
 
 /* --- */
@@ -147,7 +140,8 @@ static void absorb(cf_sha3_context *ctx, const uint8_t *data, uint16_t sz)
 
   for (uint16_t x = 0, y = 0, i = 0; i < lanes; i++)
   {
-    cf_sha3_bi bi = read64_bi(data);
+    cf_sha3_bi bi;
+    read64_bi(&bi, data);
     ctx->A[x][y].odd ^= bi.odd;
     ctx->A[x][y].evn ^= bi.evn;
     data += 8;
@@ -184,7 +178,8 @@ static void theta(cf_sha3_context *ctx)
 
   for (int x = 0; x < 5; x++)
   {
-    cf_sha3_bi r = rotl_bi_1(&C[MOD5(x + 1)]);
+    cf_sha3_bi r;
+    rotl_bi_1(&r, &C[MOD5(x + 1)]);
     D[x].odd = C[MOD5(x - 1)].odd ^ r.odd;
     D[x].evn = C[MOD5(x - 1)].evn ^ r.evn;
 
@@ -202,7 +197,7 @@ static void rho_pi_chi(cf_sha3_context *ctx)
 
   for (int x = 0; x < 5; x++)
     for (int y = 0; y < 5; y++)
-      B[y][MOD5(2 * x + 3 * y)] = rotl_bi_n(&ctx->A[x][y], rotation_constants[y][x]);
+      rotl_bi_n(&B[y][MOD5(2 * x + 3 * y)], &ctx->A[x][y], rotation_constants[y][x]);
 
   for (int x = 0; x < 5; x++)
   {
@@ -311,21 +306,12 @@ static void sha3_update(cf_sha3_context *ctx, const void *data, size_t nbytes)
 
 static void pad(cf_sha3_context *ctx, uint8_t domain, size_t npad)
 {
-  uint8_t padding[CF_SHA3_224_BLOCKSZ];
-
   assert(npad >= 1);
 
-  if (npad == 1)
-  {
-    padding[0] = domain | 0x80;
-    sha3_update(ctx, padding, 1);
-    return;
-  }
-
-  memset(padding, 0, npad);
-  padding[0] = domain;
-  padding[npad - 1] = 0x80;
-  sha3_update(ctx, padding, npad);
+  cf_blockwise_acc_pad(ctx->partial, &ctx->npartial, ctx->rate,
+                       domain, 0x00, 0x80,
+                       npad,
+                       sha3_block, ctx);
 }
 
 static void pad_and_squeeze(cf_sha3_context *ctx, uint8_t *out, size_t nout)
