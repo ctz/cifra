@@ -87,9 +87,9 @@ the initial key schedule.
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 57050  | 796B  | 2592B
-Cortex-M3  | 44319  | 812B  | 2636B
-Cortex-M4F | 43670  | 812B  | 2636B
+Cortex-M0  | 57022  | 796B  | 2600B
+Cortex-M3  | 44306  | 812B  | 2644B
+Cortex-M4F | 43657  | 812B  | 2644B
 
 ## AES128-EAX
 This test encrypts and authenticates a 16 byte message,
@@ -98,9 +98,9 @@ the initial key schedule.
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 50431  | 916B  | 2556B
-Cortex-M3  | 32741  | 900B  | 2528B
-Cortex-M4F | 32048  | 900B  | 2528B
+Cortex-M0  | 50564  | 932B  | 2836B
+Cortex-M3  | 32855  | 932B  | 2780B
+Cortex-M4F | 32159  | 932B  | 2780B
 
 ## AES128-CCM
 This test encrypts and authenticates a 16 byte message,
@@ -109,9 +109,9 @@ the initial key schedule.
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 40411  | 796B  | 2272B
-Cortex-M3  | 26744  | 780B  | 2248B
-Cortex-M4F | 26193  | 780B  | 2244B
+Cortex-M0  | 37677  | 772B  | 2280B
+Cortex-M3  | 24462  | 780B  | 2256B
+Cortex-M4F | 23949  | 780B  | 2256B
 
 ## NORX32
 This test encrypts and authenticates a 16 byte message,
@@ -149,36 +149,36 @@ This test hashes the empty string (one compression function invocation).
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 22139  | 288B  | 1480B
-Cortex-M3  | 15213  | 276B  | 1444B
-Cortex-M4F | 14908  | 276B  | 1444B
+Cortex-M0  | 11561  | 312B  | 1760B
+Cortex-M3  | 6530   | 300B  | 1708B
+Cortex-M4F | 6278   | 300B  | 1708B
 
 ## SHA512
 This test hashes the empty string (one compression function invocation).
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 59932  | 764B  | 2592B
-Cortex-M3  | 46525  | 812B  | 2724B
-Cortex-M4F | 46423  | 812B  | 2716B
+Cortex-M0  | 38447  | 796B  | 2888B
+Cortex-M3  | 28771  | 836B  | 2988B
+Cortex-M4F | 28777  | 836B  | 2980B
 
 ## SHA3-256
 This test hashes the empty string (one sponge permutation).
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 96113  | 944B  | 1924B
-Cortex-M3  | 74399  | 936B  | 1904B
-Cortex-M4F | 72056  | 936B  | 1884B
+Cortex-M0  | 93648  | 848B  | 2212B
+Cortex-M3  | 74321  | 856B  | 2164B
+Cortex-M4F | 72215  | 856B  | 2140B
 
 ## SHA3-512
 This test hashes the empty string (one sponge permutation).
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 95462  | 976B  | 1924B
-Cortex-M3  | 73923  | 968B  | 1904B
-Cortex-M4F | 71596  | 968B  | 1884B
+Cortex-M0  | 92565  | 880B  | 2212B
+Cortex-M3  | 73509  | 888B  | 2164B
+Cortex-M4F | 71419  | 888B  | 2140B
 
 ## HMAC-SHA256
 This test computes a MAC with a 32 byte key over the
@@ -186,9 +186,9 @@ message "hello world".
 
 Core       | Cycles | Stack | Code size
 ---------- | ------ | ----- | ---------
-Cortex-M0  | 61983  | 1328B | 1920B
-Cortex-M3  | 39042  | 1324B | 1872B
-Cortex-M4F | 37983  | 1324B | 1872B
+Cortex-M0  | 48924  | 1328B | 2200B
+Cortex-M3  | 28333  | 1324B | 2132B
+Cortex-M4F | 27337  | 1324B | 2132B
 
 ## Poly1305-AES
 This test computes a MAC with a 32 byte key over the
