@@ -172,18 +172,15 @@ void cf_sha256_digest_final(cf_sha256_context *ctx, uint8_t hash[CF_SHA256_HASHS
   digested_bytes = digested_bytes * CF_SHA256_BLOCKSZ + ctx->npartial;
   uint64_t digested_bits = digested_bytes * 8;
 
-  size_t zeroes = CF_SHA256_BLOCKSZ - ((digested_bytes + 1 + 8) % CF_SHA256_BLOCKSZ);
+  size_t padbytes = CF_SHA256_BLOCKSZ - ((digested_bytes + 8) % CF_SHA256_BLOCKSZ);
 
   /* Hash 0x80 00 ... block first. */
-  uint8_t buf[8];
-  buf[0] = 0x80;
-  buf[1] = 0x00;
-  cf_sha256_update(ctx, &buf[0], 1);
-
-  while (zeroes--)
-    cf_sha256_update(ctx, &buf[1], 1);
+  cf_blockwise_acc_pad(ctx->partial, &ctx->npartial, sizeof ctx->partial,
+                       0x80, 0x00, 0x00, padbytes,
+                       sha256_update_block, ctx);
 
   /* Now hash length. */
+  uint8_t buf[8];
   write64_be(digested_bits, buf);
   cf_sha256_update(ctx, buf, 8);
 

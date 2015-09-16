@@ -53,6 +53,16 @@ void cf_cbcmac_stream_update(cf_cbcmac_stream *ctx, const uint8_t *data, size_t 
                           ctx);
 }
 
+void cf_cbcmac_stream_finish_block_zero(cf_cbcmac_stream *ctx)
+{
+  if (ctx->used == 0)
+    return;
+
+  memset(ctx->buffer + ctx->used, 0, ctx->prp->blocksz - ctx->used);
+  cbcmac_process(ctx, ctx->buffer);
+  ctx->used = 0;
+}
+
 void cf_cbcmac_stream_nopad_final(cf_cbcmac_stream *ctx, uint8_t out[CF_MAXBLOCK])
 {
   assert(ctx->used == 0);
@@ -62,7 +72,8 @@ void cf_cbcmac_stream_nopad_final(cf_cbcmac_stream *ctx, uint8_t out[CF_MAXBLOCK
 void cf_cbcmac_stream_pad_final(cf_cbcmac_stream *ctx, uint8_t out[CF_MAXBLOCK])
 {
   uint8_t npad = ctx->prp->blocksz - ctx->used;
-  for (size_t i = 0; i < npad; i++)
-    cf_cbcmac_stream_update(ctx, &npad, 1);
+  cf_blockwise_acc_byte(ctx->buffer, &ctx->used, ctx->prp->blocksz,
+                        npad, npad,
+                        cbcmac_process, ctx);
   cf_cbcmac_stream_nopad_final(ctx, out);
 }

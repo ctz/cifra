@@ -35,9 +35,7 @@ static void write_be(uint8_t *out, size_t value, size_t bytes)
 
 static void zero_pad(cf_cbcmac_stream *cm)
 {
-  const uint8_t zero_byte = 0;
-  while (cm->used != 0)
-    cf_cbcmac_stream_update(cm, &zero_byte, 1);
+  cf_cbcmac_stream_finish_block_zero(cm);
 }
 
 /* nb. block is general workspace. */

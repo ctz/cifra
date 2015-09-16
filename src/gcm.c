@@ -56,7 +56,7 @@ static void ghash_block(void *vctx, const uint8_t *data)
 static void ghash_add(ghash_ctx *ctx, const uint8_t *buf, size_t n)
 {
   cf_blockwise_accumulate(ctx->buffer, &ctx->buffer_used,
-                          16,
+                          sizeof ctx->buffer,
                           buf, n,
                           ghash_block,
                           ctx);
@@ -64,9 +64,12 @@ static void ghash_add(ghash_ctx *ctx, const uint8_t *buf, size_t n)
 
 static void ghash_add_pad(ghash_ctx *ctx)
 {
-  uint8_t byte = 0x00;
-  while (ctx->buffer_used != 0)
-    ghash_add(ctx, &byte, 1);
+  if (ctx->buffer_used == 0)
+    return;
+
+  memset(ctx->buffer + ctx->buffer_used, 0, sizeof(ctx->buffer) - ctx->buffer_used);
+  ghash_block(ctx, ctx->buffer);
+  ctx->buffer_used = 0;
 }
 
 static void ghash_add_aad(ghash_ctx *ctx, const uint8_t *buf, size_t n)

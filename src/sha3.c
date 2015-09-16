@@ -311,21 +311,12 @@ static void sha3_update(cf_sha3_context *ctx, const void *data, size_t nbytes)
 
 static void pad(cf_sha3_context *ctx, uint8_t domain, size_t npad)
 {
-  uint8_t padding[CF_SHA3_224_BLOCKSZ];
-
   assert(npad >= 1);
 
-  if (npad == 1)
-  {
-    padding[0] = domain | 0x80;
-    sha3_update(ctx, padding, 1);
-    return;
-  }
-
-  memset(padding, 0, npad);
-  padding[0] = domain;
-  padding[npad - 1] = 0x80;
-  sha3_update(ctx, padding, npad);
+  cf_blockwise_acc_pad(ctx->partial, &ctx->npartial, ctx->rate,
+                       domain, 0x00, 0x80,
+                       npad,
+                       sha3_block, ctx);
 }
 
 static void pad_and_squeeze(cf_sha3_context *ctx, uint8_t *out, size_t nout)
