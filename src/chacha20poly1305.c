@@ -112,7 +112,7 @@ static int process(const uint8_t key[static 32],
 }
 
 void cf_chacha20poly1305_encrypt(const uint8_t key[static 32],
-                                 const uint8_t nonce[static 8],
+                                 const uint8_t nonce[static 12],
                                  const uint8_t *header, size_t nheader,
                                  const uint8_t *plaintext, size_t nbytes,
                                  uint8_t *ciphertext,
@@ -128,7 +128,7 @@ void cf_chacha20poly1305_encrypt(const uint8_t key[static 32],
 }
 
 int cf_chacha20poly1305_decrypt(const uint8_t key[static 32],
-                                const uint8_t nonce[static 8],
+                                const uint8_t nonce[static 12],
                                 const uint8_t *header, size_t nheader,
                                 const uint8_t *ciphertext, size_t nbytes,
                                 const uint8_t tag[static 16],

@@ -225,6 +225,14 @@ Cifra requires `memcpy`, `memset`, and `abort`.
 * Constant time curve25519 for Cortex-M4F using the FPU.
 * Constant time curve25519 for Cortex-M3 (avoiding the variable-time multiplier).
 
+## Notable past bugs/advisories
+* [Issue #2](https://github.com/ctz/cifra/issues/2): in all versions before commit
+  [d62aa26e](https://github.com/ctz/cifra/commit/d62aa26e2c3c49e5b8a4298644cff290406d9357)
+  (September 16th 2015) too much padding was added when hashing messages of certain
+  lengths.  Specifically, messages whose length satisfied `len % 64 = 55` for
+  SHA1/SHA224/SHA256 or `len % 128 = 119` for SHA384/SHA512.  SHA3 was not affected.
+  Better testing is now in place.
+
 ## License
 [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 
