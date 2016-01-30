@@ -62,6 +62,7 @@ sha3
 norx
 poly1305
 chacha20poly1305
+drbg
 """.split()
 
 # Basic idea of a C identifier
