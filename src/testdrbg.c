@@ -13,6 +13,9 @@
  */
 
 #include "drbg.h"
+#include "sha1.h"
+#include "sha2.h"
+
 #include "handy.h"
 #include "cutest.h"
 #include "testutil.h"
@@ -72,9 +75,132 @@ static void test_hashdrbg_sha256_vector_addnl(void)
   TEST_CHECK(memcmp(got, expect, sizeof got) == 0);
 }
 
+static void test_hmacdrbg_sha1_vector(void)
+{
+  uint8_t entropy[16], nonce[8], reseed[16], got[80], expect[80];
+
+  /* HMAC_DRBG.rsp, line 8. */
+  unhex(entropy, sizeof entropy, "79349bbf7cdda5799557866621c91383");
+  unhex(nonce, sizeof nonce, "1146733abf8c35c8");
+  unhex(reseed, sizeof reseed, "c7215b5b96c48e9b338c74e3e99dfedf");
+  unhex(expect, sizeof expect, "c6a16ab8d420706f0f34ab7fec5adca9d8ca3a133e159ca6ac43c6f8a2be22834a4c0a0affb10d7194f1c1a5cf7322ec1ae0964ed4bf122746e087fdb5b3e91b3493d5bb98faed49e85f130fc8a459b7");
+
+  cf_hmac_drbg ctx;
+  cf_hmac_drbg_init(&ctx, &cf_sha1, entropy, sizeof entropy, nonce, sizeof nonce, NULL, 0);
+  cf_hmac_drbg_reseed(&ctx, reseed, sizeof reseed, NULL, 0);
+  cf_hmac_drbg_gen(&ctx, got, sizeof got);
+  cf_hmac_drbg_gen(&ctx, got, sizeof got);
+  TEST_CHECK(memcmp(got, expect, sizeof got) == 0);
+}
+
+static void test_hmacdrbg_sha1_vector_addnl(void)
+{
+  uint8_t entropy[16], nonce[8], reseed[16], got[80], expect[80], addnl[16];
+
+  /* HMAC_DRBG.rsp, line 174. */
+  unhex(entropy, sizeof entropy, "7d7052a776fd2fb3d7191f733304ee8b");
+  unhex(nonce, sizeof nonce, "be4a0ceedca80207");
+  unhex(reseed, sizeof reseed, "49047e879d610955eed916e4060e00c9");
+  unhex(expect, sizeof expect, "a736343844fc92511391db0addd9064dbee24c8976aa259a9e3b6368aa6de4c9bf3a0effcda9cb0e9dc33652ab58ecb7650ed80467f76a849fb1cfc1ed0a09f7155086064db324b1e124f3fc9e614fcb");
+
+  cf_hmac_drbg ctx;
+  cf_hmac_drbg_init(&ctx, &cf_sha1, entropy, sizeof entropy, nonce, sizeof nonce, NULL, 0);
+  unhex(addnl, sizeof addnl, "fd8bb33aab2f6cdfbc541811861d518d");
+  cf_hmac_drbg_reseed(&ctx, reseed, sizeof reseed, addnl, sizeof addnl);
+  unhex(addnl, sizeof addnl, "99afe347540461ddf6abeb491e0715b4");
+  cf_hmac_drbg_gen_additional(&ctx, addnl, sizeof addnl, got, sizeof got);
+  unhex(addnl, sizeof addnl, "02f773482dd7ae66f76e381598a64ef0");
+  cf_hmac_drbg_gen_additional(&ctx, addnl, sizeof addnl, got, sizeof got);
+  TEST_CHECK(memcmp(got, expect, sizeof got) == 0);
+}
+
+static void test_hmacdrbg_sha256_vector(void)
+{
+  uint8_t entropy[32], nonce[16], reseed[32], got[128], expect[128];
+
+  /* HMAC_DRBG.rsp, line 5064. */
+  unhex(entropy, sizeof entropy, "06032cd5eed33f39265f49ecb142c511da9aff2af71203bffaf34a9ca5bd9c0d");
+  unhex(nonce, sizeof nonce, "0e66f71edc43e42a45ad3c6fc6cdc4df");
+  unhex(reseed, sizeof reseed, "01920a4e669ed3a85ae8a33b35a74ad7fb2a6bb4cf395ce00334a9c9a5a5d552");
+  unhex(expect, sizeof expect, "76fc79fe9b50beccc991a11b5635783a83536add03c157fb30645e611c2898bb2b1bc215000209208cd506cb28da2a51bdb03826aaf2bd2335d576d519160842e7158ad0949d1a9ec3e66ea1b1a064b005de914eac2e9d4f2d72a8616a80225422918250ff66a41bd2f864a6a38cc5b6499dc43f7f2bd09e1e0f8f5885935124");
+
+  cf_hmac_drbg ctx;
+  cf_hmac_drbg_init(&ctx, &cf_sha256, entropy, sizeof entropy, nonce, sizeof nonce, NULL, 0);
+  cf_hmac_drbg_reseed(&ctx, reseed, sizeof reseed, NULL, 0);
+  cf_hmac_drbg_gen(&ctx, got, sizeof got);
+  cf_hmac_drbg_gen(&ctx, got, sizeof got);
+  TEST_CHECK(memcmp(got, expect, sizeof got) == 0);
+}
+
+static void test_hmacdrbg_sha256_vector_addnl(void)
+{
+  uint8_t entropy[32], nonce[16], reseed[32], got[128], expect[128], addnl[32];
+
+  /* HMAC_DRBG.rsp, line 5230. */
+  unhex(entropy, sizeof entropy, "05ac9fc4c62a02e3f90840da5616218c6de5743d66b8e0fbf833759c5928b53d");
+  unhex(nonce, sizeof nonce, "2b89a17904922ed8f017a63044848545");
+  unhex(reseed, sizeof reseed, "2791126b8b52ee1fd9392a0a13e0083bed4186dc649b739607ac70ec8dcecf9b");
+  unhex(expect, sizeof expect, "02ddff5173da2fcffa10215b030d660d61179e61ecc22609b1151a75f1cbcbb4363c3a89299b4b63aca5e581e73c860491010aa35de3337cc6c09ebec8c91a6287586f3a74d9694b462d2720ea2e11bbd02af33adefb4a16e6b370fa0effd57d607547bdcfbb7831f54de7073ad2a7da987a0016a82fa958779a168674b56524");
+
+  cf_hmac_drbg ctx;
+  cf_hmac_drbg_init(&ctx, &cf_sha256, entropy, sizeof entropy, nonce, sizeof nonce, NULL, 0);
+  unhex(addnl, sizeof addnl, "43bac13bae715092cf7eb280a2e10a962faf7233c41412f69bc74a35a584e54c");
+  cf_hmac_drbg_reseed(&ctx, reseed, sizeof reseed, addnl, sizeof addnl);
+  unhex(addnl, sizeof addnl, "3f2fed4b68d506ecefa21f3f5bb907beb0f17dbc30f6ffbba5e5861408c53a1e");
+  cf_hmac_drbg_gen_additional(&ctx, addnl, sizeof addnl, got, sizeof got);
+  unhex(addnl, sizeof addnl, "529030df50f410985fde068df82b935ec23d839cb4b269414c0ede6cffea5b68");
+  cf_hmac_drbg_gen_additional(&ctx, addnl, sizeof addnl, got, sizeof got);
+  TEST_CHECK(memcmp(got, expect, sizeof got) == 0);
+}
+
+static void test_hmacdrbg_sha512_vector(void)
+{
+  uint8_t entropy[32], nonce[16], reseed[32], got[256], expect[256];
+
+  /* HMAC_DRBG.rsp, line 10120. */
+  unhex(entropy, sizeof entropy, "48c121b18733af15c27e1dd9ba66a9a81a5579cdba0f5b657ec53c2b9e90bbf6");
+  unhex(nonce, sizeof nonce, "bbb7c777428068fad9970891f879b1af");
+  unhex(reseed, sizeof reseed, "e0ffefdadb9ccf990504d568bdb4d862cbe17ccce6e22dfcab8b4804fd21421a");
+  unhex(expect, sizeof expect, "05da6aac7d980da038f65f392841476d37fe70fbd3e369d1f80196e66e54b8fadb1d60e1a0f3d4dc173769d75fc3410549d7a843270a54a068b4fe767d7d9a59604510a875ad1e9731c8afd0fd50b825e2c50d062576175106a9981be37e02ec7c5cd0a69aa0ca65bddaee1b0de532e10cfa1f5bf6a026e47379736a099d6750ab121dbe3622b841baf8bdcbe875c85ba4b586b8b5b57b0fecbec08c12ff2a9453c47c6e32a52103d972c62ab9affb8e728a31fcefbbccc556c0f0a35f4b10ace2d96b906e36cbb72233201e536d3e13b045187b417d2449cad1edd192e061f12d22147b0a176ea8d9c4c35404395b6502ef333a813b6586037479e0fa3c6a23");
+
+  cf_hmac_drbg ctx;
+  cf_hmac_drbg_init(&ctx, &cf_sha512, entropy, sizeof entropy, nonce, sizeof nonce, NULL, 0);
+  cf_hmac_drbg_reseed(&ctx, reseed, sizeof reseed, NULL, 0);
+  cf_hmac_drbg_gen(&ctx, got, sizeof got);
+  cf_hmac_drbg_gen(&ctx, got, sizeof got);
+  TEST_CHECK(memcmp(got, expect, sizeof got) == 0);
+}
+
+static void test_hmacdrbg_sha512_vector_addnl(void)
+{
+  uint8_t entropy[32], nonce[16], reseed[32], got[256], expect[256], addnl[32];
+
+  /* HMAC_DRBG.rsp, line 10286. */
+  unhex(entropy, sizeof entropy, "4686a959e17dfb96c294b09c0f7a60efb386416cfb4c8972bcc55e44a151607a");
+  unhex(nonce, sizeof nonce, "5226543b4c89321bbfb0f11f18ee3462");
+  unhex(reseed, sizeof reseed, "5ef50daaf29929047870235c17762f5df5d9ab1af656e0e215fcc6fd9fc0d85d");
+  unhex(expect, sizeof expect, "b60d8803531b2b8583d17bdf3ac7c01f3c65cf9b069862b2d39b9024b34c172b712db0704acb078a1ab1aec0390dbaee2dec9be7b234e63da481fd469a92c77bc7bb2cfca586855520e0f9e9d47dcb9bdf2a2fdfa9f2b4342ef0ea582616b55477717cfd516d46d6383257743656f7cf8b38402ba795a8c9d35a4aa88bec623313dad6ead689d152b54074f183b2fee556f554db343626cea853718f18d386bc8bebb0c07b3c5e96ceb391ffceece88864dbd3be83a613562c5c417a24807d5f9332974f045e79a9ade36994af6cf9bbeeb71d0025fcb4ad50f121cbc2df7cd12ff5a50cddfd9a4bbc6d942d743c8b8fbebe00eeccea3d14e07ff8454fa715da");
+
+  cf_hmac_drbg ctx;
+  cf_hmac_drbg_init(&ctx, &cf_sha512, entropy, sizeof entropy, nonce, sizeof nonce, NULL, 0);
+  unhex(addnl, sizeof addnl, "d2383c3e528492269e6c3b3aaa2b54fbf48731f5aa52150ce7fc644679a5e7c6");
+  cf_hmac_drbg_reseed(&ctx, reseed, sizeof reseed, addnl, sizeof addnl);
+  unhex(addnl, sizeof addnl, "c841e7a2d9d13bdb8644cd7f5d91d241a369e12dc6c9c2be50d1ed29484bff98");
+  cf_hmac_drbg_gen_additional(&ctx, addnl, sizeof addnl, got, sizeof got);
+  unhex(addnl, sizeof addnl, "9054cf9216af66a788d3bf6757b8987e42d4e49b325e728dc645d5e107048245");
+  cf_hmac_drbg_gen_additional(&ctx, addnl, sizeof addnl, got, sizeof got);
+  TEST_CHECK(memcmp(got, expect, sizeof got) == 0);
+}
+
 TEST_LIST = {
-  { "hashdrbg-sha256-1", test_hashdrbg_sha256_vector },
-  { "hashdrbg-sha256-2", test_hashdrbg_sha256_vector_addnl },
+  { "hashdrbg-sha256", test_hashdrbg_sha256_vector },
+  { "hashdrbg-sha256-addnl", test_hashdrbg_sha256_vector_addnl },
+  { "hmacdrbg-sha1", test_hmacdrbg_sha1_vector },
+  { "hmacdrbg-sha1-addnl", test_hmacdrbg_sha1_vector_addnl },
+  { "hmacdrbg-sha256", test_hmacdrbg_sha256_vector },
+  { "hmacdrbg-sha256-addnl", test_hmacdrbg_sha256_vector_addnl },
+  { "hmacdrbg-sha512", test_hmacdrbg_sha512_vector },
+  { "hmacdrbg-sha512-addnl", test_hmacdrbg_sha512_vector_addnl },
   { 0 }
 };
 

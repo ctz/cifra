@@ -25,6 +25,7 @@ Contents:
    sha1
    sha2
    sha3
+   drbg
 
 Index
 -----
