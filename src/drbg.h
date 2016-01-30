@@ -25,8 +25,8 @@
  * the underlying hash function.
  *
  * This generator enforces a `reseed_interval` of 2^32-1:
- * use the `cf_hash_drbg_sha256_needs_reseed` to check
- * whether you need to reseed before use, and reseed using
+ * use `cf_hash_drbg_sha256_needs_reseed` to check whether
+ * you need to reseed before use, and reseed using
  * `cf_hash_drbg_sha256_reseed`.  If you try to use the
  * generator when it thinks it needs reseeding, it will
  * call abort().
@@ -51,8 +51,8 @@
  * Current update offset.
  *
  * .. c:member:: cf_hash_drbg_sha256.reseed_counter
- * Current number of times entropy has been
- * extracted from generator.
+ * Current number of times entropy has been extracted from
+ * generator.
  */
 typedef struct
 {
