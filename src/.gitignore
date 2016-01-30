@@ -12,3 +12,4 @@ testcurve25519
 testpoly1305
 testnorx
 testchacha20poly1305
+testdrbg
