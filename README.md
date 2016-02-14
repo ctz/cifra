@@ -42,7 +42,7 @@ There is quite a lot of testing available:
   runs assorted test programs.
 * **Emulated embedded builds**: run `make test` in the `src/arm` directory.  This
   expects to find `qemu-system-gnuarmeclipse` on the path.  These tests assume
-  a Cortex-M0 target.
+  a Cortex-M3 target.
 * **Cortex-M0 on-target tests**: run `make test.stm32f0` in the `src/arm` directory.
   This expects to find `openocd` on the path, with an STM32F0xx attached via
   stlinkv2.  It uses ARM semihosting to report results.

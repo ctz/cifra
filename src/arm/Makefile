@@ -19,14 +19,14 @@ AEADS = aeadperf_aes128gcm \
 	aeadperf_norx \
 	aeadperf_chacha20poly1305
 TESTS = testcurve25519 testaes testmodes testsalsa20 testsha1 testsha2 \
-	testsha3 testpoly1305 testnorx testchacha20poly1305
-ARCHS = stm32f0 stm32f1 stm32f3 efm32 qemucm0
+	testsha3 testpoly1305 testnorx testchacha20poly1305 testdrbg
+ARCHS = stm32f0 stm32f1 stm32f3 efm32 qemucm3
 
 all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(AEADS) $(TESTS)) \
 	$(patsubst %,%.stm32f1.bin,$(FUNCS) $(AEADS) $(TESTS)) \
 	$(patsubst %,%.stm32f3.bin,$(FUNCS) $(AEADS) $(TESTS)) \
 	$(patsubst %,%.efm32.bin,$(FUNCS) $(AEADS) $(TESTS)) \
-	$(patsubst %,%.qemucm0.bin,$(FUNCS) $(AEADS) $(TESTS))
+	$(patsubst %,%.qemucm3.bin,$(FUNCS) $(AEADS) $(TESTS))
 
 %.stm32f0.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* -lgcc
@@ -40,8 +40,8 @@ all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(AEADS) $(TESTS)) \
 %.efm32.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.efm32.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* -lgcc
 
-%.qemucm0.elf:
-	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.qemucm0.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* -lgcc
+%.qemucm3.elf:
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.qemucm3.ld -mcpu=cortex-m3 -DCORTEX_M3 -o $@ $^ -DTEST=$* -lgcc
 
 %.bin: %.elf
 	arm-none-eabi-objcopy -O binary $< $@
@@ -84,13 +84,13 @@ SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
        ../aes.c ../eax.c ../gcm.c ../cbcmac.c ../ccm.c \
        ../modes.c ../cmac.c ../gf128.c \
        ../hmac.c ../pbkdf2.c ../salsa20.c ../chacha20.c \
-       ../norx.c ../chacha20poly1305.c
+       ../norx.c ../chacha20poly1305.c ../drbg.c
 
 $(patsubst %,%.stm32f0.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.stm32f1.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.stm32f3.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.efm32.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
-$(patsubst %,%.qemucm0.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c
+$(patsubst %,%.qemucm3.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
 
 $(patsubst %,testcurve25519.%.elf, $(ARCHS)): $(SRCS) $(CURVESRCS) ../testcurve25519.c
 $(patsubst %,testaes.%.elf, $(ARCHS)): $(SRCS) ../testaes.c
@@ -102,10 +102,11 @@ $(patsubst %,testsha3.%.elf, $(ARCHS)): $(SRCS) ../testsha3.c
 $(patsubst %,testpoly1305.%.elf, $(ARCHS)): $(SRCS) ../testpoly1305.c
 $(patsubst %,testnorx.%.elf, $(ARCHS)): $(SRCS) ../testnorx.c
 $(patsubst %,testchacha20poly1305.%.elf, $(ARCHS)): $(SRCS) ../testchacha20poly1305.c
+$(patsubst %,testdrbg.%.elf, $(ARCHS)): $(SRCS) ../testdrbg.c
 
-run.%.qemucm0: %.qemucm0.bin
+run.%.qemucm3: %.qemucm3.bin
 	arm-none-eabi-readelf -l $(patsubst %.bin,%.elf,$^) > $@.log
-	qemu-system-gnuarmeclipse -verbose -verbose -M STM32F0-Discovery -kernel $^ -semihosting -nographic -monitor null -serial null 2>> $@.log
+	qemu-system-gnuarmeclipse -verbose -verbose -M STM32-P103 -kernel $^ -semihosting -nographic -monitor null -serial null 2>> $@.log
 	cat $@.log
 
 run.%.efm32: %.efm32.elf
@@ -164,7 +165,7 @@ run.%.stm32f3: %.stm32f3.elf
 		-ex 'monitor wait_halt 720000' \
 		-ex 'monitor shutdown'
 
-test: $(patsubst %,run.%.qemucm0,$(FUNCS) $(TESTS))
+test: $(patsubst %,run.%.qemucm3,$(FUNCS) $(TESTS))
 .PHONY: test
 
 perf.stm32f0: $(patsubst %,run.%.stm32f0,$(FUNCS))
