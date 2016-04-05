@@ -21,6 +21,13 @@
 #include "cutest.h"
 #include "testutil.h"
 
+/* Some tests are too big for microcontrollers. */
+#if defined(CORTEX_M0) || defined(CORTEX_M3) || defined(CORTEX_M4)
+# define MCU_TARGET 1
+#else
+# define MCU_TARGET 0
+#endif
+
 static void test_cbc(void)
 {
   uint8_t out[16];
@@ -466,16 +473,15 @@ static void check_ccm(const void *key, size_t nkey,
   TEST_CHECK(err == 1);
 }
 
+#if !MCU_TARGET
 static void fill(uint8_t *buf, size_t len, uint8_t b)
 {
   for (size_t i = 0; i < len; i++)
     buf[i] = b++;
 }
 
-static void check_ccm_long(void)
+static void test_ccm_long(void)
 {
-  /* This test is too big for embedded runs.  Needs a streaming interface. */
-#if ! (defined(CORTEX_M0) || defined(CORTEX_M3) || defined(CORTEX_M4))
   /* This is example 4 from SP800-38C, to test the long AAD code path. */
   uint8_t header[0x10000];
   uint8_t key[16];
@@ -503,10 +509,8 @@ static void check_ccm_long(void)
 
   TEST_CHECK(memcmp(expect_tag, tag, sizeof tag) == 0);
   TEST_CHECK(memcmp(expect_cipher, cipher, sizeof cipher) == 0);
-#endif
-
-  (void) fill;
 }
+#endif
 
 static void test_ccm(void)
 {
@@ -530,8 +534,6 @@ static void test_ccm(void)
             "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b", 12,
             "\xe3\xb2\x01\xa9\xf5\xb7\x1a\x7a\x9b\x1c\xea\xec\xcd\x97\xe7\x0b\x61\x76\xaa\xd9\xa4\x42\x8a\xa5", 24,
             "\x48\x43\x92\xfb\xc1\xb0\x99\x51", 8);
-
-  check_ccm_long();
 }
 
 static void check_ocb(const void *key, size_t nkey,
@@ -697,6 +699,94 @@ static void test_ocb(void)
             "\x47\x9A\xD3\x63\xAC\x36\x6B\x95\xA9\x8C\xA5\xF3\x00\x0B\x14\x79", 16);
 }
 
+#if !MCU_TARGET
+static void check_ocb_long(size_t nkey, const void *expect_tag, size_t ntag)
+{
+  uint8_t C[22400];
+  uint8_t K[32];
+  uint8_t S[128] = { 0 };
+  uint8_t N[12] = { 0 };
+  size_t nC = 0;
+
+  memset(K, 0, sizeof K);
+  K[nkey - 1] = ntag * 8;
+
+  cf_aes_context aes;
+  cf_aes_init(&aes, K, nkey);
+
+  for (size_t i = 0; i < 128; i++)
+  {
+    /* N = num2str(3i+1, 96) */
+    memset(N, 0, sizeof N);
+    write32_be(3 * i + 1, N + 8);
+
+    /* C = C || OCB-ENCRYPT(K, N, S, S)
+     * nb. OCB-ENCRYPT(Key, Nonce, AAD, Plain) */
+    cf_ocb_encrypt(&cf_aes, &aes,
+                   S, i,        /* plain */
+                   S, i,        /* aad */
+                   N, sizeof N, /* nonce */
+                   C + nC,      /* cipher out */
+                   C + nC + i,  /* tag out */
+                   ntag);
+    nC += i + ntag;
+
+    /* N = num2str(3i+2,96) */
+    write32_be(3 * i + 2, N + 8);
+
+    /* C = C || OCB-ENCRYPT(K, N, <empty string>, S) */
+    cf_ocb_encrypt(&cf_aes, &aes,
+                   S, i,
+                   NULL, 0,
+                   N, sizeof N,
+                   C + nC,
+                   C + nC + i,
+                   ntag);
+    nC += i + ntag;
+
+    /* N = num2str(3i+3,96) */
+    write32_be(3 * i + 3, N + 8);
+
+    /* C = C || OCB-ENCRYPT(K, N, S, <empty string>) */
+    cf_ocb_encrypt(&cf_aes, &aes,
+                   NULL, 0,
+                   S, i,
+                   N, sizeof N,
+                   NULL,
+                   C + nC,
+                   ntag);
+    nC += ntag;
+  }
+
+  /* N = num2str(385, 96) */
+  write32_be(385, N + 8);
+
+  /* Output : OCB-ENCRYPT(K, N, C, <empty string>) */
+  uint8_t result[16];
+  cf_ocb_encrypt(&cf_aes, &aes,
+                 NULL, 0,
+                 C, nC,
+                 N, sizeof N,
+                 NULL,
+                 result, ntag);
+
+  TEST_CHECK(memcmp(result, expect_tag, ntag) == 0);
+}
+
+static void test_ocb_long(void)
+{
+  check_ocb_long(16, "\x67\xE9\x44\xD2\x32\x56\xC5\xE0\xB6\xC6\x1F\xA2\x2F\xDF\x1E\xA2", 16);
+  check_ocb_long(24, "\xF6\x73\xF2\xC3\xE7\x17\x4A\xAE\x7B\xAE\x98\x6C\xA9\xF2\x9E\x17", 16);
+  check_ocb_long(32, "\xD9\x0E\xB8\xE9\xC9\x77\xC8\x8B\x79\xDD\x79\x3D\x7F\xFA\x16\x1C", 16);
+  check_ocb_long(16, "\x77\xA3\xD8\xE7\x35\x89\x15\x8D\x25\xD0\x12\x09", 12);
+  check_ocb_long(24, "\x05\xD5\x6E\xAD\x27\x52\xC8\x6B\xE6\x93\x2C\x5E", 12);
+  check_ocb_long(32, "\x54\x58\x35\x9A\xC2\x3B\x0C\xBA\x9E\x63\x30\xDD", 12);
+  check_ocb_long(16, "\x19\x2C\x9B\x7B\xD9\x0B\xA0\x6A", 8);
+  check_ocb_long(24, "\x00\x66\xBC\x6E\x0E\xF3\x4E\x24", 8);
+  check_ocb_long(32, "\x7D\x4E\xA5\xD4\x45\x50\x1C\xBE", 8);
+}
+#endif
+
 TEST_LIST = {
   { "cbc", test_cbc },
   { "cbcmac", test_cbcmac },
@@ -707,6 +797,11 @@ TEST_LIST = {
   { "gcm", test_gcm },
   { "ccm", test_ccm },
   { "ocb", test_ocb },
+  /* These remaining tests are too big for microcontroller targets. */
+#if !MCU_TARGET
+  { "ccm-long", test_ccm_long },
+  { "ocb-long", test_ocb_long },
+#endif
   { 0 }
 };
 
