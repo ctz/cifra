@@ -20,7 +20,7 @@ In order of descending emphasis, cifra aims for:
   efficient with respect to code and data space.
 
 ## Features
-* **AES** in the **GCM**, **CCM** and **EAX** authenticated encryption modes.
+* **AES** in the **GCM**, **CCM**, **EAX** and **OCB** authenticated encryption modes.
 * **NORX** authenticated encryption system.
 * **SHA224**, **SHA256**, **SHA384** and **SHA512** hash functions (including **HMAC** and **PBKDF2**).
 * **SHA3-224**, **SHA3-256**, **SHA3-384**, **SHA3-512** hash functions (FIPS 202 compatible).
@@ -42,7 +42,7 @@ There is quite a lot of testing available:
   runs assorted test programs.
 * **Emulated embedded builds**: run `make test` in the `src/arm` directory.  This
   expects to find `qemu-system-gnuarmeclipse` on the path.  These tests assume
-  a Cortex-M0 target.
+  a Cortex-M3 target.
 * **Cortex-M0 on-target tests**: run `make test.stm32f0` in the `src/arm` directory.
   This expects to find `openocd` on the path, with an STM32F0xx attached via
   stlinkv2.  It uses ARM semihosting to report results.

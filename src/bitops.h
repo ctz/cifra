@@ -163,7 +163,7 @@ static inline uint32_t mask_u32(uint32_t x, uint32_t y)
 /** Product 0xff if x == y, zero otherwise, without branching. */
 static inline uint8_t mask_u8(uint32_t x, uint32_t y)
 {
-  uint8_t diff = x ^ y;
+  uint32_t diff = x ^ y;
   uint8_t diff_is_zero = ~diff & (diff - 1);
   return - (diff_is_zero >> 7);
 }
@@ -268,6 +268,27 @@ static inline void incr_be(uint8_t *v, size_t len)
       return;
     len--;
   }
+}
+
+/** Copies len bytes from in to out, with in shifted left by offset bits
+ *  to the right. */
+static inline void copy_bytes_unaligned(uint8_t *out, const uint8_t *in, size_t len, uint8_t offset)
+{
+  uint8_t byte_off = offset / 8;
+  uint8_t bit_off = offset & 7;
+  uint8_t rmask = (1 << bit_off) - 1;
+  uint8_t lmask = ~rmask;
+
+  for (size_t i = 0; i < len; i++)
+  {
+    out[i] = (in[i + byte_off] << bit_off) & lmask;
+    out[i] |= (in[i + byte_off + 1] >> (8 - bit_off)) & rmask;
+  }
+}
+
+static inline uint32_t count_trailing_zeroes(uint32_t x)
+{
+  return (uint32_t) __builtin_ctzl(x);
 }
 
 #endif
