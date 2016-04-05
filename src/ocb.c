@@ -33,19 +33,19 @@ typedef struct
   const cf_prp *prp;
   void *prpctx;                 /* Our PRP */
   uint8_t *out;                 /* Output pointer for block processing */
-  uint32_t i;                   /* Block index, 1-based */
   cf_gf128 L_star;              /* Zero block ciphertext */
   cf_gf128 L_dollar;            /* L_$ is double of L_* */
   cf_gf128 L[MAX_L];            /* L[0] is double of L_$, L[1] is double of L[0], etc. */
-  cf_gf128 offset;              /* Current offset */
-  cf_gf128 checksum;            /* Current checksum */
+  cf_gf128 offset;              /* Offset_i */
+  cf_gf128 checksum;            /* Checksum_i */
+  uint32_t i;                   /* Block index, 1-based */
 } ocb;
 
 typedef struct
 {
   ocb *o;                       /* OCB context (contains PRP, etc.) */
-  cf_gf128 sum;                 /* Current checksum */
-  cf_gf128 offset;              /* Current offset */
+  cf_gf128 sum;                 /* Current Sum_i */
+  cf_gf128 offset;              /* Current Offset_i */
   uint32_t i;                   /* Block index, 1-based */
 } ocb_hash;
 
@@ -293,10 +293,6 @@ void cf_ocb_encrypt(const cf_prp *prp, void *prpctx,
   memcpy(tag, tag_bytes, ntag);
 
   mem_clean(&o, sizeof o);
-  mem_clean(partial, sizeof partial);
-  mem_clean(hash_a, sizeof hash_a);
-  mem_clean(full_tag, sizeof full_tag);
-  mem_clean(tag_bytes, sizeof tag_bytes);
 }
 
 static void ocb_decrypt_block(void *vctx, const uint8_t *block)
@@ -402,9 +398,7 @@ int cf_ocb_decrypt(const cf_prp *prp, void *prpctx,
   }
 
   mem_clean(&o, sizeof o);
-  mem_clean(partial, sizeof partial);
   mem_clean(tag_bytes, sizeof tag_bytes);
-  mem_clean(hash_a, sizeof hash_a);
   mem_clean(full_tag, sizeof full_tag);
   return err;
 }
