@@ -493,4 +493,63 @@ int cf_ccm_decrypt(const cf_prp *prp, void *prpctx,
                    const uint8_t *nonce, size_t nnonce,
                    const uint8_t *tag, size_t ntag,
                    uint8_t *plain);
+
+/**
+ * OCB
+ * ---
+ *
+ * OCB is an authenticated encryption mode by Phil Rogaway.
+ *
+ * This is version 3, as standardised in RFC7253.  It's defined
+ * only for block ciphers with a 128-bit block size.
+ *
+ * This is a one-shot interface.
+ */
+
+/* .. c:function:: $DECL
+ * OCB authenticated encryption.
+ *
+ * This function does not fail.
+ *
+ * :param prp/prpctx: describe the block cipher to use.
+ * :param plain: message plaintext.
+ * :param nplain: length of message.  May be zero.
+ * :param header: additionally authenticated data (AAD).
+ * :param nheader: length of AAD.  May be zero.
+ * :param nonce: nonce.  This must not repeat for a given key.
+ * :param nnonce: length of nonce.  Must be 15 or fewer bytes.
+ * :param cipher: ciphertext output.  `nplain` bytes are written here.
+ * :param tag: authentication tag.  `ntag` bytes are written here.
+ * :param ntag: authentication tag length.  Must be 16 or fewer bytes.
+ */
+void cf_ocb_encrypt(const cf_prp *prp, void *prpctx,
+                    const uint8_t *plain, size_t nplain,
+                    const uint8_t *header, size_t nheader,
+                    const uint8_t *nonce, size_t nnonce,
+                    uint8_t *cipher,
+                    uint8_t *tag, size_t ntag);
+
+/* .. c:function:: $DECL
+ * OCB authenticated decryption.
+ *
+ * :return: 0 on success, non-zero on error.  Plain is cleared on error.
+ *
+ * :param prp: describe the block cipher to use.
+ * :param prpctx: describe the block cipher to use.
+ * :param cipher: message ciphertext.
+ * :param ncipher: length of message.
+ * :param header: additionally authenticated data (AAD).
+ * :param nheader: length of AAD.
+ * :param nonce: nonce.
+ * :param nnonce: length of nonce.
+ * :param tag: authentication tag.  `ntag` bytes are read from here.
+ * :param ntag: authentication tag length.
+ * :param plain: plaintext output.  `ncipher` bytes are written here.
+ */
+int cf_ocb_decrypt(const cf_prp *prp, void *prpctx,
+                   const uint8_t *cipher, size_t ncipher,
+                   const uint8_t *header, size_t nheader,
+                   const uint8_t *nonce, size_t nnonce,
+                   const uint8_t *tag, size_t ntag,
+                   uint8_t *plain);
 #endif

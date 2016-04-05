@@ -270,4 +270,25 @@ static inline void incr_be(uint8_t *v, size_t len)
   }
 }
 
+/** Copies len bytes from in to out, with in shifted left by offset bits
+ *  to the right. */
+static inline void copy_bytes_unaligned(uint8_t *out, const uint8_t *in, size_t len, uint8_t offset)
+{
+  uint8_t byte_off = offset / 8;
+  uint8_t bit_off = offset & 7;
+  uint8_t rmask = (1 << bit_off) - 1;
+  uint8_t lmask = ~rmask;
+
+  for (size_t i = 0; i < len; i++)
+  {
+    out[i] = (in[i + byte_off] << bit_off) & lmask;
+    out[i] |= (in[i + byte_off + 1] >> (8 - bit_off)) & rmask;
+  }
+}
+
+static inline uint32_t count_trailing_zeroes(uint32_t x)
+{
+  return (uint32_t) __builtin_ctzl(x);
+}
+
 #endif

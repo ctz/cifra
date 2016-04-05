@@ -48,7 +48,7 @@ static void test_memclean(void)
   TEST_CHECK(buf2[31] == 0xee);
 }
 
-static void test_bitopts_select(void)
+static void test_bitops_select(void)
 {
   uint8_t tab8[8];
   uint32_t tab32[32];
@@ -69,7 +69,7 @@ static void test_bitopts_select(void)
   }
 }
 
-static void test_bitopts_incr(void)
+static void test_bitops_incr(void)
 {
   uint8_t buf[4];
 
@@ -101,6 +101,34 @@ static void test_bitopts_incr(void)
 
 #undef CHECK_BE
 #undef CHECK_LE
+}
+
+static void test_bitops_unaligned(void)
+{
+  uint8_t in[4], out[4];
+
+#define CHECK(outw, len, offs) \
+  { \
+    memset(out, 0, sizeof out); \
+    copy_bytes_unaligned(out, in, len, offs); \
+    TEST_CHECK(read32_be(out) == (outw)); \
+  }
+
+  write32_be(0x11223344, in);
+
+  CHECK(0x11223344, 4, 0);
+  CHECK(0x22446600, 3, 1);
+  CHECK(0x4488cd00, 3, 2);
+  CHECK(0x89119a00, 3, 3);
+  CHECK(0x12233400, 3, 4);
+  CHECK(0x24466800, 3, 5);
+  CHECK(0x488cd100, 3, 6);
+  CHECK(0x9119a200, 3, 7);
+  CHECK(0x22334400, 3, 8);
+  CHECK(0x44660000, 2, 9);
+  CHECK(0x33440000, 2, 16);
+
+#undef CHECK
 }
 
 static void test_expand(const uint8_t *key, size_t nkey,
@@ -218,8 +246,9 @@ static void test_vectors(void)
 
 TEST_LIST = {
   { "handy-memclean", test_memclean },
-  { "bitopts-select", test_bitopts_select },
-  { "bitopts-incr", test_bitopts_incr },
+  { "bitops-select", test_bitops_select },
+  { "bitops-incr", test_bitops_incr },
+  { "bitops-unaligned", test_bitops_unaligned },
   { "key-expansion-128", test_expand_128 },
   { "key-expansion-192", test_expand_192 },
   { "key-expansion-256", test_expand_256 },
