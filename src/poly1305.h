@@ -24,9 +24,9 @@
  * This is an incremental interface to computing the poly1305
  * single shot MAC.
  *
- * Note: Poly1305-AES with this by taking a 16 byte nonce
- * and encrypting it, and then using the result as an input
- * to this function.
+ * Note: construct Poly1305-AES with this by taking a 16 byte
+ * nonce and encrypting it, and then using the result as an
+ * input to this function.
  */
 
 /* .. c:type:: cf_poly1305

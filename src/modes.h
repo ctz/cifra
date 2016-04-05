@@ -532,7 +532,7 @@ void cf_ocb_encrypt(const cf_prp *prp, void *prpctx,
 /* .. c:function:: $DECL
  * OCB authenticated decryption.
  *
- * :return: 0 on success, non-zero on error.  Plain is cleared on error.
+ * :return: 0 on success, non-zero on error.  `plain` is cleared on error.
  *
  * :param prp: describe the block cipher to use.
  * :param prpctx: describe the block cipher to use.
