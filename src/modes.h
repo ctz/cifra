@@ -263,6 +263,11 @@ void cf_cmac_sign(cf_cmac *ctx, const uint8_t *data, size_t bytes,
 /* .. c:type:: cf_cmac_stream
  * Stream interface to CMAC signing.
  *
+ * Input data in arbitrary chunks using :c:func:`cf_cmac_stream_update`.
+ * The last bit of data must be signalled with the `isfinal` flag to
+ * that function, and the data cannot be zero length unless the whole
+ * message is empty.
+ *
  * .. c:member:: cf_cmac_stream.cmac
  * CMAC one-shot data.
  *
