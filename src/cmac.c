@@ -95,12 +95,14 @@ static void cmac_process_final_nopad(void *vctx, const uint8_t *block)
 {
   cf_cmac_stream *ctx = vctx;
   cmac_process_final(ctx, block, ctx->cmac.B);
+  ctx->finalised = 1;
 }
 
 static void cmac_process_final_pad(void *vctx, const uint8_t *block)
 {
   cf_cmac_stream *ctx = vctx;
   cmac_process_final(ctx, block, ctx->cmac.P);
+  ctx->finalised = 1;
 }
 
 void cf_cmac_stream_update(cf_cmac_stream *ctx, const uint8_t *data, size_t len, int isfinal)
@@ -111,13 +113,15 @@ void cf_cmac_stream_update(cf_cmac_stream *ctx, const uint8_t *data, size_t len,
 
   if (isfinal)
   {
-    assert(!ctx->finalised);
-    ctx->finalised = 1;
+    int whole_number_of_blocks = ((len + ctx->used) & 0xf) == 0;
+    int empty_message = len == 0 && ctx->used == 0 && ctx->processed == 0;
+
+    assert(!ctx->finalised);  /* finalised before? */
+    assert(len != 0 || empty_message); /* we can't be told we're done after the fact. */
 
     /* If we have a whole number of blocks, and at least 1 block, we XOR in B.
      * Otherwise, we need to pad and XOR in P. */
-    if (((len + ctx->used) & 0xf) == 0 &&
-        !(len == 0 && ctx->used == 0 && ctx->processed == 0))
+    if (whole_number_of_blocks && !empty_message)
       final_fn = cmac_process_final_nopad;
     else
       needpad = 1;
