@@ -232,6 +232,10 @@ Cifra requires `memcpy`, `memset`, and `abort`.
   lengths.  Specifically, messages whose length satisfied `len % 64 = 55` for
   SHA1/SHA224/SHA256 or `len % 128 = 119` for SHA384/SHA512.  SHA3 was not affected.
   Better testing is now in place.
+* [Issue #3](https://github.com/ctz/cifra/issues/3): in all versions before commit
+  [82d77cd8](https://github.com/ctz/cifra/commit/82d77cd8323f6d4473fcb68517752a778970138d)
+  (April 16th 2016) EAX would produce wrong tags for empty AADs or messages.  The
+  underlying CMAC is now more resistant to this case.
 
 ## License
 [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
