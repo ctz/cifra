@@ -32,8 +32,14 @@ static void cmac_compute_n(cf_cmac_stream *ctx,
   firstblock[blocksz - 1] = t;
 
   cf_cmac_stream_reset(ctx);
-  cf_cmac_stream_update(ctx, firstblock, blocksz, 0);
-  cf_cmac_stream_update(ctx, input, ninput, 1);
+  if (ninput)
+  {
+    cf_cmac_stream_update(ctx, firstblock, blocksz, 0);
+    cf_cmac_stream_update(ctx, input, ninput, 1);
+  } else {
+    cf_cmac_stream_update(ctx, firstblock, blocksz, 1);
+  }
+
   cf_cmac_stream_final(ctx, out);
 }
 
