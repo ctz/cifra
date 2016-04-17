@@ -406,6 +406,6 @@ unsigned cf_rsassa_pss_verify(const cf_chash *hash,
   hash->digest(&ctx, Hprime);
 
   /* 14. If H = H' output "consistent", otherwise output "inconsistent" */
-  return memcmp(H, Hprime, hLen);
+  return memcmp(H, Hprime, hLen) != 0;
 }
 
