@@ -19,6 +19,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "rng.h"
+
 static inline uint8_t unhex_chr(char a)
 {
   if (a >= '0' && a <= '9')
@@ -56,6 +58,36 @@ static inline void dump(const char *label, const uint8_t *buf, size_t len)
   for (size_t i = 0; i < len; i++)
     printf("%02x", buf[i]);
   printf("\n");
+}
+
+/* A cf_rng which gives out the provided bytes */
+typedef struct
+{
+  cf_rng rng;
+  const uint8_t *buf;
+  size_t left;
+} fixed_rng;
+
+static void fixed_rng_generate(void *ctx, void *out, size_t bytes)
+{
+  fixed_rng *rng = ctx;
+
+  printf("fixed-rng %zu\n", bytes);
+
+  assert(bytes <= rng->left);
+  memcpy(out, rng->buf, bytes);
+  rng->buf += bytes;
+  rng->left -= bytes;
+}
+
+static inline fixed_rng make_fixed_rng(const void *data, size_t len)
+{
+  fixed_rng r;
+  memset(&r, 0, sizeof r);
+  r.rng.generate = fixed_rng_generate;
+  r.buf = data;
+  r.left = len;
+  return r;
 }
 
 #endif
