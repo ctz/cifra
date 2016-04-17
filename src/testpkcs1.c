@@ -42,14 +42,9 @@ static void check_pss(const cf_chash *hash,
   cf_rsassa_pss_encode(hash, &rng.rng,
                        msghash,
                        got_encoding, nmodulus);
-
-  dump("got ", got_encoding, nmodulus);
-  dump("want", encoding, nmodulus);
-
   TEST_CHECK(memcmp(got_encoding, encoding, nmodulus) == 0);
 
-  unsigned verf = cf_rsassa_pss_verify(hash, msghash,
-                                       encoding, nmodulus);
+  unsigned verf = cf_rsassa_pss_verify(hash, msghash, encoding, nmodulus);
   TEST_CHECK(verf == 0);
 
   /* wrong last 0xbc byte */
@@ -58,12 +53,24 @@ static void check_pss(const cf_chash *hash,
                               got_encoding, nmodulus);
   TEST_CHECK(verf == 1);
 
+  /* broken DB zeroes */
+  memcpy(got_encoding, encoding, nmodulus);
+  got_encoding[5] ^= 0xff;
+  verf = cf_rsassa_pss_verify(hash, msghash, got_encoding, nmodulus);
+  TEST_CHECK(verf == 1);
+
+  /* broken DB one */
+  memcpy(got_encoding, encoding, nmodulus);
+  got_encoding[nmodulus - hash->hashsz * 2 - 2] ^= 0xff;
+  verf = cf_rsassa_pss_verify(hash, msghash, got_encoding, nmodulus);
+  TEST_CHECK(verf == 1);
+
+  /* wrong hash */
   uint8_t wronghash[CF_MAXHASH];
   memcpy(wronghash, msghash, hash->hashsz);
   wronghash[0] ^= 0xff;
 
-  verf = cf_rsassa_pss_verify(hash, wronghash,
-                              encoding, nmodulus);
+  verf = cf_rsassa_pss_verify(hash, wronghash, encoding, nmodulus);
   TEST_CHECK(verf == 1);
 
 }
