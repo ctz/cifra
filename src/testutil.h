@@ -72,8 +72,6 @@ static void fixed_rng_generate(void *ctx, void *out, size_t bytes)
 {
   fixed_rng *rng = ctx;
 
-  printf("fixed-rng %zu\n", bytes);
-
   assert(bytes <= rng->left);
   memcpy(out, rng->buf, bytes);
   rng->buf += bytes;

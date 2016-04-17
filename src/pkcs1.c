@@ -77,12 +77,13 @@ void cf_rsaes_oaep_encode(const cf_chash *hash, cf_rng *rng,
    */
   uint8_t *DB = enc_out + 1 + hLen,
           *PS = DB + hLen;
-  size_t PSlen = nmodulus - nmessage - 2 * hLen - 1;
+  size_t DBlen = nmodulus - hLen - 1;
+  size_t PSlen = nmodulus - nmessage - 2 * hLen - 2;
 
   memcpy(DB, lHash, hLen);
   memset(PS, 0, PSlen);
   PS[PSlen] = 0x01;
-  memcpy(PS + 1, message, nmessage);
+  memcpy(PS + PSlen + 1, message, nmessage);
 
   /* d. Generate a random octet string seed of length hLen. */
   uint8_t seed[CF_MAXHASH];
@@ -91,7 +92,6 @@ void cf_rsaes_oaep_encode(const cf_chash *hash, cf_rng *rng,
   /* e. Let dbMask = MGF(seed, k - hLen - 1) */
   /* f. Let maskedDB = DB \xor dbMask */
   uint8_t *maskedDB = DB;
-  size_t DBlen = nmodulus - hLen - 1;
   MGF1_xor(hash,
            seed, hLen,
            maskedDB, DBlen);
@@ -162,7 +162,8 @@ unsigned cf_rsaes_oaep_decode(const cf_chash *hash,
                 *PS = DB + hLen,
                 *PSend = DB + maskedDBlen;
 
-  unsigned valid = 1,
+  /* invalid if lHash' != lHash */
+  unsigned valid = mem_eq(lHash, lHashPrime, hLen),
            in_m = 0;
   *nmessage = 0;
 
@@ -185,9 +186,6 @@ unsigned cf_rsaes_oaep_decode(const cf_chash *hash,
 
   /* invalid if we got no M */
   valid &= in_m;
-
-  /* invalid if lHash' != lHash */
-  valid &= mem_eq(lHash, lHashPrime, hLen);
 
   /* invalid if Y non-zero */
   valid &= (Y == 0x00);
@@ -275,7 +273,7 @@ unsigned cf_rsassa_pkcs1_verify(const uint8_t *enc, size_t nmodulus,
                                 const uint8_t *message, size_t nmessage)
 {
   uint8_t expect[MAX_MODULUS];
-  assert(MAX_MODULUS <= nmodulus);
+  assert(MAX_MODULUS >= nmodulus);
 
   cf_rsassa_pkcs1_encode(message, nmessage, expect, nmodulus);
   return !mem_eq(expect, enc, nmodulus);
