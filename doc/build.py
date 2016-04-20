@@ -63,6 +63,7 @@ norx
 poly1305
 chacha20poly1305
 drbg
+pkcs1
 """.split()
 
 # Basic idea of a C identifier
