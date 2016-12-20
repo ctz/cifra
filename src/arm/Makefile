@@ -84,8 +84,7 @@ SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
        ../aes.c ../eax.c ../gcm.c ../cbcmac.c ../ccm.c \
        ../modes.c ../cmac.c ../gf128.c \
        ../hmac.c ../pbkdf2.c ../salsa20.c ../chacha20.c \
-       ../norx.c ../chacha20poly1305.c ../drbg.c
-
+       ../norx.c ../chacha20poly1305.c ../drbg.c ../ocb.c
 $(patsubst %,%.stm32f0.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.stm32f1.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.stm32f3.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
