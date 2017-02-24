@@ -56,7 +56,7 @@ static int process(const uint8_t key[static 32],
    * AAD || pad(AAD) || cipher || pad(cipher) || len_64(aad) || len_64(cipher) */
   uint8_t padbuf[16] = { 0 };
 
-#define PADLEN(x) (16 - ((x) & 0xf))
+#define PADLEN(x) ((16 - ((x) & 0xf)) & 0xf)
 
   /* AAD || pad(AAD) */
   cf_poly1305_update(&poly, header, nheader);
