@@ -236,6 +236,11 @@ Cifra requires `memcpy`, `memset`, and `abort`.
   [82d77cd8](https://github.com/ctz/cifra/commit/82d77cd8323f6d4473fcb68517752a778970138d)
   (April 16th 2016) EAX would produce wrong tags for empty AADs or messages.  The
   underlying CMAC is now more resistant to this case.
+* [Issue #6](https://github.com/ctz/cifra/issues/6): in all versions before commit
+  [b6cdf9f3](https://github.com/ctz/cifra/commit/b6cdf9f3dcf693fbc243c5f341ea27114caf869a)
+  the chacha20poly1305 construction would produce incorrect tags for some message or AAD
+  lengths.  These case weren't covered by the standard test vectors, so extra tests have
+  been added computed with libsodium.
 
 ## License
 [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
