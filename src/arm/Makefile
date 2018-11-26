@@ -20,11 +20,12 @@ AEADS = aeadperf_aes128gcm \
 	aeadperf_chacha20poly1305
 TESTS = testcurve25519 testaes testmodes testsalsa20 testsha1 testsha2 \
 	testsha3 testpoly1305 testnorx testchacha20poly1305 testdrbg
-ARCHS = stm32f0 stm32f1 stm32f3 efm32 qemucm3
+ARCHS = stm32f0 stm32f1 stm32f3 stm32l4 efm32 qemucm3
 
 all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(AEADS) $(TESTS)) \
 	$(patsubst %,%.stm32f1.bin,$(FUNCS) $(AEADS) $(TESTS)) \
 	$(patsubst %,%.stm32f3.bin,$(FUNCS) $(AEADS) $(TESTS)) \
+	$(patsubst %,%.stm32l4.bin,$(FUNCS) $(AEADS) $(TESTS)) \
 	$(patsubst %,%.efm32.bin,$(FUNCS) $(AEADS) $(TESTS)) \
 	$(patsubst %,%.qemucm3.bin,$(FUNCS) $(AEADS) $(TESTS))
 
@@ -36,6 +37,9 @@ all: $(patsubst %,%.stm32f0.bin,$(FUNCS) $(AEADS) $(TESTS)) \
 
 %.stm32f3.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32f3.ld -mcpu=cortex-m4 -DCORTEX_M4 -o $@ $^ -DTEST=$* -lgcc
+
+%.stm32l4.elf:
+	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.stm32l4.ld -mcpu=cortex-m4 -DCORTEX_M4 -o $@ $^ -DTEST=$* -lgcc
 
 %.efm32.elf:
 	arm-none-eabi-gcc $(CFLAGS) $(CFLAGS_$*) $(LDFLAGS) -T linkscript.efm32.ld -mcpu=cortex-m0 -DCORTEX_M0 -o $@ $^ -DTEST=$* -lgcc
@@ -88,6 +92,7 @@ SRCS = boot.c memcpy.s memset.s semihost.c semihost.s \
 $(patsubst %,%.stm32f0.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.stm32f1.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.stm32f3.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
+$(patsubst %,%.stm32l4.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.efm32.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
 $(patsubst %,%.qemucm3.elf, $(FUNCS) $(AEADS)): $(SRCS) main.c $(CURVESRCS)
 
@@ -164,6 +169,20 @@ run.%.stm32f3: %.stm32f3.elf
 		-ex 'monitor wait_halt 720000' \
 		-ex 'monitor shutdown'
 
+run.%.stm32l4: %.stm32l4.elf
+	arm-none-eabi-readelf -l $^ > $@.log
+	echo '-----' >> $@.log
+	openocd -f openocd.stm32l4.cfg >> $@.log &
+	gdb-multiarch --quiet --batch-silent \
+		$^ \
+		-ex 'target remote :3333' \
+		-ex 'monitor reset halt' \
+		-ex 'load' \
+		-ex 'monitor arm semihosting enable' \
+		-ex 'monitor reset run' \
+		-ex 'monitor wait_halt 720000' \
+		-ex 'monitor shutdown'
+
 test: $(patsubst %,run.%.qemucm3,$(FUNCS) $(TESTS))
 .PHONY: test
 
@@ -178,6 +197,9 @@ test.stm32f1: $(patsubst %,run.%.stm32f1,$(FUNCS) $(TESTS))
 
 test.stm32f3: $(patsubst %,run.%.stm32f3,$(FUNCS) $(TESTS))
 .PHONY: test.stm32f3
+
+test.stm32l4: $(patsubst %,run.%.stm32l4,$(FUNCS) $(TESTS))
+.PHONY: test.stm32l4
 
 clean:
 	rm -rf *.log *.elf *.bin
