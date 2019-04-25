@@ -139,7 +139,7 @@ void cf_salsa20_init(cf_salsa20_ctx *ctx, const uint8_t *key, size_t nkey, const
   }
 
   memset(ctx->nonce, 0, sizeof ctx->nonce);
-  memcpy(ctx->nonce + 8, nonce, 8);
+  memcpy(ctx->nonce, nonce, 8);
   ctx->nblock = 0;
   ctx->ncounter = 8;
 }
@@ -152,7 +152,7 @@ static void cf_salsa20_next_block(void *vctx, uint8_t *out)
                   ctx->nonce,
                   ctx->constant,
                   out);
-  incr_le(ctx->nonce, ctx->ncounter);
+  incr_le(ctx->nonce + 8, ctx->ncounter);
 }
 
 void cf_salsa20_cipher(cf_salsa20_ctx *ctx, const uint8_t *input, uint8_t *output, size_t bytes)
