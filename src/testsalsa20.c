@@ -115,6 +115,22 @@ static void test_salsa20(void)
   TEST_CHECK(memcmp(expect, cipher, 64) == 0);
 }
 
+static void test_salsa20_against_nacl(void)
+{
+  uint8_t key[32], nonce[8], cipher[128], expect[128];
+
+  unhex(key, 32, "7365637265746b65797365637265746b65797365637265746b65797365637265");
+  unhex(nonce, 8, "6e6f6e63656e6f6e");
+  unhex(expect, 128, "cdb2a9faa90c95c11d9e0aa095ec4bca441ee3ebec629ebeb3037f37316b1e275c990e0668f90f38622cb1997e4dcd3c27f5323ce3729a8ae0f94e2cfe1fe58fc71aa5210cac089cc6b2fc092fb38686d1adb2d9763f8d89691e485547561e0da4d68c276708dca0bee1cd3667c76e5c79fe71ab18d32f63f3862024a78e8e66");
+  memset(cipher, 0, sizeof(cipher));
+
+  cf_salsa20_ctx ctx;
+  cf_salsa20_init(&ctx, key, 32, nonce);
+  cf_salsa20_cipher(&ctx, cipher, cipher, sizeof(cipher));
+
+  TEST_CHECK(memcmp(expect, cipher, sizeof(cipher)) == 0);
+}
+
 static void test_chacha20_core(void)
 {
   uint8_t k0[16], k1[16], nonce[16], out[64], expect[64];
@@ -204,6 +220,7 @@ TEST_LIST = {
   { "salsa20-core", test_salsa20_core },
   { "chacha20-core", test_chacha20_core },
   { "salsa20", test_salsa20 },
+  { "salsa20-vs-nacl", test_salsa20_against_nacl },
   { "chacha20", test_chacha20 },
   { 0 }
 };
