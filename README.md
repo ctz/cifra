@@ -241,6 +241,11 @@ Cifra requires `memcpy`, `memset`, and `abort`.
   the chacha20poly1305 construction would produce incorrect tags for some message or AAD
   lengths.  These case weren't covered by the standard test vectors, so extra tests have
   been added computed with libsodium.
+* [Issue #11](https://github.com/ctz/cifra/issues/11): in all versions before commit
+  [df1e4130](https://github.com/ctz/cifra/commit/df1e4130722943b15563e92a0595b31c603aa34d)
+  our salsa20 used incorrect internal ordering when constructing the nonce.  The correct
+  ordering is apparently not specified by the specification or covered by test vectors.
+  Additional tests have been generated from libsodium.
 
 ## License
 [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
