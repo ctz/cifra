@@ -60,6 +60,26 @@
  * The block size of SHA3-512. */
 #define CF_SHA3_512_BLOCKSZ 72
 
+/* The block size of SHAKE128 */
+#define CF_SHAKE_128_BLOCKSZ 168
+
+/* The block size of SHAKE256 */
+#define CF_SHAKE_256_BLOCKSZ 136
+
+/* Padding and domain separation constants.
+ *
+ * FIPS 202 specifies that 0b01 is appended to hash function
+ * input, and 0b1111 is appended to SHAKE input.
+ *
+ * This is done in internal (little endian) bit ordering, and
+ * we convolve it with the leftmost (first) padding bit, so:
+ *
+ * Hash: 0b110
+ * SHAKE: 0b11111
+ */
+#define DOMAIN_HASH_PAD  0x06
+#define DOMAIN_SHAKE_PAD 0x1f
+
 /* We use bit-interleaved internal representation.  This
  * stores a 64 bit quantity in two 32 bit words: one word
  * contains odd bits, the other even.  This means 64-bit rotations
@@ -91,9 +111,10 @@ typedef struct
 {
   /* State is a 5x5 block of 64-bit values, for Keccak-f[1600]. */
   cf_sha3_bi A[5][5];
-  uint8_t partial[CF_SHA3_224_BLOCKSZ];
+  uint8_t partial[CF_SHAKE_128_BLOCKSZ];
   size_t npartial;
   uint16_t rate, capacity; /* rate and capacity, in bytes. */
+  uint8_t domain_pad;
 } cf_sha3_context;
 
 
