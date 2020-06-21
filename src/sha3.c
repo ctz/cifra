@@ -127,7 +127,7 @@ static inline void rotl_bi_n(cf_sha3_bi *out, const cf_sha3_bi *in, uint8_t rot)
 
 /* --- */
 
-static void sha3_init(cf_sha3_context *ctx, uint16_t rate_bits, uint16_t capacity_bits)
+void sha3_init(cf_sha3_context *ctx, uint16_t rate_bits, uint16_t capacity_bits)
 {
   mem_clean(ctx, sizeof *ctx);
   ctx->rate = rate_bits / 8;
@@ -262,15 +262,17 @@ static void squeeze(cf_sha3_context *ctx, uint8_t *out, size_t nbytes)
     out += take;
     nbytes -= take;
 
-    assert(nbytes == 0);
-#if 0
-    /* Note: if we ever have |H| >= rate, we need to permute
-     * after each rate-length block.
-     *
-     * This cannot currently happen. */
+    /* for SHA3 hash functions, the size of the output nbytes is always less
+    than the rate, so one iteration here will always be enough and will bring
+    nbytes to 0; instead for SHA3 XOFs multiple iterations may be needed.
+    Hash and XOFs can be distinguished using the domain_pad. */
+    if (ctx->domain_pad == DOMAIN_HASH_PAD) {
+      assert(nbytes == 0);
+    }
+
+    /* if |H| >= rate, we need to permute after each rate-length block */
     if (nbytes)
       permute(ctx);
-#endif
   }
 }
 
@@ -282,27 +284,12 @@ static void sha3_block(void *vctx, const uint8_t *data)
   permute(ctx);
 }
 
-static void sha3_update(cf_sha3_context *ctx, const void *data, size_t nbytes)
+void sha3_update(cf_sha3_context *ctx, const void *data, size_t nbytes)
 {
   cf_blockwise_accumulate(ctx->partial, &ctx->npartial, ctx->rate,
                           data, nbytes,
                           sha3_block, ctx);
 }
-
-/* Padding and domain separation constants.
- *
- * FIPS 202 specifies that 0b01 is appended to hash function
- * input, and 0b1111 is appended to SHAKE input.
- *
- * This is done in internal (little endian) bit ordering, and
- * we convolve it with the leftmost (first) padding bit, so:
- *
- * Hash: 0b110
- * SHAKE: 0b11111
- */
-  
-#define DOMAIN_HASH_PAD  0x06
-#define DOMAIN_SHAKE_PAD 0x1f
 
 static void pad(cf_sha3_context *ctx, uint8_t domain, size_t npad)
 {
@@ -314,9 +301,9 @@ static void pad(cf_sha3_context *ctx, uint8_t domain, size_t npad)
                        sha3_block, ctx);
 }
 
-static void pad_and_squeeze(cf_sha3_context *ctx, uint8_t *out, size_t nout)
+void pad_and_squeeze(cf_sha3_context *ctx, uint8_t *out, size_t nout)
 {
-  pad(ctx, DOMAIN_HASH_PAD, ctx->rate - ctx->npartial);
+  pad(ctx, ctx->domain_pad, ctx->rate - ctx->npartial);
   assert(ctx->npartial == 0);
 
   squeeze(ctx, out, nout);
@@ -327,6 +314,7 @@ static void pad_and_squeeze(cf_sha3_context *ctx, uint8_t *out, size_t nout)
 void cf_sha3_224_init(cf_sha3_context *ctx)
 {
   sha3_init(ctx, 1152, 448);
+  ctx->domain_pad = DOMAIN_HASH_PAD;
 }
 
 void cf_sha3_224_update(cf_sha3_context *ctx, const void *data, size_t nbytes)
@@ -357,6 +345,7 @@ const cf_chash cf_sha3_224 = {
 void cf_sha3_256_init(cf_sha3_context *ctx)
 {
   sha3_init(ctx, 1088, 512);
+  ctx->domain_pad = DOMAIN_HASH_PAD;
 }
 
 void cf_sha3_256_update(cf_sha3_context *ctx, const void *data, size_t nbytes)
@@ -387,6 +376,7 @@ const cf_chash cf_sha3_256 = {
 void cf_sha3_384_init(cf_sha3_context *ctx)
 {
   sha3_init(ctx, 832, 768);
+  ctx->domain_pad = DOMAIN_HASH_PAD;
 }
 
 void cf_sha3_384_update(cf_sha3_context *ctx, const void *data, size_t nbytes)
@@ -417,6 +407,7 @@ const cf_chash cf_sha3_384 = {
 void cf_sha3_512_init(cf_sha3_context *ctx)
 {
   sha3_init(ctx, 576, 1024);
+  ctx->domain_pad = DOMAIN_HASH_PAD;
 }
 
 void cf_sha3_512_update(cf_sha3_context *ctx, const void *data, size_t nbytes)
