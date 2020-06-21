@@ -59,6 +59,7 @@ salsa20
 sha1
 sha2
 sha3
+sha3_shake
 norx
 poly1305
 chacha20poly1305
