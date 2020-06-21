@@ -1,7 +1,7 @@
 # Cifra
 Cifra is a collection of cryptographic primitives targeted at embedded use.
 
-[![Build Status](https://travis-ci.org/ctz/cifra.svg?branch=master)](https://travis-ci.org/ctz/cifra)
+[![Build Status](https://travis-ci.org/ctz/cifra.svg?branch=main)](https://travis-ci.org/ctz/cifra)
 
 [![Documentation](https://readthedocs.org/projects/pip/badge/)](https://cifra.readthedocs.org/en/latest/)
 
