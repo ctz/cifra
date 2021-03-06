@@ -51,8 +51,9 @@ void cf_cbc_decrypt(cf_cbc *ctx, const uint8_t *input, uint8_t *output, size_t b
   while (blocks--)
   {
     ctx->prp->decrypt(ctx->prpctx, input, buf);
-    xor_bb(output, buf, ctx->block, nblk);
+    xor_bb(buf, buf, ctx->block, nblk);
     memcpy(ctx->block, input, nblk);
+    memcpy(output, buf, nblk);
     input += nblk;
     output += nblk;
   }
