@@ -105,7 +105,7 @@ typedef struct
 
 /* .. c:macro:: CF_CHASH_MAXBLK
  * Maximum hash function block size (in bytes). */
-#define CF_CHASH_MAXBLK 128
+#define CF_CHASH_MAXBLK 144
 
 /* .. c:macro:: CF_MAXHASH
  * Maximum hash function output (in bytes). */
