@@ -64,10 +64,23 @@
 /* .. c:macro:: CF_AES_ENCRYPT_ONLY
  *
  * Define this to 1 if you don't need to decrypt anything.
+ * Setting this and :c:macro:`CF_AES_DECRYPT_ONLY` at the same time
+ * has no effect.
  * This saves space.  :c:func:`cf_aes_decrypt` calls `abort(3)`.
  */
 #ifndef CF_AES_ENCRYPT_ONLY
 # define CF_AES_ENCRYPT_ONLY 0
+#endif
+
+/* .. c:macro:: CF_AES_DECRYPT_ONLY
+ *
+ * Define this to 1 if you don't need to encrypt anything.
+ * Setting this and :c:macro:`CF_AES_ENCRYPT_ONLY` at the same time
+ * has no effect.
+ * This saves space.  :c:func:`cf_aes_encrypt` calls `abort(3)`.
+ */
+#ifndef CF_AES_DECRYPT_ONLY
+# define CF_AES_DECRYPT_ONLY 0
 #endif
 
 /* .. c:type:: cf_aes_context
@@ -81,7 +94,7 @@
  * when you're done.
  *
  * .. c:member:: cf_aes_context.rounds
- * 
+ *
  * Number of rounds to use, set by :c:func:`cf_aes_init`.
  *
  * This depends on the original key size, and will be
@@ -89,7 +102,7 @@
  * :c:macro:`AES256_ROUNDS`.
  *
  * .. c:member:: cf_aes_context.ks
- * 
+ *
  * Expanded key material.  Filled in by :c:func:`cf_aes_init`.
  */
 typedef struct

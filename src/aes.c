@@ -123,7 +123,7 @@ static void aes_schedule(cf_aes_context *ctx, const uint8_t *key, size_t nkey)
   for (; i < n; i++, i_mod_nk++)
   {
     uint32_t temp = w[i - 1];
-    
+
     if (i_mod_nk == nk)
     {
       i_div_nk++;
@@ -179,6 +179,21 @@ static void add_round_key(uint32_t state[4], const uint32_t rk[4])
   state[3] ^= rk[3];
 }
 
+static uint32_t gf_poly_mul2(uint32_t x)
+{
+  return
+    ((x & 0x7f7f7f7f) << 1) ^
+    (((x & 0x80808080) >> 7) * 0x1b);
+}
+
+#if CF_AES_DECRYPT_ONLY != 0 && CF_AES_ENCRYPT_ONLY == 0
+void cf_aes_encrypt(const cf_aes_context *ctx,
+                    const uint8_t in[AES_BLOCKSZ],
+                    uint8_t out[AES_BLOCKSZ])
+{
+  abort();
+}
+#else
 static void sub_block(uint32_t state[4])
 {
   state[0] = sub_word(state[0], S);
@@ -215,13 +230,6 @@ static void shift_rows(uint32_t state[4])
   state[1] = v;
   state[2] = x;
   state[3] = y;
-}
-
-static uint32_t gf_poly_mul2(uint32_t x)
-{
-  return
-    ((x & 0x7f7f7f7f) << 1) ^
-    (((x & 0x80808080) >> 7) * 0x1b);
 }
 
 static uint32_t mix_column(uint32_t x)
@@ -275,8 +283,16 @@ void cf_aes_encrypt(const cf_aes_context *ctx,
   write32_be(state[2], out + 8);
   write32_be(state[3], out + 12);
 }
+#endif
 
-#if CF_AES_ENCRYPT_ONLY == 0
+#if CF_AES_DECRYPT_ONLY == 0 && CF_AES_ENCRYPT_ONLY != 0
+void cf_aes_decrypt(const cf_aes_context *ctx,
+                    const uint8_t in[AES_BLOCKSZ],
+                    uint8_t out[AES_BLOCKSZ])
+{
+  abort();
+}
+#else
 static const uint8_t S_inv[256] =
 {
   0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81,
@@ -389,18 +405,11 @@ void cf_aes_decrypt(const cf_aes_context *ctx,
   inv_shift_rows(state);
   inv_sub_block(state);
   add_round_key(state, round_keys);
-  
+
   write32_be(state[0], out + 0);
   write32_be(state[1], out + 4);
   write32_be(state[2], out + 8);
   write32_be(state[3], out + 12);
-}
-#else
-void cf_aes_decrypt(const cf_aes_context *ctx,
-                    const uint8_t in[AES_BLOCKSZ],
-                    uint8_t out[AES_BLOCKSZ])
-{
-  abort();
 }
 #endif
 
@@ -414,4 +423,3 @@ const cf_prp cf_aes = {
   .encrypt = (cf_prp_block) cf_aes_encrypt,
   .decrypt = (cf_prp_block) cf_aes_decrypt
 };
-
