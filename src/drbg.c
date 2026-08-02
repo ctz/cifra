@@ -34,6 +34,10 @@ static void hash_df(const cf_chash *H,
   uint8_t cbuf[4];
   uint8_t block[CF_MAXHASH];
 
+  /* counter wraps after 255 blocks; refuse requests that would
+   * repeat output blocks. */
+  assert(nout <= 255 * (size_t)H->hashsz);
+
   write32_be(bits_to_return, cbuf);
 
   while (nout)
@@ -58,6 +62,8 @@ static void hash_df(const cf_chash *H,
 
     counter += 1;
   }
+
+  mem_clean(block, sizeof block);
 }
 
 void cf_hash_drbg_sha256_init(cf_hash_drbg_sha256 *ctx,
@@ -130,6 +136,8 @@ static void hash_process_addnl(const cf_chash *H,
 
   /* 2.2. V = (V + w) mod 2 ^ seedlen */
   add(V, nV, w, H->hashsz);
+
+  mem_clean(w, sizeof w);
 }
 
 static void hash_generate(const cf_chash *H,
@@ -157,6 +165,8 @@ static void hash_generate(const cf_chash *H,
     /* 4.3. data = (data + 1) mod 2 ^ seedlen */
     add(data, ndata, &one, sizeof one);
   }
+
+  mem_clean(w, sizeof w);
 }
 
 static void hash_step(const cf_chash *H,
@@ -184,6 +194,8 @@ static void hash_step(const cf_chash *H,
 
   /* 6. reseed_counter = reseed_counter + 1 */
   *reseed_counter = *reseed_counter + 1;
+
+  mem_clean(h, sizeof h);
 }
 
 /* This is Hash_DRBG_Generate_algorithm.
@@ -201,6 +213,7 @@ static void hash_gen_request(cf_hash_drbg_sha256 *ctx,
   memcpy(data, ctx->V, sizeof ctx->V);
   hash_generate(&cf_sha256, data, sizeof data, out, nout);
   hash_step(&cf_sha256, ctx->V, sizeof ctx->V, ctx->C, sizeof ctx->C, &ctx->reseed_counter);
+  mem_clean(data, sizeof data);
 }
 
 void cf_hash_drbg_sha256_gen_additional(cf_hash_drbg_sha256 *ctx,
